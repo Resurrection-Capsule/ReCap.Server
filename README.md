@@ -1,4 +1,4 @@
-![alt ReCap logo and title](https://raw.githubusercontent.com/Resurrection-Capsule/recap/master/logo.png)
+![alt ReCap logo and title](https://raw.githubusercontent.com/Resurrection-Capsule/recap/main/logo.png)
 
 [WIP] ReCap for short. A small local server to play Darkspore offline
 
