@@ -11,7 +11,7 @@ namespace HttpServer
     {
         static void Main(string[] args)
         {
-            RestClientAdapter.Run("localhost:8080");
+            RestClientAdapter.Run();
         }
     }
 }

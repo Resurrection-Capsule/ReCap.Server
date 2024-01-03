@@ -9,8 +9,9 @@ namespace HttpServer
 {
     class RestClientAdapter
     {
-        public static void Run(string host)
+        public static void Run()
         {
+            string host = ServerConfig.GetHost();
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add(String.Format("http://{0}/", host));
             listener.Start();
@@ -18,11 +19,11 @@ namespace HttpServer
             while (true)
             {
                 HttpListenerContext context = listener.GetContext();
-                ProcessRequest(context, host);
+                ProcessRequest(context);
             }
         }
 
-        static void ProcessRequest(HttpListenerContext context, string host)
+        static void ProcessRequest(HttpListenerContext context)
         {
             byte[] fileBytes = null;
 
@@ -32,11 +33,11 @@ namespace HttpServer
 
                 if (uri == "/bootstrap/launcher/")
                 {
-                    fileBytes = StaticStorageAdapter.GetHtmlFile("/bootstrap/launcher/index.html", host);
+                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/index.html");
                 }
                 else if (uri == "/bootstrap/launcher/notes")
                 {
-                    fileBytes = StaticStorageAdapter.GetHtmlFile("/bootstrap/launcher/notes.html", host);
+                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/notes.html");
                 }
                 else if (uri.StartsWith("/recap/api"))
                 {
