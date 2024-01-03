@@ -9,6 +9,7 @@
         <script type="text/javascript" src="/assets/js/recapclient.js"></script>
         <link rel="stylesheet" type="text/css" href="/assets/css/dsbutton.css">
         <link rel="stylesheet" type="text/css" href="/assets/css/dsfonts.css">
+        <link rel="stylesheet" type="text/css" href="/assets/css/dstitlebar.css">
         <link rel="stylesheet" type="text/css" href="style.css">
 
         <script type="text/javascript">
@@ -317,11 +318,11 @@
                     container.style.visibility = "hidden";
                     if (!mousebuttondown)
                     {
-                        container.className = "minButton on";
+                        container.className = "titlebar-min-button on";
                     }
                     else
                     {
-                        container.className = "minButton clicked";
+                        container.className = "titlebar-min-button clicked";
                     }
                     container.style.visibility = "visible";
                 }
@@ -333,7 +334,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "minButton off";
+                    container.className = "titlebar-min-button off";
                     container.style.visibility = "visible";
                 }
             }
@@ -346,11 +347,11 @@
                     container.style.visibility = "hidden";
                     if (!mousebuttondown)
                     {
-                        container.className = "closeButton on";
+                        container.className = "titlebar-close-button on";
                     }
                     else
                     {
-                        container.className = "closeButton clicked";
+                        container.className = "titlebar-close-button clicked";
                     }
                     container.style.visibility = "visible";
                 }
@@ -362,7 +363,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "closeButton off";
+                    container.className = "titlebar-close-button off";
                     container.style.visibility = "visible";
                 }
             }
@@ -374,7 +375,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "closeButton off";
+                    container.className = "titlebar-close-button off";
                     container.style.visibility = "visible";
                     Client.closeCurrentApp();
                 }
@@ -387,7 +388,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "minButton off";
+                    container.className = "titlebar-min-button off";
                     container.style.visibility = "visible";
                     Client.minCurrentApp();
                 }
@@ -466,7 +467,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "closeButton clicked";
+                    container.className = "titlebar-close-button clicked";
                     container.style.visibility = "visible";
                 }
             }
@@ -477,7 +478,7 @@
                 if (container != null)
                 {
                     container.style.visibility = "hidden";
-                    container.className = "minButton clicked";
+                    container.className = "titlebar-min-button clicked";
                     container.style.visibility = "visible";
                 }
             }
@@ -838,8 +839,8 @@
 
         <table>
             <tr>
-                <td><div id="Minbutton"   class="minButton off" onMouseOver="showMouseOverMinButton()" onMouseOut="showMouseOutMinButton()" onMouseUp="clickMinButton()" onMouseDown="onMouseDownMinButton()"></div></td>
-                <td><div id="Closebutton" class="closeButton off" onMouseOver="showMouseOverCloseButton()" onMouseOut="showMouseOutCloseButton()" onMouseUp="clickCloseButton()" onMouseDown="onMouseDownCloseButton()"></div></td>
+                <td><div id="Minbutton"   class="titlebar-min-button off"   onMouseOver="showMouseOverMinButton()"   onMouseOut="showMouseOutMinButton()"   onMouseUp="clickMinButton()"   onMouseDown="onMouseDownMinButton()"></div></td>
+                <td><div id="Closebutton" class="titlebar-close-button off" onMouseOver="showMouseOverCloseButton()" onMouseOut="showMouseOutCloseButton()" onMouseUp="clickCloseButton()" onMouseDown="onMouseDownCloseButton()"></div></td>
             </tr>
         </table>
 

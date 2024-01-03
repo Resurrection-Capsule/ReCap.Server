@@ -7,13 +7,13 @@
     height: 48px;
     padding: 17px;
     position: relative;
-    background: url("../images/button/registrationButton-hover-center.png") repeat-x; /* avoids blink on first hover */
-    background: url("../images/button/registrationButton-center.png") repeat-x;
+    background: url("../images/button/button-hover-center.png") repeat-x; /* avoids blink on first hover */
+    background: url("../images/button/button-center.png") repeat-x;
     background-size: 1px 48px;
     z-index: 1;
 }
 .dsbutton:hover:not(:active) {
-    background: url("../images/button/registrationButton-hover-center.png") repeat-x;
+    background: url("../images/button/button-hover-center.png") repeat-x;
 	color: #fff;
 }
 .dsbutton .left-side {
@@ -23,13 +23,13 @@
     height: 48px;
     width: 26px;
     display: block;
-    background: url("../images/button/registrationButton-hover-left.png") no-repeat; /* avoids blink on first hover */
-    background: url("../images/button/registrationButton-left.png") no-repeat;
+    background: url("../images/button/button-hover-left.png") no-repeat; /* avoids blink on first hover */
+    background: url("../images/button/button-left.png") no-repeat;
     background-size: 26px 48px;
     z-index: 2;
 }
 .dsbutton:hover:not(:active) .left-side {
-    background: url("../images/button/registrationButton-hover-left.png") no-repeat;
+    background: url("../images/button/button-hover-left.png") no-repeat;
 }
 .dsbutton .text {
     position: absolute;
@@ -48,13 +48,13 @@
     height: 48px;
     width: 26px;
     display: block;
-    background: url("../images/button/registrationButton-hover-right.png") no-repeat; /* avoids blink on first hover */
-    background: url("../images/button/registrationButton-right.png") no-repeat;
+    background: url("../images/button/button-hover-right.png") no-repeat; /* avoids blink on first hover */
+    background: url("../images/button/button-right.png") no-repeat;
     background-size: 26px 48px;
     z-index: 2;
 }
 .dsbutton:hover:not(:active) .right-side {
-    background: url("../images/button/registrationButton-hover-right.png") no-repeat;
+    background: url("../images/button/button-hover-right.png") no-repeat;
 }
 .dsbutton:hover:not(:active) {
     -moz-user-select: none;

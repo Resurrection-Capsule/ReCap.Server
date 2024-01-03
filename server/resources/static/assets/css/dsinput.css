@@ -7,11 +7,11 @@ input[type="text"].password {
 
 .form-input-bg {
     width: 288px;
-    background-image: url("/assets/images/TextField.png");
+    background-image: url("../images/TextField.png");
 }
 
 .form-input-bg:hover:not(:active) {
-    background-image: url("/assets/images/TextField-hover.png");
+    background-image: url("../images/TextField-hover.png");
 }
 
 .form-input {

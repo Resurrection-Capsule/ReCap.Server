@@ -25,29 +25,25 @@ namespace BootstrapWebServer
         {
             string uri = context.Request.Url.LocalPath;
 
-            if (uri.StartsWith("/assets"))
-            {
-                ServeDirectoryFiles(context, "./resources/static");
-            }
-            else if (uri == "/bootstrap/launcher/")
+            if (uri == "/bootstrap/launcher/")
             {
                 ServeHtmlStaticFile(context, "./resources/static/bootstrap/launcher/index.html", host);
-            }
-            else if (uri == "/bootstrap/launcher/style.css")
-            {
-                ServeStaticFile(context, "./resources/static/bootstrap/launcher/style.css");
-            }
-            else if (uri.StartsWith("/bootstrap/launcher/images"))
-            {
-                ServeDirectoryFiles(context, "./resources/static");
             }
             else if (uri == "/bootstrap/launcher/notes")
             {
                 ServeHtmlStaticFile(context, "./resources/static/bootstrap/launcher/notes.html", host);
             }
+            else if (uri.StartsWith("/assets"))
+            {
+                ServeDirectoryFiles(context, "./resources/static");
+            }
+            else if (uri.StartsWith("/bootstrap/launcher/"))
+            {
+                ServeDirectoryFiles(context, "./resources/static");
+            }
             else if (uri.StartsWith("/bootstrap/api"))
             {
-                HandleApiRequest(context);
+                HandleBootstrapApiRequest(context);
             }
             else
             {
@@ -62,7 +58,7 @@ namespace BootstrapWebServer
             {
                 string fileContents = File.ReadAllText(filePath);
                 fileContents = fileContents.Replace("{{host}}", host);
-                fileContents = fileContents.Replace("{{recap-version}}", "0.1");
+                fileContents = fileContents.Replace("{{recap-version}}", "1.0");
                 fileContents = fileContents.Replace("{{game-mode}}", "singleplayer");
                 byte[] fileBytes = Encoding.UTF8.GetBytes(fileContents);
         
@@ -118,7 +114,7 @@ namespace BootstrapWebServer
             }
         }
 
-        static void HandleApiRequest(HttpListenerContext context)
+        static void HandleBootstrapApiRequest(HttpListenerContext context)
         {
             // Parse GET parameters and handle API logic here
         }

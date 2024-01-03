@@ -82,46 +82,6 @@ body{
     left: 267px;
 }
 
-.minButton {
-    width: 36px;
-    height: 27px;
-    Position: absolute;
-    top: 9px;
-    right: 46px;
-}
-.minButton.off{
-    background: url(./images/PatcherMinButtonOn.png)no-repeat 0 0;
-    background: url(./images/PatcherMinButtonOff.png)no-repeat 0 0;
-}
-
-.minButton.clicked{
-    background: url(./images/PatcherMinButtonOnClick.png)no-repeat 0 0;
-}
-
-.minButton.on{
-    background: url(./images/PatcherMinButtonOn.png)no-repeat 0 0;
-}
-
-.closeButton {
-    width: 35px;
-    height: 27px;
-    Position: absolute;
-    top: 9px;
-    right: 10px;
-}
-.closeButton.off{
-    background: url(/assets/images/titlebar/PatcherCloseButtonOn.png)no-repeat 0 0;
-    background: url(/assets/images/titlebar/PatcherCloseButtonOff.png)no-repeat 0 0;
-}
-
-.closeButton.on{
-    background: url(/assets/images/titlebar/PatcherCloseButtonOn.png)no-repeat 0 0;
-}
-
-.closeButton.clicked{
-    background: url(/assets/images/titlebar/PatcherCloseButtonOnClick.png)no-repeat 0 0;
-}
-
 #Playbutton_deactive,
 #Playbutton_active {
     position: absolute;
