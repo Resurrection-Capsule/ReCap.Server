@@ -33,22 +33,21 @@ namespace BootstrapWebServer
             {
                 ServeHtmlStaticFile(context, "./resources/static/bootstrap/launcher/notes.html", host);
             }
-            else if (uri.StartsWith("/assets"))
+            else if (uri.StartsWith("/recap/api"))
             {
-                ServeDirectoryFiles(context, "./resources/static");
-            }
-            else if (uri.StartsWith("/bootstrap/launcher/"))
-            {
-                ServeDirectoryFiles(context, "./resources/static");
+                HandleRecapApiRequest(context);
             }
             else if (uri.StartsWith("/bootstrap/api"))
             {
                 HandleBootstrapApiRequest(context);
             }
+            else if (uri.StartsWith("/game/api"))
+            {
+                HandleGameApiRequest(context);
+            }
             else
             {
-                context.Response.StatusCode = 404;
-                context.Response.Close();
+                ServeDirectoryFiles(context);
             }
         }
 
@@ -95,8 +94,9 @@ namespace BootstrapWebServer
             }
         }
 
-        static void ServeDirectoryFiles(HttpListenerContext context, string directoryPath)
+        static void ServeDirectoryFiles(HttpListenerContext context)
         {
+            string directoryPath = "./resources/static";
             string requestedFile = context.Request.Url.LocalPath;
 
             if (!string.IsNullOrEmpty(requestedFile) && requestedFile != "/")
@@ -114,7 +114,17 @@ namespace BootstrapWebServer
             }
         }
 
+        static void HandleRecapApiRequest(HttpListenerContext context)
+        {
+            // Parse GET parameters and handle API logic here
+        }
+
         static void HandleBootstrapApiRequest(HttpListenerContext context)
+        {
+            // Parse GET parameters and handle API logic here
+        }
+
+        static void HandleGameApiRequest(HttpListenerContext context)
         {
             // Parse GET parameters and handle API logic here
         }
