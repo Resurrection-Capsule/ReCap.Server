@@ -45,7 +45,7 @@ The negative one is that, at this moment, there is no sign of packet logs from t
 I have no idea.
 
 ### Which programs do I need to modify the project?
-- ???
+- .NET 8.0
 
 ## Actual state
 ???
