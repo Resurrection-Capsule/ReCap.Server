@@ -64,24 +64,28 @@ namespace HttpServer
                 {
                     fileBytes = StaticStorageAdapter.GetFile(uri);
                 }
+
+                if (fileBytes != null) {
+                    context.Response.ContentLength64 = fileBytes.Length;
+                    context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
+                }
+                else {
+                    context.Response.StatusCode = 501;
+                    context.Response.StatusDescription = "Method not implemented";
+                }
+                context.Response.Close();
             }
             catch (FileNotFoundException ex)
             {
                 context.Response.StatusCode = 404;
                 context.Response.StatusDescription = "File not found: " + ex.Message;
+                context.Response.Close();
             }
             catch (Exception ex)
             {
                 context.Response.StatusCode = 500;
                 context.Response.StatusDescription = "Error serving file: " + ex.Message;
                 Console.WriteLine(ex.ToString());
-            }
-            finally
-            {
-                if (fileBytes != null) {
-                    context.Response.ContentLength64 = fileBytes.Length;
-                    context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-                }
                 context.Response.Close();
             }
         }
