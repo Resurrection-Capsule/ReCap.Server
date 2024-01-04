@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Text;
 
 using HttpServer;
@@ -29,6 +30,7 @@ namespace HttpServer
 
             try
             {
+                var query = context.Request.QueryString;
                 string uri = context.Request.Url.LocalPath;
 
                 if (uri == "/bootstrap/launcher/")
@@ -45,7 +47,8 @@ namespace HttpServer
                 }
                 else if (uri.StartsWith("/bootstrap/api"))
                 {
-                    fileBytes = LauncherService.HandleRequest(context);
+                    var method = GetMethod(typeof(LauncherService), query.Get("method"));
+                    fileBytes = (byte[])method.Invoke(null, new object[] { query });
                 }
                 else if (uri.StartsWith("/game/api"))
                 {
@@ -75,6 +78,22 @@ namespace HttpServer
                 }
                 context.Response.Close();
             }
+        }
+
+        private static MethodInfo GetMethod(Type serviceType, string methodName)
+        {
+            MethodInfo[] methods = serviceType.GetMethods(BindingFlags.Static | BindingFlags.Public);
+
+            foreach (MethodInfo method in methods)
+            {
+                if (method.GetCustomAttribute(typeof(ApiMethod)) != null &&
+                    ((ApiMethod)method.GetCustomAttribute(typeof(ApiMethod))).Name == methodName)
+                {
+                    return method;
+                }
+            }
+
+            throw new Exception("Invalid method " + methodName);
         }
     }
 }

@@ -14,19 +14,8 @@ namespace HttpServer;
 
 class LauncherService
 {
-    public static byte[] HandleRequest(HttpListenerContext context)
-    {
-        string method = context.Request.QueryString.Get("method");
-
-        if (method == "api.config.getConfigs")
-        {
-            return XmlUtils.Serialize(getConfigs(context.Request.QueryString));
-        }
-
-        return null;
-    }
-
-    private static ConfigResponseContract getConfigs(NameValueCollection parameters) {
+    [ApiMethod(Name="api.config.getConfigs")]
+    public static byte[] getConfigs(NameValueCollection parameters) {
         bool includeSettings = parameters.Get("include_settings") == "true";
         bool includePatches = parameters.Get("include_patches") == "true";
 
@@ -85,6 +74,6 @@ class LauncherService
             };
         }
 
-        return response;
+        return XmlUtils.Serialize(response);
     }
 }
