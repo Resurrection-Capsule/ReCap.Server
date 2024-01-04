@@ -65,6 +65,7 @@ namespace HttpServer
             {
                 context.Response.StatusCode = 500;
                 context.Response.StatusDescription = "Error serving file: " + ex.Message;
+                Console.WriteLine(ex.ToString());
             }
             finally
             {

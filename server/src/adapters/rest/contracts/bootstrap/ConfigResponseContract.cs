@@ -5,18 +5,24 @@ using System.Xml.Serialization;
 
 using HttpServer;
 
-namespace HttpServer
-{
-    [XmlRoot("response")]
-    public class ConfigResponseContract {
+namespace HttpServer;
 
-        [XmlElement(ElementName = "configs")]
-        public List<ConfigContract>? Configs { get; set; }
+[XmlRoot("response")]
+public class ConfigResponseContract {
 
-        [XmlElement(ElementName = "to_image")]
-        public string? ToImage { get; set; }
+    [XmlArray("configs")]
+    [XmlArrayItem("config")]
+    public List<ConfigContract>? Configs { get; set; }
 
-        [XmlElement(ElementName = "from_image")]
-        public string? FromImage { get; set; }
-    }
+    [XmlElement(ElementName = "to_image")]
+    public string? ToImage { get; set; }
+
+    [XmlElement(ElementName = "from_image")]
+    public string? FromImage { get; set; }
+
+    [XmlElement(ElementName = "settings")]
+    public ConfigSettingsContract? Settings { get; set; }
+
+    [XmlElement(ElementName = "patches")]
+    public ConfigPatchesContract? Patches { get; set; }
 }

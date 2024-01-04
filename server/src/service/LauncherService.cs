@@ -61,11 +61,40 @@ namespace HttpServer
             };
 
             var configs = new List<ConfigContract>(){config};
-            return new ConfigResponseContract{
+            var response = new ConfigResponseContract{
                 Configs = configs,
                 ToImage = "",
                 FromImage = ""
             };
+
+            if (includeSettings)
+            {
+                response.Settings = new ConfigSettingsContract{
+                    Open=new ConfigSettingsOpenContract{Value=true, Test=true},
+                    TelemetryRate=256, TelemetrySetting=0
+                };
+            }
+            if (includePatches)
+            {
+                response.Patches = new ConfigPatchesContract{
+                    Target = "test",
+                    Date = "test2",
+                    FromVersion = "test3",
+                    ToVersion = "test4",
+                    ID = "test5",
+                    Description = "test6",
+                    ApplicationInstructions = "test6",
+                    Locale = "en-US",
+                    Shipping = "true",
+                    FileUrl = "test.zip",
+                    ArchiveSize = "1000",
+                    UncompressedSize = "2000",
+                    Hashes = "0123456789abcdef",
+                    HashesList = new string[] {}
+                };
+            }
+
+            return response;
         }
     }
 }
