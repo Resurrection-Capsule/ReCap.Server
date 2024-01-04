@@ -19,7 +19,7 @@ class LauncherService
         bool includeSettings = parameters.Get("include_settings") == "true";
         bool includePatches = parameters.Get("include_patches") == "true";
 
-        string host = ServerConfig.GetHost();
+        string host = ServerConfig.GetDarksporeHosts()[0];
         string darksporeVersion = ServerConfig.GetDarksporeVersion();
 
         var config = new ConfigContract{

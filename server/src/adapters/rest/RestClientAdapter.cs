@@ -12,9 +12,11 @@ namespace HttpServer
     {
         public static void Run()
         {
-            string host = ServerConfig.GetHost();
+            string[] hosts = ServerConfig.GetDarksporeHosts();
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add(String.Format("http://{0}/", host));
+            for(int i = 0; i < hosts.Length; i++) {
+                listener.Prefixes.Add(String.Format("http://{0}/", hosts[i]));
+            }
             listener.Start();
 
             while (true)
@@ -32,6 +34,7 @@ namespace HttpServer
             {
                 var query = context.Request.QueryString;
                 string uri = context.Request.Url.LocalPath;
+                Console.WriteLine(uri);
 
                 if (uri == "/bootstrap/launcher/")
                 {
@@ -50,6 +53,7 @@ namespace HttpServer
                 {
                     var method = GetMethod(typeof(LauncherService), query.Get("method"));
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                    context.Response.ContentType = "text/xml";
                 }
                 else if (uri.StartsWith("/game/api"))
                 {

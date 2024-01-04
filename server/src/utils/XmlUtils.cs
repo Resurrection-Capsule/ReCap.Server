@@ -16,13 +16,19 @@ class XmlUtils
 {
     public static byte[] Serialize<T>(T value)
     {
+        var encoding = Encoding.Latin1;
         var xmlserializer = new XmlSerializer(typeof(T));
-        var stringWriter = new StringWriter();
-        using (var writer = XmlWriter.Create(stringWriter))
+        var stream = new MemoryStream();
+
+        XmlWriterSettings settings = new XmlWriterSettings();
+        settings.Encoding = encoding;
+        settings.NewLineChars = "\r\n";
+        settings.NewLineOnAttributes = true;
+
+        using (var writer = XmlWriter.Create(stream, settings))
         {
             xmlserializer.Serialize(writer, value);
-            string xmlStr = stringWriter.ToString();
-            return Encoding.UTF8.GetBytes(xmlStr);
+            return stream.ToArray();
         }
     }
 }

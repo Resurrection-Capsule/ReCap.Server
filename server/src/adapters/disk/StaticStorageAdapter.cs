@@ -19,7 +19,7 @@ namespace HttpServer
                 throw new FileNotFoundException(fullPath);
             }
             if (filePath.EndsWith(".html")) {
-                string host = ServerConfig.GetHost();
+                string host = ServerConfig.GetDarksporeHosts()[0];
                 string fileContents = File.ReadAllText(fullPath);
                 fileContents = fileContents.Replace("{{host}}", host);
                 fileContents = fileContents.Replace("{{recap-version}}", "1.0");
