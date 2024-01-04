@@ -6,6 +6,7 @@ using System.Web;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using System.Collections.Specialized;
 
 using HttpServer;
 
@@ -15,16 +16,11 @@ namespace HttpServer
     {
         public static byte[] HandleRequest(HttpListenerContext context)
         {
-            string darksporeVersion = ServerConfig.GetDarksporeVersion();
-            var queryString = context.Request.QueryString;
-            string method = queryString.Get("method");
+            string method = context.Request.QueryString.Get("method");
 
             if (method == "api.config.getConfigs")
             {
-                bool includeSettings = queryString.Get("include_settings") == "true";
-                bool includePatches = queryString.Get("include_patches") == "true";
-                var response = getConfigs(includeSettings, includePatches);
-                return SerializeAsXml(response);
+                return SerializeAsXml(getConfigs(context.Request.QueryString));
             }
 
             return null;
@@ -42,7 +38,10 @@ namespace HttpServer
             }
         }
 
-        private static ConfigResponseContract getConfigs(bool includeSettings, bool includePatches) {
+        private static ConfigResponseContract getConfigs(NameValueCollection parameters) {
+            bool includeSettings = parameters.Get("include_settings") == "true";
+            bool includePatches = parameters.Get("include_patches") == "true";
+
             string host = ServerConfig.GetHost();
             string darksporeVersion = ServerConfig.GetDarksporeVersion();
 
@@ -62,6 +61,10 @@ namespace HttpServer
 
             var configs = new List<ConfigContract>(){config};
             var response = new ConfigResponseContract{
+                Stat = "ok",
+                Version = darksporeVersion,
+                Timestamp = 1,
+                ExecTime = 1,
                 Configs = configs,
                 ToImage = "",
                 FromImage = ""

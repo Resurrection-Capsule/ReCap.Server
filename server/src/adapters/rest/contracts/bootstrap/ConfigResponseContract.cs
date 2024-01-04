@@ -8,7 +8,7 @@ using HttpServer;
 namespace HttpServer;
 
 [XmlRoot("response")]
-public class ConfigResponseContract {
+public class ConfigResponseContract : ResponseContract {
 
     [XmlArray("configs")]
     [XmlArrayItem("config")]
