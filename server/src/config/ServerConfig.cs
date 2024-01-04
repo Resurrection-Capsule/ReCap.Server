@@ -13,5 +13,10 @@ namespace HttpServer
         {
             return "localhost:8080";
         }
+
+        public static string GetDarksporeVersion()
+        {
+            return "5.3.0.127";
+        }
     }
 }

@@ -59,6 +59,7 @@ namespace HttpServer
             catch (FileNotFoundException ex)
             {
                 context.Response.StatusCode = 404;
+                context.Response.StatusDescription = "File not found: " + ex.Message;
             }
             catch (Exception ex)
             {
