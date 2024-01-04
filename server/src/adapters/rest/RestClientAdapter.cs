@@ -34,7 +34,6 @@ namespace HttpServer
             {
                 var query = context.Request.QueryString;
                 string uri = context.Request.Url.LocalPath;
-                Console.WriteLine(uri);
 
                 if (uri == "/bootstrap/launcher/")
                 {
