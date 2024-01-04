@@ -58,6 +58,7 @@ namespace HttpServer
                 {
                     var method = GetMethod(typeof(GameService), query.Get("method"));
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                    context.Response.ContentType = "text/xml";
                 }
                 else
                 {
