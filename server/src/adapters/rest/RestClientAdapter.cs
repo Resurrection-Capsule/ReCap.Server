@@ -43,7 +43,8 @@ namespace HttpServer
                 }
                 else if (uri.StartsWith("/recap/api"))
                 {
-                    fileBytes = ReCapService.HandleRequest(context);
+                    var method = GetMethod(typeof(ReCapService), query.Get("method"));
+                    fileBytes = (byte[])method.Invoke(null, new object[] { query });
                 }
                 else if (uri.StartsWith("/bootstrap/api"))
                 {
@@ -52,7 +53,8 @@ namespace HttpServer
                 }
                 else if (uri.StartsWith("/game/api"))
                 {
-                    fileBytes = GameService.HandleRequest(context);
+                    var method = GetMethod(typeof(GameService), query.Get("method"));
+                    fileBytes = (byte[])method.Invoke(null, new object[] { query });
                 }
                 else
                 {

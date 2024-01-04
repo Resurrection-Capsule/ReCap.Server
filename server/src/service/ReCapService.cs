@@ -9,7 +9,8 @@ namespace HttpServer
 {
     class ReCapService
     {
-        public static byte[] HandleRequest(HttpListenerContext context)
+        [ApiMethod(Name="api.game.registration")]
+        public static byte[] registerUser(NameValueCollection parameters)
         {
             return null;
         }

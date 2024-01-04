@@ -9,7 +9,8 @@ namespace HttpServer
 {
     class GameService
     {
-        public static byte[] HandleRequest(HttpListenerContext context)
+        [ApiMethod(Name="api.account.auth")]
+        public static byte[] authenticateAccount(NameValueCollection parameters)
         {
             return null;
         }
