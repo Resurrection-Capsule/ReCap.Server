@@ -13,7 +13,8 @@ public class AccountMapper
         {
             cfg.CreateMap<Account, AccountModel>();
             cfg.CreateMap<AccountModel, Account>();
-            cfg.CreateMap<Account, AccountContract>();
+            cfg.CreateMap<Account, AccountContract>().ForMember(s => s.tutorialCompleted,
+                opt => opt.MapFrom(src => src.tutorialCompleted ? "Y" : "N"));
         });
         mapper = configuration.CreateMapper();
     }
