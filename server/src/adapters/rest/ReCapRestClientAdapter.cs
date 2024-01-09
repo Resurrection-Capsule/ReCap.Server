@@ -6,27 +6,41 @@ using System.Collections.Specialized;
 
 using HttpServer;
 
-namespace HttpServer
+namespace HttpServer;
+
+public class ReCapRestClientAdapter
 {
-    class ReCapRestClientAdapter
+    private AccountService accountService;
+
+    public ReCapRestClientAdapter(SqliteConfig newSqliteConfig) {
+        accountService = new AccountService(newSqliteConfig);
+    }
+
+    [ApiMethod(Name="api.game.log")]
+    public static byte[] log(NameValueCollection parameters)
     {
-        [ApiMethod(Name="api.game.log")]
-        public static byte[] log(NameValueCollection parameters)
-        {
-            string message = parameters.Get("message");
-            Console.WriteLine(message);
-            return new byte[]{};
-        }
+        string message = parameters.Get("message");
+        Console.WriteLine(message);
+        return new byte[]{};
+    }
 
-        [ApiMethod(Name="api.game.registration")]
-        public static byte[] registerUser(NameValueCollection parameters)
-        {
-            string name = parameters.Get("name");
-            string email = parameters.Get("mail");
-            string password = parameters.Get("pass");
-            string avatar = parameters.Get("avatar");
+    [ApiMethod(Name="api.game.registration")]
+    public byte[] registerUser(NameValueCollection parameters)
+    {
+        string email = parameters.Get("email");
+        string name = parameters.Get("name");
+        string password = parameters.Get("pass");
+        int avatar = Int32.Parse(parameters.Get("avatar"));
 
-            return null;
-        }
+        accountService.createAccount(email, name, password, avatar);
+
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
+
+        return XmlUtils.Serialize(response);
     }
 }

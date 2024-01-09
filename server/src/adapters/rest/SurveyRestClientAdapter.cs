@@ -8,7 +8,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class SurveyRestClientAdapter
+public class SurveyRestClientAdapter
 {
     [ApiMethod(Name="api.survey.getSurveyList")]
     public static byte[] getSurveyList(NameValueCollection parameters)

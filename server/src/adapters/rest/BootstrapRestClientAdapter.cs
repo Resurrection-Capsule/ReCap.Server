@@ -12,7 +12,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class BootstrapRestClientAdapter
+public class BootstrapRestClientAdapter
 {
     [ApiMethod(Name="api.config.getConfigs")]
     public static byte[] getConfigs(NameValueCollection parameters) {

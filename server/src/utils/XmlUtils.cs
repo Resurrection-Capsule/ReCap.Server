@@ -12,7 +12,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class XmlUtils
+public class XmlUtils
 {
     public static byte[] Serialize<T>(T value)
     {

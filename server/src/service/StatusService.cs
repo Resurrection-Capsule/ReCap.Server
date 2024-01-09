@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class StatusService
+public class StatusService
 {
     public static StatusContract getStatus() {
         return new StatusContract{

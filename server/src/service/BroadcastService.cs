@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class BroadcastService
+public class BroadcastService
 {
     public static List<BroadcastContract> getBroadcastList() {
         var broadcast = new BroadcastContract{

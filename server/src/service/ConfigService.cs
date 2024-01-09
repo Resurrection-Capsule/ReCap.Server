@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class ConfigService
+public class ConfigService
 {
     public static ConfigContract getGameConfig() {
         string host = ServerConfig.GetDarksporeHosts()[0];

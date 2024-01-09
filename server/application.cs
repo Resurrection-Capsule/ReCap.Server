@@ -5,13 +5,14 @@ using System.Text;
 
 using HttpServer;
 
-namespace HttpServer
+namespace HttpServer;
+
+public class Application
 {
-    class Server
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            RestClientAdapter.Run();
-        }
+        var dbConfig = new SqliteConfig();
+        var restClientAdapter = new RestClientAdapter(dbConfig);
+        restClientAdapter.Run();
     }
 }
