@@ -12,7 +12,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-class LauncherService
+class BootstrapRestClientAdapter
 {
     [ApiMethod(Name="api.config.getConfigs")]
     public static byte[] getConfigs(NameValueCollection parameters) {
@@ -22,19 +22,7 @@ class LauncherService
         string host = ServerConfig.GetDarksporeHosts()[0];
         string darksporeVersion = ServerConfig.GetDarksporeVersion();
 
-        var config = new ConfigContract{
-            BlazeServiceName = "darkspore", // Directly linked to BlazeServiceName
-            BlazeSecure = "N", // Directly linked to BlazeSecure
-            BlazeEnv = "prod", // Directly linked to BlazeEnvironment, can be { prod, beta, cert, test, dev }
-            SporenetCdnHost = host,
-            SporenetDbHost = host,
-            SporenetDbName = "darkspore",
-            SporenetHost = host,
-            HttpSecure = "N",
-            LiferayHost = host,
-            LauncherAction = 2,
-            LauncherUrl = "http://" + host + "/bootstrap/launcher/?version=" + darksporeVersion
-        };
+        var config = ConfigService.getGameConfig();
 
         var configs = new List<ConfigContract>(){config};
         var response = new ConfigResponseContract{

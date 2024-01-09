@@ -8,11 +8,19 @@ using HttpServer;
 
 namespace HttpServer
 {
-    class GameService
+    class GameRestClientAdapter
     {
         [ApiMethod(Name="api.account.auth")]
         public static byte[] loginPlayerAccount(NameValueCollection parameters)
         {
+            string key = parameters.Get("key");
+            if (key != null) {
+                string[] keyParts = key.Split(' ');
+                string authToken = keyParts[0];
+
+                
+            }
+            
             return null;
         }
 
@@ -139,7 +147,15 @@ namespace HttpServer
         [ApiMethod(Name="api.status.getBroadcastList")]
         public static byte[] getBroadcastList(NameValueCollection parameters)
         {
-            return null;
+            var response = new StatusResponseContract{
+                Stat = "ok",
+                Version = ServerConfig.GetDarksporeVersion(),
+                Timestamp = 1,
+                ExecTime = 1,
+                Broadcasts = BroadcastService.getBroadcastList()
+            };
+
+            return XmlUtils.Serialize(response);
         }
 
         [ApiMethod(Name="api.status.getStatus")]
@@ -147,35 +163,17 @@ namespace HttpServer
         {
             bool includeBroadcasts = parameters.Get("include_broadcasts") == "true";
 
-            string darksporeVersion = ServerConfig.GetDarksporeVersion();
-
-            var status = new StatusContract{
-                Api = new StatusApiContract{Health=1, Revision=1, Version=1},
-                Blaze = new StatusBlazeContract{Health=1},
-                Gms = new StatusGmsContract{Health=1},
-                Nucleus = new StatusNucleusContract{Health=1},
-                Game = new StatusGameContract{Health=1, Countdown=90, Open=1, Throttle=1, Vip=1}
-            };
-
             var response = new StatusResponseContract{
                 Stat = "ok",
-                Version = darksporeVersion,
+                Version = ServerConfig.GetDarksporeVersion(),
                 Timestamp = 1,
                 ExecTime = 1,
-                Status = status
+                Status = StatusService.getStatus()
             };
 
             if (includeBroadcasts)
             {
-                var broadcast = new BroadcastContract{
-                    Id = 0x10,
-                    End = 0x11,
-                    Start = 0x12,
-                    Type = 0x13,
-                    Message = "Bananas for sale! Come get your bananas for only 50 bucks each!",
-                    Tokens = "12345678"
-                };
-                response.Broadcasts = new List<BroadcastContract>(){broadcast};
+                response.Broadcasts = BroadcastService.getBroadcastList();
             }
 
             return XmlUtils.Serialize(response);

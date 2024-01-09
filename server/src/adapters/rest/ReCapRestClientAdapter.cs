@@ -8,7 +8,7 @@ using HttpServer;
 
 namespace HttpServer
 {
-    class ReCapService
+    class ReCapRestClientAdapter
     {
         [ApiMethod(Name="api.game.log")]
         public static byte[] log(NameValueCollection parameters)
@@ -21,6 +21,11 @@ namespace HttpServer
         [ApiMethod(Name="api.game.registration")]
         public static byte[] registerUser(NameValueCollection parameters)
         {
+            string name = parameters.Get("name");
+            string email = parameters.Get("mail");
+            string password = parameters.Get("pass");
+            string avatar = parameters.Get("avatar");
+
             return null;
         }
     }

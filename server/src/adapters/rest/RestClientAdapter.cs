@@ -45,18 +45,18 @@ namespace HttpServer
                 }
                 else if (uri.StartsWith("/recap/api"))
                 {
-                    var method = GetMethod(typeof(ReCapService), query.Get("method"));
+                    var method = GetMethod(typeof(ReCapRestClientAdapter), query.Get("method"));
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
                 }
                 else if (uri.StartsWith("/bootstrap/api"))
                 {
-                    var method = GetMethod(typeof(LauncherService), query.Get("method"));
+                    var method = GetMethod(typeof(BootstrapRestClientAdapter), query.Get("method"));
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
                     context.Response.ContentType = "text/xml";
                 }
                 else if (uri.StartsWith("/game/api"))
                 {
-                    var method = GetMethod(typeof(GameService), query.Get("method"));
+                    var method = GetMethod(typeof(GameRestClientAdapter), query.Get("method"));
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
                     context.Response.ContentType = "text/xml";
                 }
