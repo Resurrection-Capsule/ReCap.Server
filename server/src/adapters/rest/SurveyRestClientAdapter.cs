@@ -11,7 +11,7 @@ namespace HttpServer;
 public class SurveyRestClientAdapter
 {
     [ApiMethod(Name="api.survey.getSurveyList")]
-    public static byte[] getSurveyList(NameValueCollection parameters)
+    public byte[] getSurveyList(NameValueCollection parameters)
     {
         var response = new SurveyResponseContract{
             Stat = "ok",

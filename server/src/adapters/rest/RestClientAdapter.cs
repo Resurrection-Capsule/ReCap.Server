@@ -10,10 +10,16 @@ namespace HttpServer;
 
 public class RestClientAdapter
 {
+    private BootstrapRestClientAdapter bootstrapRestClientAdapter;
+    private GameRestClientAdapter gameRestClientAdapter;
     private ReCapRestClientAdapter reCapRestClientAdapter;
+    private SurveyRestClientAdapter surveyRestClientAdapter;
 
     public RestClientAdapter(SqliteConfig newSqliteConfig) {
+        bootstrapRestClientAdapter = new BootstrapRestClientAdapter();
+        gameRestClientAdapter = new GameRestClientAdapter();
         reCapRestClientAdapter = new ReCapRestClientAdapter(newSqliteConfig);
+        surveyRestClientAdapter = new SurveyRestClientAdapter();
     }
 
     public void Run()
@@ -57,19 +63,19 @@ public class RestClientAdapter
             else if (uri.StartsWith("/bootstrap/api"))
             {
                 var method = GetMethod(typeof(BootstrapRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { query });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/game/api"))
             {
                 var method = GetMethod(typeof(GameRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { query });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/survey/api"))
             {
                 var method = GetMethod(typeof(SurveyRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { query });
                 context.Response.ContentType = "text/xml";
             }
             else
