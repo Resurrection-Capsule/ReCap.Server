@@ -10,6 +10,10 @@ public class AccountService
         accountRepository = new AccountRepositoryAdapter(newSqliteConfig);
     }
 
+    public Account getAccountByAuthToken(string authToken) {
+        return accountRepository.getAccountByAuthToken(authToken);
+    }
+
     public Account createAccount(string email, string name, string password, int avatarId) {
         var oldAccount = accountRepository.getAccountByEmail(email);
         if (oldAccount != null) {

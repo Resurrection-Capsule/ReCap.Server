@@ -17,6 +17,13 @@ public class AccountRepositoryAdapter
         accountMapper = new AccountMapper();
     }
 
+    public Account getAccountByAuthToken(string authToken)
+    {
+        // TODO: Not implemented yet
+        var accountModel = sqliteConfig.Accounts.First();
+        return accountMapper.toDomain(accountModel);
+    }
+
     public Account getAccountByEmail(string email)
     {
         var accountModel = sqliteConfig.Accounts.Where(b => b.Email == email).First();

@@ -17,7 +17,7 @@ public class RestClientAdapter
 
     public RestClientAdapter(SqliteConfig newSqliteConfig) {
         bootstrapRestClientAdapter = new BootstrapRestClientAdapter();
-        gameRestClientAdapter = new GameRestClientAdapter();
+        gameRestClientAdapter = new GameRestClientAdapter(newSqliteConfig);
         reCapRestClientAdapter = new ReCapRestClientAdapter(newSqliteConfig);
         surveyRestClientAdapter = new SurveyRestClientAdapter();
     }

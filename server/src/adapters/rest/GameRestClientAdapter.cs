@@ -10,6 +10,14 @@ namespace HttpServer;
 
 public class GameRestClientAdapter
 {
+    private AccountService accountService;
+    private AccountMapper accountMapper;
+
+    public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
+        accountMapper = new AccountMapper();
+        accountService = new AccountService(newSqliteConfig);
+    }
+
     [ApiMethod(Name="api.account.auth")]
     public byte[] loginPlayerAccount(NameValueCollection parameters)
     {
@@ -19,7 +27,7 @@ public class GameRestClientAdapter
             string[] keyParts = key.Split(' ');
             string authToken = keyParts[0];
 
-            
+            var account = accountService.getAccountByAuthToken(authToken);
         }
         
         return null;

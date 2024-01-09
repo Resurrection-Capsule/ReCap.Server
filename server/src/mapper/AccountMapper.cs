@@ -13,6 +13,7 @@ public class AccountMapper
         {
             cfg.CreateMap<Account, AccountModel>();
             cfg.CreateMap<AccountModel, Account>();
+            cfg.CreateMap<Account, AccountContract>();
         });
         mapper = configuration.CreateMapper();
     }
@@ -23,5 +24,9 @@ public class AccountMapper
     
     public AccountModel toModel(Account account) {
         return mapper.Map<AccountModel>(account);
+    }
+
+    public AccountContract toContract(Account account) {
+        return mapper.Map<AccountContract>(account);
     }
 }
