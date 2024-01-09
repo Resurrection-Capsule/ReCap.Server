@@ -13,10 +13,9 @@ public class AccountService
     public Account createAccount(string email, string name, string password, int avatarId) {
         var oldAccount = accountRepository.getAccountByEmail(email);
         if (oldAccount != null) {
-            throw new Exception("This e-mail already belongs to a different account");
+            throw new ForbiddenOperationException("This e-mail already belongs to a different account");
         }
         var newAccount = new Account{
-            Id = "newId",
             Email = email,
             Username = name,
             Password = password

@@ -25,6 +25,9 @@ public class AccountRepositoryAdapter
 
     public void saveAccount(Account account)
     {
+        Guid myuuid = Guid.NewGuid();
+        account.Id = myuuid.ToString();
+
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);
         sqliteConfig.SaveChanges();

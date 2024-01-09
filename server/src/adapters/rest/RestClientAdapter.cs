@@ -93,6 +93,12 @@ public class RestClientAdapter
             }
             context.Response.Close();
         }
+        catch (ForbiddenOperationException ex)
+        {
+            context.Response.StatusCode = 403;
+            context.Response.StatusDescription = ex.Message;
+            context.Response.Close();
+        }
         catch (FileNotFoundException ex)
         {
             context.Response.StatusCode = 404;
