@@ -60,6 +60,12 @@ namespace HttpServer
                     fileBytes = (byte[])method.Invoke(null, new object[] { query });
                     context.Response.ContentType = "text/xml";
                 }
+                else if (uri.StartsWith("/survey/api"))
+                {
+                    var method = GetMethod(typeof(SurveyRestClientAdapter), query.Get("method"));
+                    fileBytes = (byte[])method.Invoke(null, new object[] { query });
+                    context.Response.ContentType = "text/xml";
+                }
                 else
                 {
                     fileBytes = StaticStorageAdapter.GetFile(uri);

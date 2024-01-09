@@ -15,6 +15,7 @@ namespace HttpServer
         {
             string key = parameters.Get("key");
             if (key != null) {
+                // key = auth_token::0
                 string[] keyParts = key.Split(' ');
                 string authToken = keyParts[0];
 
