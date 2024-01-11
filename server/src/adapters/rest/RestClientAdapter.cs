@@ -58,7 +58,7 @@ public class RestClientAdapter
             else if (uri.StartsWith("/recap/api"))
             {
                 var method = GetMethod(typeof(ReCapRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { query });
+                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context.Request });
             }
             else if (uri.StartsWith("/bootstrap/api"))
             {

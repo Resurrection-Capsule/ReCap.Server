@@ -5,18 +5,22 @@
     Position: absolute;
     top: 9px;
     right: 46px;
-}
-.titlebar-min-button.off{
+    background: url(../images/titlebar/titlebar-min-button-on-click.png)no-repeat 0 0;
     background: url(../images/titlebar/titlebar-min-button-on.png)no-repeat 0 0;
     background: url(../images/titlebar/titlebar-min-button-off.png)no-repeat 0 0;
 }
-
-.titlebar-min-button.clicked{
+.titlebar-min-button:hover:not(:active) {
+    background: url(../images/titlebar/titlebar-min-button-on.png)no-repeat 0 0;
+}
+.titlebar-min-button:active {
     background: url(../images/titlebar/titlebar-min-button-on-click.png)no-repeat 0 0;
 }
-
-.titlebar-min-button.on{
-    background: url(../images/titlebar/titlebar-min-button-on.png)no-repeat 0 0;
+.titlebar-min-button:hover:not(:active) {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
 }
 
 .titlebar-close-button {
@@ -25,16 +29,20 @@
     Position: absolute;
     top: 9px;
     right: 10px;
-}
-.titlebar-close-button.off{
+    background: url(../images/titlebar/titlebar-close-button-on-click.png)no-repeat 0 0;
     background: url(../images/titlebar/titlebar-close-button-on.png)no-repeat 0 0;
     background: url(../images/titlebar/titlebar-close-button-off.png)no-repeat 0 0;
 }
-
-.titlebar-close-button.on{
+.titlebar-close-button:hover:not(:active) {
     background: url(../images/titlebar/titlebar-close-button-on.png)no-repeat 0 0;
 }
-
-.titlebar-close-button.clicked{
+.titlebar-close-button:active {
     background: url(../images/titlebar/titlebar-close-button-on-click.png)no-repeat 0 0;
+}
+.titlebar-close-button:hover:not(:active) {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: pointer;
 }

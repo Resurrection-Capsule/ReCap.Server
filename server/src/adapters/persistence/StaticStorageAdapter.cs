@@ -18,12 +18,13 @@ public class StaticStorageAdapter
         {
             throw new FileNotFoundException(fullPath);
         }
-        if (filePath.EndsWith(".html")) {
+        if (filePath.EndsWith(".html") || filePath.EndsWith(".js")) {
             string host = ServerConfig.GetDarksporeHosts()[0];
             string fileContents = File.ReadAllText(fullPath);
             fileContents = fileContents.Replace("{{host}}", host);
             fileContents = fileContents.Replace("{{recap-version}}", "1.0");
             fileContents = fileContents.Replace("{{game-mode}}", "singleplayer");
+            fileContents = fileContents.Replace("{{isDev}}", "true");
             return Encoding.UTF8.GetBytes(fileContents);
         }
         return File.ReadAllBytes(fullPath);

@@ -10,7 +10,7 @@ ReCapClient.postRequest = function(name, params, callback) {
 ReCapClient.log = function(object) {
     var isDev = ("{{isDev}}" === "true");
     if (isDev) {
-        console.log(object);
+        //console.log(object);
         ReCapClient.postRequest("api.game.log", object);
     }
 };
