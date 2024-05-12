@@ -635,6 +635,10 @@
 
 
             function updateBottomrightProgressComment(text){
+                var versionPrefix = "version: ";
+                var versionContainer = document.getElementById("darkspore_version");
+                versionContainer.innerHTML = (text.length > versionPrefix.length) ? text.substr(versionPrefix.length) : text;
+
                 var container = document.getElementById("Progress_comment_bottom_right_container");
                 container.firstChild.firstChild.innerHTML = text;
                 ellipsisTestRightComment(container);
