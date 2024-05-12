@@ -1404,8 +1404,11 @@
 
         <table>
             <tr>
-                <td><div id="Minbutton"   class="dstitlebar-min-button" onMouseOver="showMouseOverMinButton()" onMouseOut="showMouseOutMinButton()" onMouseUp="clickMinButton()" onMouseDown="onMouseDownMinButton()"></div></td>
-                <td><div id="Closebutton" class="dstitlebar-close-button" onMouseOver="showMouseOverCloseButton()" onMouseOut="showMouseOutCloseButton()" onMouseUp="clickCloseButton()" onMouseDown="onMouseDownCloseButton()"></div></td>
+                <td><div id="Minbutton"   class="dstitlebar-min-button" onMouseOver="showMouseOverMinButton()" onMouseOut="showMouseOutMinButton()" onMouseUp="clickMinButton()" onMouseDown="onMouseDownMinButton()" style="display: none;"></div></td>
+                <td><div id="Closebutton" class="dstitlebar-close-button" onMouseOver="showMouseOverCloseButton()" onMouseOut="showMouseOutCloseButton()" onMouseUp="clickCloseButton()" onMouseDown="onMouseDownCloseButton()" style="display: none;"></div></td>
+
+                <td><div class="dstitlebar-min-button" onMouseUp="clickMinButton()"></div></td>
+                <td><div class="dstitlebar-close-button" onMouseUp="clickCloseButton()"></div></td>
             </tr>
         </table>
 
