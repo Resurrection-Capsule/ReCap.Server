@@ -1,1 +1,1 @@
-dotnet run
+sudo dotnet run
