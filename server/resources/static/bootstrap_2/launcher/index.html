@@ -1355,6 +1355,43 @@
                 font-weight: bold;
             }
 
+            #buttons {
+                position: relative;
+                top: 30px;
+            }
+            #SingleplayerButton,
+            #MultiplayerButton,
+            #SettingsButton,
+            #ExitButton {
+                position: absolute;
+                width: 260px;
+                left: 244px;
+                font-size: 18px !important;
+            }
+            #SingleplayerButton {
+                top: 160px;
+            }
+            #MultiplayerButton {
+                top: 220px;
+            }
+            #SettingsButton {
+                top: 280px;
+            }
+            #ExitButton {
+                top: 340px;
+            }
+
+            #darkspore_version {
+                display:block;
+                position:absolute;
+                top: 557px;
+                left: 25px;
+                width: 181px;
+                overflow:hidden;
+                color:#FFFFFF;
+                font-family:Arial;
+                font-size:11px;
+            }
 
         </style>
 
@@ -1427,6 +1464,31 @@
                 </span>
             </div>
         </div>
+
+        <div id="buttons">
+            <div class="dsbutton" id="SingleplayerButton" onclick="Client.playCurrentApp()">
+                <div class="left-side"></div>
+                <div class="text">singleplayer</div>
+                <div class="right-side"></div>
+            </div>
+            <div class="dsbutton" id="MultiplayerButton" disabled="disabled">
+                <div class="left-side"></div>
+                <div class="text">multiplayer</div>
+                <div class="right-side"></div>
+            </div>
+            <div class="dsbutton" id="SettingsButton" disabled="disabled">
+                <div class="left-side"></div>
+                <div class="text">settings</div>
+                <div class="right-side"></div>
+            </div>
+            <div class="dsbutton" id="ExitButton" onclick="Client.closeCurrentApp()">
+                <div class="left-side"></div>
+                <div class="text">exit</div>
+                <div class="right-side"></div>
+            </div>
+        </div>
+
+        <div id="darkspore_version"></div>
 
         <!-- Display downloaded patch notes -->
         <div id="Patch_note_frame" style="position:absolute; top:147px; left:292px; width:430px">
