@@ -93,6 +93,12 @@ public class RestClientAdapter
             }
             context.Response.Close();
         }
+        catch (BadRequestException ex)
+        {
+            context.Response.StatusCode = 400;
+            context.Response.StatusDescription = ex.Message;
+            context.Response.Close();
+        }
         catch (ForbiddenOperationException ex)
         {
             context.Response.StatusCode = 403;
@@ -116,6 +122,10 @@ public class RestClientAdapter
 
     private MethodInfo GetMethod(Type serviceType, string methodName)
     {
+        if (methodName == null) {
+            throw new BadRequestException("Method must not be null");
+        }
+
         MethodInfo[] methods = serviceType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
         foreach (MethodInfo method in methods)
