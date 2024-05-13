@@ -49,7 +49,7 @@ public class RestClientAdapter
 
             if (uri == "/bootstrap/launcher/")
             {
-                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/index.html");
+                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
             }
             else if (uri == "/bootstrap/launcher/notes")
             {

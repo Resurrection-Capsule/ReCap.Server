@@ -1,3 +1,8 @@
+// Those are required to the index file from the bootstrap/launcher folder doesn't
+// need to make a manual bridge between itself and the wrapper file
+var Client = (window.parent || {}).Client;
+var DarksporeVersion = (window.parent || {}).DarksporeVersion;
+
 var Utils = {
 	type: function(obj) {
 		return Object.prototype.toString.call(obj);
