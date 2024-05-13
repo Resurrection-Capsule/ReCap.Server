@@ -14,8 +14,21 @@ public class BlazeHttpServer
     public void Start()
     {
         // Create an SSL certificate for the server
-        var certificateBytes = Encoding.ASCII.GetBytes(BlazeCredentials.CERTIFICATE);
-        var certificate = new X509Certificate2(certificateBytes);
+        var certificate = X509Certificate2.CreateFromPem(BlazeCredentials.CERTIFICATE, BlazeCredentials.PRIVATE_KEY);
+        var cipherSuites = new CipherSuitesPolicy(new[]
+            {
+                TlsCipherSuite.TLS_RSA_WITH_RC4_128_MD5,
+                TlsCipherSuite.TLS_RSA_WITH_RC4_128_SHA
+            });
+        var sslOptions = new SslServerAuthenticationOptions()
+        {
+            ServerCertificate = certificate,
+            CipherSuitesPolicy = cipherSuites,
+            ClientCertificateRequired = false,
+            EnabledSslProtocols = SslProtocols.Ssl3,
+            //EncryptionPolicy = EncryptionPolicy.AllowNoEncryption,
+            CertificateRevocationCheckMode = X509RevocationMode.NoCheck
+        };
 
         string ipAddress = "127.0.0.1";
         int port = 42127;
@@ -31,7 +44,7 @@ public class BlazeHttpServer
 
             var sslStream = new SslStream(client.GetStream(), false);
             try {
-                sslStream.AuthenticateAsServer(certificate, false, SslProtocols.Ssl3, true);
+                sslStream.AuthenticateAsServer(sslOptions);
 
                 Console.WriteLine("Waiting for client message...");
                 string messageData = ReadMessage(sslStream);
