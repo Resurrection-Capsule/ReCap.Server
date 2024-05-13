@@ -6,6 +6,7 @@
         <link rel="stylesheet" type="text/css" href="/assets/css/dstitlebar.css">
         <script src="/assets/js/eawebkit.js"></script>
         <script src="/assets/js/recapclient.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
         <script type="text/javascript">
 
             /// if the servers are healthy and responding
@@ -14,8 +15,7 @@
             /// if the servers are closed at our whim rather than a down service
             var mServerMaintenance = false;
 
-
-            var localizedkeymap = {
+            var localizedstringmap = {
                 "FAILED_TO_CONNECT" : "CONNECTION FAILED",
                 "PLAY" : "PLAY",
                 "SERVER_STATUS" : "SERVER STATUS",
@@ -26,9 +26,7 @@
                 "CONTACTING" : "CONTACTING...",
                 "REFRESH" : "REFRESH",
                 "VALIDATE_INSTALL" : "VALIDATE&nbsp;&nbsp;INSTALL"
-
             };
-            var localizedstringmap = {};
 
             /**
              * Set the current state of the servers, and having the launcher take
@@ -36,9 +34,8 @@
              * @param bool health if our servers are healthy and reachable
              * @param bool maintenance if the servers are down for maintenance/temporary reasons
              * @param bool throttle if the game is currently being throttled and not letting eople in
-             * @param int countdown a unix timestamp to when the game will be available, or 0 for no countdown
              */
-            function setServerStatus(health, maintenance, countdown)
+            function setServerStatus(health, maintenance)
             {
                 mServerHealth = health;
                 mServerMaintenance = maintenance;
@@ -61,29 +58,7 @@
 
                 container.innerHTML = innervar;
 
-
             } //end setServerStatus
-
-            function gameVersionParts() {
-              var version = DarksporeVersion;
-              if (version === undefined) return true;
-
-              var versionParts = version.split(".");
-              if (versionParts.length !== 4) return true;
-
-              var versionComp1 = parseInt(versionParts[0]);
-              var versionComp2 = parseInt(versionParts[1]);
-              var versionComp3 = parseInt(versionParts[2]);
-              var versionComp4 = parseInt(versionParts[3]);
-              return [versionComp1,versionComp2,versionComp3,versionComp4];
-            }
-            function isGameVersionAtLeast(versionArray) {
-              var versionParts = gameVersionParts();
-              if (versionParts[0] > versionArray[0]) return true;
-              if (versionParts[1] > versionArray[1]) return true;
-              if (versionParts[2] > versionArray[2]) return true;
-              return versionParts[3] >= versionArray[3];
-            }
 
             /**
              * request a server side refresh
@@ -96,8 +71,6 @@
              * Our text needs to be localized!
              */
             function setLocalizedText(){
-                localizedstringmap = localizedkeymap;
-
                 // server status
                 document.getElementById("Server_Header").innerHTML = localizedstringmap['SERVER_STATUS'];
 
@@ -125,87 +98,6 @@
             }
 
         </script>
-        <style type="text/css">
-
-            body{
-                background: url(images/background.png) no-repeat 0 0;
-                height: 600;
-                width: 800px;
-                margin: 0;
-                -moz-user-select: none;
-                -webkit-user-select: none;
-            }
-
-            #server_notes{
-                -moz-user-select: none;
-                -webkit-user-select: none;
-            }
-
-            #Server_status{
-                position:relative;
-                width: 400px;
-                height: 55px;
-                top: 10px;
-                left: 18px;
-                -moz-user-select: none;
-                -webkit-user-select: none;
-            }
-
-            #Server_Header{
-                color:#B0C5FF;
-                font-family:  Arial;
-                font-size:16px;
-                font-weight: bold;
-            }
-
-            .darkspore-logo {
-                background: url(./images/logo.png)no-repeat 0 0;
-                width: 266px;
-                height: 31px;
-                position: absolute;
-                top: 100px;
-                left: 267px;
-            }
-
-            #buttons {
-                position: relative;
-                top: 30px;
-            }
-            #SingleplayerButton,
-            #MultiplayerButton,
-            #SettingsButton,
-            #ExitButton {
-                position: absolute;
-                width: 260px;
-                left: 244px;
-                font-size: 18px !important;
-            }
-            #SingleplayerButton {
-                top: 160px;
-            }
-            #MultiplayerButton {
-                top: 220px;
-            }
-            #SettingsButton {
-                top: 280px;
-            }
-            #ExitButton {
-                top: 340px;
-            }
-
-            #darkspore_version {
-                display:block;
-                position:absolute;
-                top: 557px;
-                left: 25px;
-                width: 181px;
-                overflow:hidden;
-                color:#FFFFFF;
-                font-family:Arial;
-                font-size:11px;
-            }
-
-        </style>
     </head>
     <body id="Main_Body">
 
@@ -218,8 +110,8 @@
 
         <!-- Server status -->
         <div id="server_notes">
-            <div id="Server_status" style="position: absolute;top: 60px; left: 355px;">
-                <div id="Server_Status_Header" style="position: relative;top: 7px; left: 4px;padding-bottom:10px;" align="right">
+            <div id="Server_status">
+                <div id="Server_Status_Header" align="right">
                     <span id="Server_Header"></span>
                 </div>
                 <span id="Server_condition">
