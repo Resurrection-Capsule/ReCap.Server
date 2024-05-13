@@ -14,8 +14,8 @@ Just want to test it in your computer? Check [HOW_I_RUN_IT.md](HOW_I_RUN_IT.md).
 
 ## _Making the game playable offline_ progress
 - [ ] Redirect Darkspore requests to the localhost;
-- [ ] Make Darkspore believe that the server is online (Error code 102);
-- [ ] Make Darkspore open after the Play button has been pressed (Error 3001).
+- [X] Make Darkspore believe that the server is online (Error code 102);
+- [X] Make Darkspore open after the Play button has been pressed (Error 3001).
 - [ ] Make the login screen appear properly (Network connection was lost / Error 73000).
 - [ ] Make it possible to access the hangar.
 - [ ] Make it possible to access the hero editor.
@@ -28,11 +28,7 @@ Just want to test it in your computer? Check [HOW_I_RUN_IT.md](HOW_I_RUN_IT.md).
 ## Introduction
 The focus is creating a local server in order to make Darkspore work again. The game has been dead since 2016 (you can literally buy a new physical copy by 2.99£ in Amazon.com). Since the servers shutdown, the game discs became useless pieces of plastic. This project aims to create a localhost server, which is going to make Darkspore work like if it was the original server, but much faster and private.
 
-Still, be aware: this project will respect every layer of DRM that is above the Darkspore application. If you bought the game in Steam, you will still need Steam to play it. If you bought the game in Origin, you will still need Origin to play it. And if you bought the game disc, you will still need your serial to install it.
-
-The only layer of DRM that _for now_ cannot be kept is the ingame DRM, which checks if you have the game in your Origin account after the game has already started. There are two reasons for that:
-- Origin has no public API, so there is no way to check if the user is really logged in, nor there is a way to know if he/she really has the game in the library;
-- Even if we managed to do it, it would be very simple for someone to simply fork the project and remove that. I guess the best that can be done is relying in the serial DRM, which will exist independently of the way that you bought the game.
+This project is inteded to be used by people who an original copy of the game. If you bought the game in Steam, you will use Steam to play it. If you bought the game in Origin, you will use Origin to play it. And if you bought the game disc, you will use your disc to play it.
 
 ## FAQ
 
