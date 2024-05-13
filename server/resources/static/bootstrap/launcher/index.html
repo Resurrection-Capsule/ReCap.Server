@@ -5,6 +5,7 @@
         <link rel="stylesheet" type="text/css" href="/assets/css/dsbutton.css">
         <link rel="stylesheet" type="text/css" href="/assets/css/dstitlebar.css">
         <script src="/assets/js/eawebkit.js"></script>
+        <script src="/assets/js/eawebkit.ui.js"></script>
         <script src="/assets/js/recapclient.js"></script>
         <link rel="stylesheet" type="text/css" href="style.css">
         <script type="text/javascript">
@@ -93,8 +94,7 @@
                 // refresh the launcher every 5 minutes
                 setInterval("refreshStatus()", 300000);
 
-                var versionContainer = document.getElementById("darkspore_version");
-                versionContainer.innerHTML = DarksporeVersion;
+                $("#darkspore_version").html(DarksporeVersion);
             }
 
         </script>
@@ -103,8 +103,8 @@
 
         <table>
             <tr>
-                <td><div class="dstitlebar-min-button" onMouseUp="Client.minCurrentApp()"></div></td>
-                <td><div class="dstitlebar-close-button" onMouseUp="Client.closeCurrentApp()"></div></td>
+                <td><div class="dstitlebar-min-button" onclick="Client.minCurrentApp()"></div></td>
+                <td><div class="dstitlebar-close-button" onclick="Client.closeCurrentApp()"></div></td>
             </tr>
         </table>
 
