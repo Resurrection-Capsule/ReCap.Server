@@ -11,18 +11,11 @@ using Darkspore.Server.Adapters.Blaze.Ssl;
 
 using Darkspore.Server.Adapters.Blaze.Component.Association;
 using Darkspore.Server.Adapters.Blaze.Component.Authentication;
-using Darkspore.Server.Adapters.Blaze.Component.BGAccounts;
-using Darkspore.Server.Adapters.Blaze.Component.BGEcommerce;
-using Darkspore.Server.Adapters.Blaze.Component.BGOps;
-using Darkspore.Server.Adapters.Blaze.Component.BGWeb;
-using Darkspore.Server.Adapters.Blaze.Component.Entry;
 using Darkspore.Server.Adapters.Blaze.Component.GameManager;
-using Darkspore.Server.Adapters.Blaze.Component.LivingLore;
 using Darkspore.Server.Adapters.Blaze.Component.Messaging;
 using Darkspore.Server.Adapters.Blaze.Component.Playgroups;
 using Darkspore.Server.Adapters.Blaze.Component.Redirector;
 using Darkspore.Server.Adapters.Blaze.Component.Rooms;
-using Darkspore.Server.Adapters.Blaze.Component.Stats;
 using Darkspore.Server.Adapters.Blaze.Component.UserSessions;
 using Darkspore.Server.Adapters.Blaze.Component.Util;
 
@@ -72,17 +65,10 @@ public class Server
             List<IComponent> components = new List<IComponent> {
                 new AssociationListsComponent(),
                 new AuthenticationComponent(),
-                new BGAccountsComponent(),
-                new BGECommerceComponent(),
-                new BGOpsComponent(),
-                new BGWebComponent(),
-                new EntryComponent(),
                 new GameManagerComponent(),
-                new LivingLoreComponent(),
                 new MessagingComponent(),
                 new PlaygroupsComponent(),
                 new RoomsComponent(),
-                new StatsComponent(),
                 new UserSessionsComponent(),
                 new UtilComponent(),
                 new GameReportingComponent()
