@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HttpServer;
+using BlazeServer;
 
 namespace HttpServer;
 
@@ -14,9 +15,13 @@ public class Application
     {
         var dbConfig = new SqliteConfig();
 
-        var blazeHttpServer = new BlazeHttpServer();
+        Task.Run(() => {
+            var blazeHttpServer = new Server("Redirector", IPAddress.Parse("127.0.0.1"), 42127, true, "localhost");
+            blazeHttpServer.Start();
+        });
 
         Task.Run(() => {
+            var blazeHttpServer = new Server("Lobby", IPAddress.Parse("127.0.0.1"), 42125, false, "localhost");
             blazeHttpServer.Start();
         });
 
