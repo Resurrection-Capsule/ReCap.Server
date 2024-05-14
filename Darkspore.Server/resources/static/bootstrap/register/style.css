@@ -28,11 +28,6 @@ input, select, textarea {
     -ms-appearance: unset !important; 
 }
 
-input[type="text"].password {
-    font-family: 'dotsfont-regular';
-	line-height: 33px;
-}
-
 input[type="text"],
 input[type="email"] {
 	resize: none;
@@ -44,15 +39,6 @@ input[type="email"] {
 	margin-left: 15px;
 	margin-top: 9px;
 	margin-bottom: 13px;
-}
-
-.form-input-bg {
-    width: 288px;
-    background-image: url("./images/TextField.png");
-}
-
-.form-input-bg:hover:not(:active) {
-    background-image: url("./images/TextField-hover.png");
 }
 
 input::-webkit-input-placeholder {

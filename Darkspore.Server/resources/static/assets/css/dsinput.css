@@ -5,16 +5,16 @@ input[type="text"].password {
     background-color: transparent;
 }
 
-.form-input-bg {
+.dstextfield {
     width: 288px;
     background-image: url("../images/TextField.png");
 }
 
-.form-input-bg:hover:not(:active) {
+.dstextfield:hover:not(:active) {
     background-image: url("../images/TextField-hover.png");
 }
 
-.form-input {
+.dstextfield input {
     width: 100%;
 }
 
