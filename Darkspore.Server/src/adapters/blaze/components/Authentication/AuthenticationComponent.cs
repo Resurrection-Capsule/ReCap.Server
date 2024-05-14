@@ -17,6 +17,9 @@ public class AuthenticationComponent : IComponent
     {
         switch (packet.Command)
         {
+            case 0x24:
+                return GetAuthToken(client, packet);
+
             case 0x28:
                 return HandleLogin(client, packet);
 
@@ -42,6 +45,33 @@ public class AuthenticationComponent : IComponent
                 Log($"Unknown command: {packet.Command}");
                 return false;
         }
+    }
+
+    private static bool GetAuthToken(Client client, Packet packet)
+    {
+        var request = packet.ReadContent<LoginPersonaRequest>();
+        if (request is null)
+        {
+            client.RespondTo(packet, null, error: 0x5E0001); // AUTH_ERR_NO_SUCH_AUTH_DATA
+            return true;
+        }
+
+        // const auto& user = request.get_user();
+		// if (!user) {
+		// 	return;
+		// }
+
+		// user->set_auth_token(std::to_string(user->get_id()));
+
+		// TDF::Packet packet;
+		// WriteAuthToken(packet, user->get_auth_token());
+
+		// request.reply(packet);
+
+		// // Notifications
+		// UserSessionComponent::NotifyUserUpdated(request, user, SessionState::Authenticated);
+
+        return true;
     }
 
     private static bool HandleLogin(Client client, Packet packet)

@@ -14,6 +14,7 @@ public class Application
     static void Main(string[] args)
     {
         var dbConfig = new SqliteConfig();
+        dbConfig.Start();
 
         Task.Run(() => {
             var blazeHttpServer = new Server("Redirector", IPAddress.Parse("127.0.0.1"), 42127, true, "localhost");

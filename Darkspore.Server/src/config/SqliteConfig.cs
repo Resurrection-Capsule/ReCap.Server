@@ -16,4 +16,9 @@ public class SqliteConfig : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
+
+    public void Start()
+    {
+        this.Database.EnsureCreated();
+    }
 }

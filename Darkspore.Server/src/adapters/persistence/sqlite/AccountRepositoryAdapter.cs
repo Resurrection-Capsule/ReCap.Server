@@ -26,7 +26,10 @@ public class AccountRepositoryAdapter
 
     public Account getAccountByEmail(string email)
     {
-        var accountModel = sqliteConfig.Accounts.Where(b => b.Email == email).First();
+        var accountModel = sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
+        if (accountModel == null) {
+            return null;
+        }
         return accountMapper.toDomain(accountModel);
     }
 
