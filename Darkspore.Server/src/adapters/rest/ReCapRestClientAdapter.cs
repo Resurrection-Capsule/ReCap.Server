@@ -16,7 +16,9 @@ public class ReCapRestClientAdapter
         accountService = new AccountService(newSqliteConfig);
     }
 
-    private string getBodyFromRequest(HttpListenerRequest request) {
+    private string getBodyFromRequest(HttpListenerContext context)
+    {
+        var request = context.Request;
         if (!request.HasEntityBody)
         {
             return "";
@@ -31,16 +33,17 @@ public class ReCapRestClientAdapter
     }
 
     [ApiMethod(Name="api.game.log")]
-    public byte[] log(HttpListenerRequest request)
+    public byte[] log(HttpListenerContext context)
     {
-        string message = getBodyFromRequest(request);
+        string message = getBodyFromRequest(context);
         Console.WriteLine(message);
         return new byte[]{};
     }
 
     [ApiMethod(Name="api.game.registration")]
-    public byte[] registerUser(HttpListenerRequest request)
+    public byte[] registerUser(HttpListenerContext context)
     {
+        var request = context.Request;
         var parameters = request.QueryString;
         string email = parameters.Get("email");
         string name = parameters.Get("name");

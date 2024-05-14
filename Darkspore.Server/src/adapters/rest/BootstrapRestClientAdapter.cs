@@ -15,7 +15,9 @@ namespace HttpServer;
 public class BootstrapRestClientAdapter
 {
     [ApiMethod(Name="api.config.getConfigs")]
-    public byte[] getConfigs(NameValueCollection parameters) {
+    public byte[] getConfigs(HttpListenerContext context)
+    {
+        var parameters = context.Request.QueryString;
         bool includeSettings = parameters.Get("include_settings") == "true";
         bool includePatches = parameters.Get("include_patches") == "true";
 

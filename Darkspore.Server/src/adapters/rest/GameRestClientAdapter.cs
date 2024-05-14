@@ -5,6 +5,7 @@ using System.Text;
 using System.Collections.Specialized;
 
 using HttpServer;
+using HttpMultipartParser;
 
 namespace HttpServer;
 
@@ -19,10 +20,15 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.account.auth")]
-    public byte[] loginPlayerAccount(NameValueCollection parameters)
+    public byte[] loginPlayerAccount(HttpListenerContext context)
     {
+        var request = context.Request;
+        var parameters = request.QueryString;
+
         Account account = null;
-        string key = parameters.Get("key");
+
+        var parser = MultipartFormDataParser.Parse(request.InputStream);
+        string key = parser.GetParameterValue("key");
         if (key != null) {
             // key = auth_token::0
             string[] keyParts = key.Split(' ');
@@ -50,12 +56,12 @@ public class GameRestClientAdapter
             Account = accountMapper.toContract(account)
         };
 
-        bool includeCreatures = bool.Parse(parameters.Get("include_creatures"));
-        bool includeDecks = bool.Parse(parameters.Get("include_decks"));
-        bool includeFeed = bool.Parse(parameters.Get("include_feed"));
-        bool includeSettings = bool.Parse(parameters.Get("include_settings"));
-        bool includeServerTuning = bool.Parse(parameters.Get("include_server_tuning"));
-        bool includeTokenCookie = bool.Parse(parameters.Get("cookie"));
+        bool includeCreatures = Convert.ToBoolean(parameters.Get("include_creatures"));
+        bool includeDecks = Convert.ToBoolean(parameters.Get("include_decks"));
+        bool includeFeed = Convert.ToBoolean(parameters.Get("include_feed"));
+        bool includeSettings = Convert.ToBoolean(parameters.Get("include_settings"));
+        bool includeServerTuning = Convert.ToBoolean(parameters.Get("include_server_tuning"));
+        bool includeTokenCookie = Convert.ToBoolean(parameters.Get("cookie"));
 
         if (includeCreatures) {
             Console.WriteLine("[GameRestClientAdapter] includeCreatures");
@@ -108,128 +114,149 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.account.getAccount")]
-    public byte[] getPlayerAccount(NameValueCollection parameters)
+    public byte[] getPlayerAccount(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.logout")]
-    public byte[] logoutPlayerAccount(NameValueCollection parameters)
+    public byte[] logoutPlayerAccount(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.searchAccounts")]
-    public byte[] searchPlayerAccounts(NameValueCollection parameters)
+    public byte[] searchPlayerAccounts(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.setSettings")]
-    public byte[] setPlayerAccountSettings(NameValueCollection parameters)
+    public byte[] setPlayerAccountSettings(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.unlock")]
-    public byte[] unlockPlayerAccount(NameValueCollection parameters)
+    public byte[] unlockPlayerAccount(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.setNewPlayerStats")]
-    public byte[] setNewPlayerStats(NameValueCollection parameters)
+    public byte[] setNewPlayerStats(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.getCreature")]
-    public byte[] getCreature(NameValueCollection parameters)
+    public byte[] getCreature(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.getTemplate")]
-    public byte[] getTemplate(NameValueCollection parameters)
+    public byte[] getTemplate(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.resetCreature")]
-    public byte[] resetCreature(NameValueCollection parameters)
+    public byte[] resetCreature(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.unlockCreature")]
-    public byte[] unlockCreature(NameValueCollection parameters)
+    public byte[] unlockCreature(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.updateCreature")]
-    public byte[] updateCreature(NameValueCollection parameters)
+    public byte[] updateCreature(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.deck.updateDecks")]
-    public byte[] updateDecks(NameValueCollection parameters)
+    public byte[] updateDecks(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.exitGame")]
-    public byte[] exitGame(NameValueCollection parameters)
+    public byte[] exitGame(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.getGame")]
-    public byte[] getGame(NameValueCollection parameters)
+    public byte[] getGame(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.getRandomGame")]
-    public byte[] getRandomGame(NameValueCollection parameters)
+    public byte[] getRandomGame(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.getPartList")]
-    public byte[] getPartList(NameValueCollection parameters)
+    public byte[] getPartList(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.getPartOfferList")]
-    public byte[] getPartOfferList(NameValueCollection parameters)
+    public byte[] getPartOfferList(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.updatePartStatus")]
-    public byte[] updatePartStatus(NameValueCollection parameters)
+    public byte[] updatePartStatus(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.vendorParts")]
-    public byte[] getVendorParts(NameValueCollection parameters)
+    public byte[] getVendorParts(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.leaderboard.getLeaderboard")]
-    public byte[] getLeaderboard(NameValueCollection parameters)
+    public byte[] getLeaderboard(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.status.getBroadcastList")]
-    public byte[] getBroadcastList(NameValueCollection parameters)
+    public byte[] getBroadcastList(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         var response = new StatusResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
@@ -242,8 +269,9 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.status.getStatus")]
-    public byte[] getStatus(NameValueCollection parameters)
+    public byte[] getStatus(HttpListenerContext context)
     {
+        var parameters = context.Request.QueryString;
         bool includeBroadcasts = parameters.Get("include_broadcasts") == "true";
 
         var response = new StatusResponseContract{

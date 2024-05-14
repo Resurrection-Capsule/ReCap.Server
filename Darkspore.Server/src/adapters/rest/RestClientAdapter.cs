@@ -57,12 +57,12 @@ public class RestClientAdapter
             else if (uri.StartsWith("/recap/api"))
             {
                 var method = GetMethod(typeof(ReCapRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context.Request });
+                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context });
             }
             else if (uri.StartsWith("/bootstrap/api"))
             {
                 var method = GetMethod(typeof(BootstrapRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { query });
+                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/game/api"))
@@ -76,13 +76,13 @@ public class RestClientAdapter
                     }
                 }
                 var method = GetMethod(typeof(GameRestClientAdapter), methodName);
-                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { query });
+                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/survey/api"))
             {
                 var method = GetMethod(typeof(SurveyRestClientAdapter), query.Get("method"));
-                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { query });
+                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri == "/web/sporelabsgame/register")
@@ -101,11 +101,12 @@ public class RestClientAdapter
             if (fileBytes != null) {
                 context.Response.ContentLength64 = fileBytes.Length;
                 context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
+                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
             }
             else {
                 context.Response.StatusCode = 501;
                 context.Response.StatusDescription = "Method not implemented";
-                Console.WriteLine($"[RestClientAdapter] {uri} Error 501");
+                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 501");
             }
             context.Response.Close();
         }
@@ -121,20 +122,20 @@ public class RestClientAdapter
             context.Response.StatusCode = 403;
             context.Response.StatusDescription = ex.Message;
             context.Response.Close();
-            Console.WriteLine($"[RestClientAdapter] {uri} Error 403: {context.Response.StatusDescription}");
+            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
         }
         catch (FileNotFoundException ex)
         {
             context.Response.StatusCode = 404;
             context.Response.StatusDescription = "File not found: " + ex.Message;
             context.Response.Close();
-            Console.WriteLine($"[RestClientAdapter] {uri} Error 404: {context.Response.StatusDescription}");
+            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
         }
         catch (Exception ex)
         {
             context.Response.StatusCode = 500;
             context.Response.StatusDescription = "Error serving file: " + ex.Message;
-            Console.WriteLine($"[RestClientAdapter] {uri} Error 500: {ex.ToString()}");
+            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
             context.Response.Close();
         }
     }
