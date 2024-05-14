@@ -25,6 +25,7 @@ public class GameRestClientAdapter
         var request = context.Request;
         var parameters = request.QueryString;
 
+        string authToken = null;
         Account account = null;
 
         var parser = MultipartFormDataParser.Parse(request.InputStream);
@@ -32,8 +33,7 @@ public class GameRestClientAdapter
         if (key != null) {
             // key = auth_token::0
             string[] keyParts = key.Split(' ');
-            string authToken = keyParts[0];
-
+            authToken = keyParts[0];
             account = accountService.getAccountByAuthToken(authToken);
         }
         if (account == null) {
@@ -79,35 +79,30 @@ public class GameRestClientAdapter
         }
 
         if (includeSettings) {
-            Console.WriteLine("[GameRestClientAdapter] includeSettings");
-        //     if (auto settingsDoc = docResponse.append_child("settings")) {
-        //         // Values can be an integer(long) or "on/off"
-        //         /*
-        //         utils::xml_add_text_node(settingsDoc, "showConfigAlerts", "on");
-        //         utils::xml_add_text_node(settingsDoc, "cheat", "on");
-        //         utils::xml_add_text_node(settingsDoc, "safeMode", "on");
-        //         */
-        //     }
+            response.Settings = new SettingsContract{
+                ShowConfigAlerts = true ? "on" : "off",
+                Cheat = true ? "on" : "off",
+                SafeMode = true ? "on" : "off"
+            };
         }
 
         if (includeServerTuning) {
-            Console.WriteLine("[GameRestClientAdapter] includeServerTuning");
-        //     if (auto server_tuning = docResponse.append_child("server_tuning")) {
-        //         utils::xml_add_text_node(server_tuning, "itemstore_offer_period", timestamp);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_current_expiration", timestamp + (3 * 60 * 60 * 1000));
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_basic", 1);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_uncommon", 1.1);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_rare", 1.2);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_epic", 1.3);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_unique", 1.4);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_rareunique", 1.5);
-        //         utils::xml_add_text_node(server_tuning, "itemstore_cost_multiplier_epicunique", 1.6);
-        //     }
+            int timestamp = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            response.ServerTuning = new ServerTuningContract{
+                ItemstoreOfferPeriod = timestamp,
+                ItemstoreCurrentExpiration = timestamp + (3 * 60 * 60 * 1000),
+                ItemstoreCostMultiplierBasic = 1,
+                ItemstoreCostMultiplierUncommon = 1.1,
+                ItemstoreCostMultiplierRare = 1.2,
+                ItemstoreCostMultiplierEpic = 1.3,
+                ItemstoreCostMultiplierUnique = 1.4,
+                ItemstoreCostMultiplierRareUnique = 1.5,
+                ItemstoreCostMultiplierEpicUnique = 1.6
+            };
         }
 
         if (includeTokenCookie) {
-            Console.WriteLine("[GameRestClientAdapter] includeTokenCookie");
-        //     response.set(boost::beast::http::field::set_cookie, "token=" + user->get_auth_token());
+            context.Response.SetCookie(new Cookie("token", authToken));
         }
 
         return XmlUtils.Serialize(response);
