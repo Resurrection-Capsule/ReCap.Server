@@ -40,20 +40,19 @@ public class RestClientAdapter
 
     private void ProcessRequest(HttpListenerContext context)
     {
+        var query = context.Request.QueryString;
+        string uri = context.Request.Url.LocalPath;
         byte[] fileBytes = null;
 
         try
         {
-            var query = context.Request.QueryString;
-            string uri = context.Request.Url.LocalPath;
-
             if (uri == "/bootstrap/launcher/")
             {
                 fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
             }
             else if (uri == "/bootstrap/launcher/notes")
             {
-                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/notes.html");
+                fileBytes = new byte[]{};
             }
             else if (uri.StartsWith("/recap/api"))
             {
@@ -68,7 +67,15 @@ public class RestClientAdapter
             }
             else if (uri.StartsWith("/game/api"))
             {
-                var method = GetMethod(typeof(GameRestClientAdapter), query.Get("method"));
+                var methodName = query.Get("method");
+                if (String.IsNullOrEmpty(methodName)) {
+                    if (String.IsNullOrEmpty(query.Get("token"))) {
+                        methodName = "api.account.auth";
+                    } else {
+                        methodName = "api.account.getAccount";
+                    }
+                }
+                var method = GetMethod(typeof(GameRestClientAdapter), methodName);
                 fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { query });
                 context.Response.ContentType = "text/xml";
             }
@@ -98,6 +105,7 @@ public class RestClientAdapter
             else {
                 context.Response.StatusCode = 501;
                 context.Response.StatusDescription = "Method not implemented";
+                Console.WriteLine($"[RestClientAdapter] {uri} Error 501");
             }
             context.Response.Close();
         }
@@ -106,24 +114,27 @@ public class RestClientAdapter
             context.Response.StatusCode = 400;
             context.Response.StatusDescription = ex.Message;
             context.Response.Close();
+            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
         }
         catch (ForbiddenOperationException ex)
         {
             context.Response.StatusCode = 403;
             context.Response.StatusDescription = ex.Message;
             context.Response.Close();
+            Console.WriteLine($"[RestClientAdapter] {uri} Error 403: {context.Response.StatusDescription}");
         }
         catch (FileNotFoundException ex)
         {
             context.Response.StatusCode = 404;
             context.Response.StatusDescription = "File not found: " + ex.Message;
             context.Response.Close();
+            Console.WriteLine($"[RestClientAdapter] {uri} Error 404: {context.Response.StatusDescription}");
         }
         catch (Exception ex)
         {
             context.Response.StatusCode = 500;
             context.Response.StatusDescription = "Error serving file: " + ex.Message;
-            Console.WriteLine(ex.ToString());
+            Console.WriteLine($"[RestClientAdapter] {uri} Error 500: {ex.ToString()}");
             context.Response.Close();
         }
     }

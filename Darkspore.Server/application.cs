@@ -17,12 +17,12 @@ public class Application
         dbConfig.Start();
 
         Task.Run(() => {
-            var blazeHttpServer = new Server("Redirector", IPAddress.Parse("127.0.0.1"), 42127, true, "localhost");
+            var blazeHttpServer = new Server(dbConfig, "Redirector", IPAddress.Parse("127.0.0.1"), 42127, true, "localhost");
             blazeHttpServer.Start();
         });
 
         Task.Run(() => {
-            var blazeHttpServer = new Server("Lobby", IPAddress.Parse("127.0.0.1"), 42125, false, "localhost");
+            var blazeHttpServer = new Server(dbConfig, "Lobby", IPAddress.Parse("127.0.0.1"), 42125, false, "localhost");
             blazeHttpServer.Start();
         });
 

@@ -24,6 +24,15 @@ public class AccountRepositoryAdapter
         return accountMapper.toDomain(accountModel);
     }
 
+    public Account getAccountById(ulong id)
+    {
+        var accountModel = sqliteConfig.Accounts.SingleOrDefault(b => b.Id == id);
+        if (accountModel == null) {
+            return null;
+        }
+        return accountMapper.toDomain(accountModel);
+    }
+
     public Account getAccountByEmail(string email)
     {
         var accountModel = sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
@@ -35,8 +44,7 @@ public class AccountRepositoryAdapter
 
     public void saveAccount(Account account)
     {
-        Guid myuuid = Guid.NewGuid();
-        account.Id = myuuid.ToString();
+        account.Id = 1;
 
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);

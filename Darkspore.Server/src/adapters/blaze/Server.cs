@@ -7,6 +7,7 @@ using Org.BouncyCastle.Tls;
 
 namespace BlazeServer;
 
+using HttpServer;
 using Darkspore.Server.Adapters.Blaze.Ssl;
 
 using Darkspore.Server.Adapters.Blaze.Component.Association;
@@ -37,7 +38,7 @@ public class Server
     public int Port { get; }
     public bool Running { get; private set; }
 
-    public Server(string name, IPAddress hostAddress, int port, bool isSecure, string hostname)
+    public Server(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname)
     {
         Name = name;
         IsSecure = isSecure;
@@ -64,7 +65,7 @@ public class Server
         else {
             List<IComponent> components = new List<IComponent> {
                 new AssociationListsComponent(),
-                new AuthenticationComponent(),
+                new AuthenticationComponent(newSqliteConfig),
                 new GameManagerComponent(),
                 new MessagingComponent(),
                 new PlaygroupsComponent(),

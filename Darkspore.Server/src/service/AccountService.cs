@@ -10,6 +10,25 @@ public class AccountService
         accountRepository = new AccountRepositoryAdapter(newSqliteConfig);
     }
 
+    public Account getAccountById(ulong id) {
+        var account = accountRepository.getAccountById(id);
+        if (account == null) {
+            throw new ForbiddenOperationException("Account ID not found");
+        }
+        return account;
+    }
+
+    public Account getAccountByEmailAndPassword(string email, string password) {
+        var account = accountRepository.getAccountByEmail(email);
+        if (account == null) {
+            throw new ForbiddenOperationException("This e-mail does not belong to any account");
+        }
+        if (account.Password != password) {
+            throw new ForbiddenOperationException("Invalid password");
+        }
+        return account;
+    }
+
     public Account getAccountByAuthToken(string authToken) {
         return accountRepository.getAccountByAuthToken(authToken);
     }

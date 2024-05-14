@@ -1,13 +1,21 @@
 ﻿using System.Buffers.Binary;
+using System.Text;
 
 namespace Darkspore.Server.Adapters.Blaze.Component.Authentication;
 
 using BlazeServer;
+using HttpServer;
 using Darkspore.Server.Adapters.Blaze.Component.UserSessions;
 using Darkspore.Server.Adapters.Blaze.Component.Util;
 
 public class AuthenticationComponent : IComponent
 {
+    private AccountService accountService;
+
+    public AuthenticationComponent(SqliteConfig newSqliteConfig) {
+        accountService = new AccountService(newSqliteConfig);
+    }
+
     public static uint CurrentUnixTime => (uint)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
 
     public ushort Id { get; } = 1;
@@ -49,32 +57,26 @@ public class AuthenticationComponent : IComponent
 
     private static bool GetAuthToken(Client client, Packet packet)
     {
-        var request = packet.ReadContent<LoginPersonaRequest>();
-        if (request is null)
+        Guid myuuid = Guid.NewGuid();
+        client.AuthToken = "1"; //myuuid.ToString();
+
+        var response = new GetAuthTokenResponse
         {
-            client.RespondTo(packet, null, error: 0x5E0001); // AUTH_ERR_NO_SUCH_AUTH_DATA
-            return true;
-        }
+            AuthToken = client.AuthToken
+        };
+		
+        client.RespondTo(packet, response);
 
-        // const auto& user = request.get_user();
-		// if (!user) {
-		// 	return;
-		// }
-
-		// user->set_auth_token(std::to_string(user->get_id()));
-
-		// TDF::Packet packet;
-		// WriteAuthToken(packet, user->get_auth_token());
-
-		// request.reply(packet);
-
-		// // Notifications
-		// UserSessionComponent::NotifyUserUpdated(request, user, SessionState::Authenticated);
+        client.Notify(new UserStatus()
+        {
+            BlazeId = client.UserId,
+            StatusFlags = 3
+        }, 0x7802, 5);
 
         return true;
     }
 
-    private static bool HandleLogin(Client client, Packet packet)
+    private bool HandleLogin(Client client, Packet packet)
     {
         // NOTES:
         // error 0x320001 (AUTH_ERR_NEED_PCCDKEY) displays: Servers are down or you have not registered your beta key.
@@ -87,17 +89,22 @@ public class AuthenticationComponent : IComponent
             return true;
         }
 
+        var account = accountService.getAccountByEmailAndPassword(request.Email, request.Password);
+        client.UserId = account.Id;
+
         var response = new LoginResponse
         {
-            IsOfLegalContactAge = true,
-            UserId = 1
+            IsOfLegalContactAge = false,
+            UserId = account.Id,
+            PCLoginToken = "unknown_data",
+            SessionKey = "telemetry_key"
         };
 
         response.PersonaDetailsList.Add(new PersonaDetails()
         {
-            DisplayName = "HelloDawngate",
+            DisplayName = account.Username,
             LastLoginTime = CurrentUnixTime,
-            PersonaId = 1,
+            PersonaId = account.Id,
             Status = PersonaStatus.Active,
         });
 
@@ -112,7 +119,7 @@ public class AuthenticationComponent : IComponent
         return true;
     }
 
-    private static bool HandleLoginPersona(Client client, Packet packet)
+    private bool HandleLoginPersona(Client client, Packet packet)
     {
         var request = packet.ReadContent<LoginPersonaRequest>();
         if (request is null)
@@ -121,17 +128,19 @@ public class AuthenticationComponent : IComponent
             return true;
         }
 
+        var account = accountService.getAccountById(client.UserId);
+
         var response = new SessionInfo
         {
             LastLoginDateTime = CurrentUnixTime,
-            Email = "teszt@teszt.com",
-            UserId = 1,
-            BlazeUserId = 1
+            Email = account.Email,
+            UserId = account.Id,
+            BlazeUserId = account.Id
         };
 
-        response.PersonaDetails.DisplayName = "HelloDawngate";
+        response.PersonaDetails.DisplayName = account.Username;
         response.PersonaDetails.LastLoginTime = CurrentUnixTime;
-        response.PersonaDetails.PersonaId = 1;
+        response.PersonaDetails.PersonaId = client.UserId;
         response.PersonaDetails.Status = PersonaStatus.Active;
 
         client.RespondTo(packet, response);
@@ -144,16 +153,16 @@ public class AuthenticationComponent : IComponent
         userAdded.ExtendedData.Address.ActiveMember = NetworkAddressMember.IpPairAddress;
         userAdded.ExtendedData.Address.IpPairAddress.ExternalAddress.Ip = addr;
         userAdded.ExtendedData.Address.IpPairAddress.ExternalAddress.Port = (ushort)client.EndPoint.Port;
-        userAdded.UserInfo.AccountId = 1;
+        userAdded.UserInfo.AccountId = client.UserId;
         userAdded.UserInfo.AccountLocale = 0x656E5553;
-        userAdded.UserInfo.BlazeId = 1;
-        userAdded.UserInfo.Name = "HelloDawngate";
+        userAdded.UserInfo.BlazeId = client.UserId;
+        userAdded.UserInfo.Name = account.Username;
 
         client.Notify(userAdded, 0x7802, 2);
 
         client.Notify(new UserStatus()
         {
-            BlazeId = 1,
+            BlazeId = account.Id,
             StatusFlags = 2
         }, 0x7802, 5);
 
@@ -168,14 +177,14 @@ public class AuthenticationComponent : IComponent
         client.Notify(new UserSessionLoginInfo
         {
             AccountLocale = 0x656E5553,
-            BlazeUserId = 1,
-            DisplayName = "HelloDawngate",
+            BlazeUserId = client.UserId,
+            DisplayName = account.Username,
             LastLoginTime = CurrentUnixTime,
             LastLoginDateTime = CurrentUnixTime,
-            Email = "teszt@teszt.com",
-            PersonaId = 1,
+            Email = account.Email,
+            PersonaId = client.UserId,
             Platform = ConnectionProfileType.PC,
-            UserId = 1
+            UserId = client.UserId
         }, 0x7802, 8);
         return true;
     }
@@ -363,8 +372,17 @@ public enum AuthenticationTokenType
     PCLoginToken = 2,
 }
 
+public class GetAuthTokenResponse : Tdf
+{
+    [TdfField("AUTH", "")]
+    public string AuthToken { get; set; } = string.Empty;
+}
+
 public class LoginRequest : Tdf
 {
+    [TdfField("DVID", 0)]
+    public ulong DeviceID { get; set; } // ?
+
     [TdfField("MAIL", "")]
     public string Email { get; set; } = string.Empty;
 
@@ -403,6 +421,15 @@ public class LoginResponse : Tdf
 
     [TdfField("UNDR", false)]
     public bool IsUnderage { get; set; }
+
+    [TdfField("PRIV", "")]
+    public string PRIV { get; set; } = string.Empty;
+
+    [TdfField("THST", "")]
+    public string THST { get; set; } = string.Empty;
+
+    [TdfField("TURI", "")]
+    public string TURI { get; set; } = string.Empty;
 }
 
 public enum PersonaStatus

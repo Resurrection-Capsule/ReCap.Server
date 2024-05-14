@@ -4,6 +4,7 @@ using BlazeServer;
 
 public class UtilComponent : IComponent
 {
+    // public static uint CurrentUnixTime => (uint)(new DateTimeOffset(DateTime.UtcNow)).ToUnixTimeMilliseconds();
     public static uint CurrentUnixTime => (uint)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
 
     public ushort Id => 9;
@@ -78,11 +79,11 @@ public class UtilComponent : IComponent
 
         response.PssConfig.Address = "127.0.0.1";
         response.PssConfig.ProjectId = "123071";
-        response.PssConfig.Port = 42129;
+        response.PssConfig.Port = 42125;
         response.PssConfig.InitialReportTypes = 9;
 
         response.Telemetry.Address = "127.0.0.1";
-        response.Telemetry.Port = 42128;
+        response.Telemetry.Port = 42125;
         response.Telemetry.SendDelay = 15000;
         response.Telemetry.Locale = 0x656E5553;
         response.Telemetry.Disable = "AD,AF,AG,AI,AL,AM,AN,AO,AQ,AR,AS,AW,AX,AZ,BA,BB,BD,BF,BH,BI,BJ,BM,BN,BO,BR,BS,BT,BV,BW,BY,BZ,CC,CD,CF,CG,CI,CK,CL,CM,CN,CO,CR,CU,CV,CX,DJ,DM,DO,DZ,EC,EG,EH,ER,ET,FJ,FK,FM,FO,GA,GD,GE,GF,GG,GH,GI,GL,GM,GN,GP,GQ,GS,GT,GU,GW,GY,HM,HN,HT,ID,IL,IM,IN,IO,IQ,IR,IS,JE,JM,JO,KE,KG,KH,KI,KM,KN,KP,KR,KW,KY,KZ,LA,LB,LC,LI,LK,LR,LS,LY,MA,MC,MD,ME,MG,MH,ML,MM,MN,MO,MP,MQ,MR,MS,MU,MV,MW,MY,MZ,NA,NC,NE,NF,NG,NI,NP,NR,NU,OM,PA,PE,PF,PG,PH,PK,PM,PN,PS,PW,PY,QA,RE,RS,RW,SA,SB,SC,SD,SG,SH,SJ,SL,SM,SN,SO,SR,ST,SV,SY,SZ,TC,TD,TF,TG,TH,TJ,TK,TL,TM,TN,TO,TT,TV,TZ,UA,UG,UM,UY,UZ,VA,VC,VE,VG,VN,VU,WF,WS,YE,YT,ZM,ZW,ZZ";
@@ -94,10 +95,10 @@ public class UtilComponent : IComponent
         response.Telemetry.ServerName = "BGServ";
 
         response.Ticker.Address = "127.0.0.1";
-        response.Ticker.Port = 42126;
+        response.Ticker.Port = 42125;
         response.Ticker.Key = "0,127.0.0.1:8999,darkspore-pc,10,50,50,50,50,0,0";
 
-        response.Options.UserId = 1;
+        response.Options.UserId = client.UserId;
         response.Options.TelemetryOpt = TelemetryOpt.OptOut;
 
         client.RespondTo(packet, response);
@@ -227,6 +228,9 @@ public class ClientInfo : Tdf
 
     [TdfField("MAC", "")]
     public string MacAddress { get; set; } = string.Empty;
+
+    [TdfField("PLAT", "")]
+    public string PLAT { get; set; } = string.Empty;
 }
 
 public class FetchClientConfigRequest : Tdf

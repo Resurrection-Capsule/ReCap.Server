@@ -38,6 +38,12 @@ public class UserSessionsComponent : IComponent
             return false;
         }
 
+        client.Notify(new UserStatus()
+        {
+            BlazeId = client.UserId,
+            StatusFlags = 3
+        }, 0x7802, 5);
+
         client.RespondTo(packet);
         return true;
     }
@@ -59,7 +65,7 @@ public class UserSessionsComponent : IComponent
 
         var update = new UserSessionExtendedDataUpdate
         {
-            UserId = 1
+            UserId = client.UserId
         };
 
         update.ExtendedData.Address.ActiveMember = NetworkAddressMember.IpPairAddress;

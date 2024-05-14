@@ -23,6 +23,9 @@ public class Client
     public IPEndPoint EndPoint { get; } = null!;
     public Action? OnDisconnect { get; set; }
 
+    public ulong UserId { get; set; }
+    public string AuthToken { get; set; }
+
     public Client(Server server, TcpClient tcpClient)
     {
         ReceiveBuffer = ArrayPool<byte>.Shared.Rent(0x10000);
