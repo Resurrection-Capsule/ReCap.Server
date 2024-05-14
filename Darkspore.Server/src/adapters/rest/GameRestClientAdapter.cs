@@ -56,12 +56,12 @@ public class GameRestClientAdapter
             Account = accountMapper.toContract(account)
         };
 
-        bool includeCreatures = Convert.ToBoolean(parameters.Get("include_creatures"));
-        bool includeDecks = Convert.ToBoolean(parameters.Get("include_decks"));
-        bool includeFeed = Convert.ToBoolean(parameters.Get("include_feed"));
-        bool includeSettings = Convert.ToBoolean(parameters.Get("include_settings"));
-        bool includeServerTuning = Convert.ToBoolean(parameters.Get("include_server_tuning"));
-        bool includeTokenCookie = Convert.ToBoolean(parameters.Get("cookie"));
+        bool includeCreatures = Convert.ToBoolean(parser.GetParameterValue("include_creatures"));
+        bool includeDecks = Convert.ToBoolean(parser.GetParameterValue("include_decks"));
+        bool includeFeed = Convert.ToBoolean(parser.GetParameterValue("include_feed"));
+        bool includeSettings = Convert.ToBoolean(parser.GetParameterValue("include_settings"));
+        bool includeServerTuning = Convert.ToBoolean(parser.GetParameterValue("include_server_tuning"));
+        bool includeTokenCookie = Convert.ToBoolean(parser.GetParameterValue("cookie"));
 
         if (includeCreatures) {
             Console.WriteLine("[GameRestClientAdapter] includeCreatures");
