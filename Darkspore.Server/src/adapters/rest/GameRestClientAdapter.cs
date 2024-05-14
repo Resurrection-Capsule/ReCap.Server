@@ -11,12 +11,16 @@ namespace HttpServer;
 
 public class GameRestClientAdapter
 {
-    private AccountService accountService;
     private AccountMapper accountMapper;
+    private AccountService accountService;
+    private CreatureMapper creatureMapper;
+    private CreatureService creatureService;
 
     public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountMapper = new AccountMapper();
         accountService = new AccountService(newSqliteConfig);
+        creatureMapper = new CreatureMapper();
+        creatureService = new CreatureService(newSqliteConfig);
     }
 
     [ApiMethod(Name="api.account.auth")]
@@ -64,8 +68,7 @@ public class GameRestClientAdapter
         bool includeTokenCookie = Convert.ToBoolean(parser.GetParameterValue("cookie"));
 
         if (includeCreatures) {
-            // TODO: Not implemented
-            response.Creatures = [];
+            response.Creatures = creatureService.getCreaturesByAccount(account).Select(creature => creatureMapper.toContract(creature)).ToList();
         }
 
         if (includeDecks) {

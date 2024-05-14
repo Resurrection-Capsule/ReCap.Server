@@ -12,8 +12,11 @@ public class ReCapRestClientAdapter
 {
     private AccountService accountService;
 
+    private CreatureService creatureService;
+
     public ReCapRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountService = new AccountService(newSqliteConfig);
+        creatureService = new CreatureService(newSqliteConfig);
     }
 
     private string getBodyFromRequest(HttpListenerContext context)
@@ -49,9 +52,9 @@ public class ReCapRestClientAdapter
         string name = parameters.Get("name");
         string password = parameters.Get("pass");
         int avatar = Int32.Parse(parameters.Get("avatar"));
+        bool isTest = true; // TODO: Unlocking everything from start to test; make that configurable through parameters
 
-        // TODO: Unlocking everything from start to test; make that configurable through parameters
-        var account = accountService.createAccount(email, name, password, avatar, true);
+        var account = accountService.createAccount(email, name, password, avatar, isTest);
 
         // auto actualPartsSize = Repository::CreatureParts::ListAll().size();
 		// auto parts = Repository::Parts::ListAll();
@@ -61,12 +64,9 @@ public class ReCapRestClientAdapter
 		// }
 		// Repository::CreatureParts::Save();
 
-		// // TODO: Unlocking all creatures from start to test; remove that in the future
-		// std::vector<Repository::CreatureTemplatePtr> templates = Repository::CreatureTemplates::ListAll();
-		// user->get_account().creatureRewards = templates.size();
-		// for (auto& templateCreature : templates) {
-		// 	user->UnlockCreature(templateCreature->id);
-		// }
+		if (isTest) {
+            creatureService.addAllCreatures(account);
+        }
 
 		// for (uint16_t squadSlot = 1; squadSlot <= 3; squadSlot++) {
 		// 	uint16_t templateId = squadSlot - 1;

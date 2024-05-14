@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 using HttpServer;
 
 namespace HttpServer;
 
-public class CreaturePartModel
+public class CreaturePartTemplateModel
 {
+    [Key]
     public ulong rigblockAssetId { get; set; }
 
     public int cost { get; set; }

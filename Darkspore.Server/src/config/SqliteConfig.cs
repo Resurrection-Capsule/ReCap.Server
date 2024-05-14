@@ -7,8 +7,9 @@ namespace HttpServer;
 public class SqliteConfig : DbContext
 {
     public DbSet<AccountModel> Accounts { get; set; }
+    public DbSet<CreatureModel> Creatures { get; set; }
     public DbSet<CreatureTemplateModel> CreatureTemplates { get; set; }
-    public DbSet<CreaturePartModel> CreatureParts { get; set; }
+    public DbSet<CreaturePartTemplateModel> CreaturePartTemplates { get; set; }
 
     private string DbPath;
 
@@ -25,15 +26,15 @@ public class SqliteConfig : DbContext
         this.Database.EnsureCreated();
 
         if (this.CreatureTemplates.SingleOrDefault(b => b.id == 1667741389) == null) {
-            var templatesStr = File.ReadAllText("./resources/templates.json");
+            var templatesStr = File.ReadAllText("./resources/creature_templates.json");
             var templates = JsonSerializer.Deserialize<List<CreatureTemplateModel>>(templatesStr);
             this.CreatureTemplates.AddRange(templates);
             this.SaveChanges();
         }
-        if (this.CreatureParts.SingleOrDefault(b => b.rigblockAssetId == 1) == null) {
-            var partsStr = File.ReadAllText("./resources/parts.json");
-            var parts = JsonSerializer.Deserialize<List<CreaturePartModel>>(partsStr);
-            this.CreatureParts.AddRange(parts);
+        if (this.CreaturePartTemplates.SingleOrDefault(b => b.rigblockAssetId == 1) == null) {
+            var partsStr = File.ReadAllText("./resources/part_templates.json");
+            var parts = JsonSerializer.Deserialize<List<CreaturePartTemplateModel>>(partsStr);
+            this.CreaturePartTemplates.AddRange(parts);
             this.SaveChanges();
         }
     }
