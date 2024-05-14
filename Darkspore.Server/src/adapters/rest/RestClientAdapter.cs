@@ -78,6 +78,14 @@ public class RestClientAdapter
                 fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { query });
                 context.Response.ContentType = "text/xml";
             }
+            else if (uri == "/web/sporelabsgame/register")
+            {
+                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/register/index.html");
+            }
+            else if (uri.StartsWith("/web/sporelabsgame/register/"))
+            {
+                fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
+            }
             else
             {
                 fileBytes = StaticStorageAdapter.GetFile(uri);
