@@ -47,7 +47,8 @@ public class AccountService
 
         // TODO: Implement real default values
 
-        if (isTestAccount) {
+        if (isTestAccount)
+        {
             account.tutorialCompleted = false;
             account.chainProgression = 24;
             account.creatureRewards = 100;
