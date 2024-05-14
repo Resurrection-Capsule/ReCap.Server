@@ -13,6 +13,17 @@ public class AuthResponseContract : ResponseContract {
     [XmlElement(ElementName = "account")]
     public AccountContract? Account { get; set; }
 
+    [XmlArray("creatures")]
+    [XmlArrayItem("creature")]
+    public List<CreatureContract>? Creatures { get; set; }
+
+    [XmlArray("decks")]
+    [XmlArrayItem("deck")]
+    public List<DeckContract>? Decks { get; set; }
+
+    [XmlElement(ElementName = "feed")]
+    public FeedContract? Feed { get; set; }
+
     [XmlElement(ElementName = "settings")]
     public SettingsContract? Settings { get; set; }
 

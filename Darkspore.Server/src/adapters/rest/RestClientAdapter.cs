@@ -78,6 +78,10 @@ public class RestClientAdapter
                 var method = GetMethod(typeof(GameRestClientAdapter), methodName);
                 fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
+
+                if (fileBytes != null) {
+                    Console.WriteLine(System.Text.Encoding.Latin1.GetString(fileBytes, 0, fileBytes.Length));
+                }
             }
             else if (uri.StartsWith("/survey/api"))
             {

@@ -64,18 +64,18 @@ public class GameRestClientAdapter
         bool includeTokenCookie = Convert.ToBoolean(parser.GetParameterValue("cookie"));
 
         if (includeCreatures) {
-            Console.WriteLine("[GameRestClientAdapter] includeCreatures");
-            // user->get_creatures().WriteApi(docResponse);
+            // TODO: Not implemented
+            response.Creatures = [];
         }
 
         if (includeDecks) {
-            Console.WriteLine("[GameRestClientAdapter] includeDecks");
-            // user->WriteSquadsAPI(docResponse);
+            // TODO: Not implemented
+            response.Decks = [];
         }
 
         if (includeFeed) {
-            Console.WriteLine("[GameRestClientAdapter] includeFeed");
-            // user->get_feed().Write(docResponse);
+            // TODO: Not implemented
+            response.Feed = new FeedContract{ Items = [] };
         }
 
         if (includeSettings) {
@@ -118,8 +118,14 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.account.logout")]
     public byte[] logoutPlayerAccount(HttpListenerContext context)
     {
-        var parameters = context.Request.QueryString;
-        return null;
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.account.searchAccounts")]

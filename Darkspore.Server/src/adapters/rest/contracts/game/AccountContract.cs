@@ -9,7 +9,7 @@ namespace HttpServer;
 public class AccountContract {
 
     [XmlElement(ElementName = "id")]
-    public int? BlazeId { get; set; }
+    public int? Id { get; set; }
 
     [XmlElement(ElementName = "tutorial_completed")]
     public string? tutorialCompleted { get; set; }
