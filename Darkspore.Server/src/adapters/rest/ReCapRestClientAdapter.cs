@@ -50,7 +50,36 @@ public class ReCapRestClientAdapter
         string password = parameters.Get("pass");
         int avatar = Int32.Parse(parameters.Get("avatar"));
 
-        accountService.createAccount(email, name, password, avatar);
+        // TODO: Unlocking everything from start to test; make that configurable through parameters
+        var account = accountService.createAccount(email, name, password, avatar, true);
+
+        // auto actualPartsSize = Repository::CreatureParts::ListAll().size();
+		// auto parts = Repository::Parts::ListAll();
+		// uint64_t index = 1;
+		// for (auto& part : parts) {
+		// 	Repository::CreatureParts::Add(std::make_shared<Game::CreaturePart>(actualPartsSize + index++, part->rigblock_asset_id, user->get_account().id));
+		// }
+		// Repository::CreatureParts::Save();
+
+		// // TODO: Unlocking all creatures from start to test; remove that in the future
+		// std::vector<Repository::CreatureTemplatePtr> templates = Repository::CreatureTemplates::ListAll();
+		// user->get_account().creatureRewards = templates.size();
+		// for (auto& templateCreature : templates) {
+		// 	user->UnlockCreature(templateCreature->id);
+		// }
+
+		// for (uint16_t squadSlot = 1; squadSlot <= 3; squadSlot++) {
+		// 	uint16_t templateId = squadSlot - 1;
+		// 	Squad squad1;
+		// 	squad1.id = squadSlot;
+		// 	squad1.slot = squadSlot;
+		// 	squad1.name = "Slot " + std::to_string(squadSlot);
+		// 	squad1.locked = false;
+		// 	squad1.creatures.Add(templates[templateId]->id);
+		// 	user->get_squads().data().push_back(squad1);
+		// }
+
+		// Repository::Users::SaveUser(user);
 
         var response = new ResponseContract{
             Stat = "ok",
