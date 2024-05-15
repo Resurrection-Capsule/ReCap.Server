@@ -12,7 +12,7 @@ public class Account
 
     public bool tutorialCompleted = false;
     public bool grantAllAccess = false;
-    public bool grantOnlineAccess = false;
+    public bool? grantOnlineAccess = false;
 
     public int chainProgression = 0;
     public int creatureRewards = 0;

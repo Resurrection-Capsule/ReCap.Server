@@ -5,8 +5,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IncludePath>$(IncludePath);$(ProjectDir)\libs\openssl-1.1.1b\include\;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(ProjectDir)\libs\openssl-1.1.1b\lib\;</LibraryPath>
   </PropertyGroup>
 
   <ItemGroup>

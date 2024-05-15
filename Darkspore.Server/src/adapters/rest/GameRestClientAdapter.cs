@@ -5,7 +5,6 @@ using System.Text;
 using System.Collections.Specialized;
 
 using HttpServer;
-using HttpMultipartParser;
 
 namespace HttpServer;
 
@@ -28,48 +27,73 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.account.auth")]
-    public byte[] loginPlayerAccount(HttpListenerContext context)
+    public byte[] loginPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         var request = context.Request;
-        var parameters = request.QueryString;
 
         string authToken = null;
         Account account = null;
 
-        var parser = MultipartFormDataParser.Parse(request.InputStream);
-        string key = parser.GetParameterValue("key");
+        string key = parameters.GetValueOrDefault("key", null);
         if (key != null) {
-            // key = auth_token::0
-            string[] keyParts = key.Split(' ');
+            // key = "{auth_token}::0" (example: "1::0")
+            string[] keyParts = key.Split("::");
             authToken = keyParts[0];
             account = accountService.getAccountByAuthToken(authToken);
+
+            // TODO: Temporary code
+            account.tutorialCompleted = false;
+            account.chainProgression = 24;
+            account.creatureRewards = 100;
+            account.currentGameId = 1;
+            account.currentPlaygroupId = 1;
+            account.defaultDeckPveId = 1;
+            account.defaultDeckPvpId = 1;
+            account.level = 100;
+            account.dna = 10000000;
+            account.newPlayerInventory = 1;
+            account.newPlayerProgress = 9500;
+            account.cashoutBonusTime = 1;
+            account.starLevel = 10;
+            account.unlockCatalysts = 1;
+            account.unlockDiagonalCatalysts = 1;
+            account.unlockFuelTanks = 1;
+            account.unlockInventory = 1;
+            account.unlockPveDecks = 2;
+            account.unlockPvpDecks = 1;
+            account.unlockStats = 1;
+            account.unlockInventoryIdentify = 2500;
+            account.unlockEditorFlairSlots = 1;
+            account.upsell = 1;
+            account.xp = 10000;
+            account.grantAllAccess = true;
+            account.grantOnlineAccess = null;
         }
         if (account == null) {
             throw new ForbiddenOperationException("Unindentified account");
         }
 
-        // auto newPlayerProgress = request.uri.parameter<uint32_t>("new_player_progress");
-        // if (newPlayerProgress != 0) {
-        //     std::cout << "Old progress: " << account.newPlayerProgress << ", New: " << newPlayerProgress << std::endl;
-        //     account.newPlayerProgress = newPlayerProgress;
-        // }
+        int newPlayerProgress = Convert.ToInt32(parameters.GetValueOrDefault("new_player_progress", "0"));
+        if (newPlayerProgress != 0) {
+            account.newPlayerProgress = newPlayerProgress;
+        }
 
         // account.Write(docAccount);
 
         var response = new AuthResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
-            Timestamp = 1,
+            Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
             ExecTime = 1,
             Account = accountMapper.toContract(account)
         };
 
-        bool includeCreatures = Convert.ToBoolean(parser.GetParameterValue("include_creatures"));
-        bool includeDecks = Convert.ToBoolean(parser.GetParameterValue("include_decks"));
-        bool includeFeed = Convert.ToBoolean(parser.GetParameterValue("include_feed"));
-        bool includeSettings = Convert.ToBoolean(parser.GetParameterValue("include_settings"));
-        bool includeServerTuning = Convert.ToBoolean(parser.GetParameterValue("include_server_tuning"));
-        bool includeTokenCookie = Convert.ToBoolean(parser.GetParameterValue("cookie"));
+        bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", null));
+        bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", null));
+        bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", null));
+        bool includeSettings = Convert.ToBoolean(parameters.GetValueOrDefault("include_settings", null));
+        bool includeServerTuning = Convert.ToBoolean(parameters.GetValueOrDefault("include_server_tuning", null));
+        bool includeTokenCookie = Convert.ToBoolean(parameters.GetValueOrDefault("cookie", null));
 
         var creatures = creatureService.getCreaturesByAccount(account);
 
@@ -83,14 +107,16 @@ public class GameRestClientAdapter
 
         if (includeFeed) {
             // TODO: Not implemented
-            response.Feed = new FeedContract{ Items = [] };
+            response.Feed = new FeedContract{
+                // Items = []
+            };
         }
 
         if (includeSettings) {
             response.Settings = new SettingsContract{
-                ShowConfigAlerts = true ? "on" : "off",
-                Cheat = true ? "on" : "off",
-                SafeMode = true ? "on" : "off"
+                // ShowConfigAlerts = true ? "on" : "off",
+                // Cheat = true ? "on" : "off",
+                // SafeMode = true ? "on" : "off"
             };
         }
 
@@ -110,21 +136,21 @@ public class GameRestClientAdapter
         }
 
         if (includeTokenCookie) {
-            context.Response.SetCookie(new Cookie("token", authToken));
+            string cookieDate = DateTime.UtcNow.AddMinutes(60).ToString("ddd, dd-MMM-yyyy H:mm:ss");
+            context.Response.Headers.Add("Set-Cookie", $"token={authToken}");
         }
 
         return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.account.getAccount")]
-    public byte[] getPlayerAccount(HttpListenerContext context)
+    public byte[] getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.logout")]
-    public byte[] logoutPlayerAccount(HttpListenerContext context)
+    public byte[] logoutPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         var response = new ResponseContract{
             Stat = "ok",
@@ -137,135 +163,116 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.account.searchAccounts")]
-    public byte[] searchPlayerAccounts(HttpListenerContext context)
+    public byte[] searchPlayerAccounts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.setSettings")]
-    public byte[] setPlayerAccountSettings(HttpListenerContext context)
+    public byte[] setPlayerAccountSettings(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.unlock")]
-    public byte[] unlockPlayerAccount(HttpListenerContext context)
+    public byte[] unlockPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.account.setNewPlayerStats")]
-    public byte[] setNewPlayerStats(HttpListenerContext context)
+    public byte[] setNewPlayerStats(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.getCreature")]
-    public byte[] getCreature(HttpListenerContext context)
+    public byte[] getCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.getTemplate")]
-    public byte[] getTemplate(HttpListenerContext context)
+    public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.resetCreature")]
-    public byte[] resetCreature(HttpListenerContext context)
+    public byte[] resetCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.unlockCreature")]
-    public byte[] unlockCreature(HttpListenerContext context)
+    public byte[] unlockCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.creature.updateCreature")]
-    public byte[] updateCreature(HttpListenerContext context)
+    public byte[] updateCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.deck.updateDecks")]
-    public byte[] updateDecks(HttpListenerContext context)
+    public byte[] updateDecks(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.exitGame")]
-    public byte[] exitGame(HttpListenerContext context)
+    public byte[] exitGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.getGame")]
-    public byte[] getGame(HttpListenerContext context)
+    public byte[] getGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.game.getRandomGame")]
-    public byte[] getRandomGame(HttpListenerContext context)
+    public byte[] getRandomGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.getPartList")]
-    public byte[] getPartList(HttpListenerContext context)
+    public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.getPartOfferList")]
-    public byte[] getPartOfferList(HttpListenerContext context)
+    public byte[] getPartOfferList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.updatePartStatus")]
-    public byte[] updatePartStatus(HttpListenerContext context)
+    public byte[] updatePartStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.inventory.vendorParts")]
-    public byte[] getVendorParts(HttpListenerContext context)
+    public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.leaderboard.getLeaderboard")]
-    public byte[] getLeaderboard(HttpListenerContext context)
+    public byte[] getLeaderboard(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         return null;
     }
 
     [ApiMethod(Name="api.status.getBroadcastList")]
-    public byte[] getBroadcastList(HttpListenerContext context)
+    public byte[] getBroadcastList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
         var response = new StatusResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
@@ -278,10 +285,9 @@ public class GameRestClientAdapter
     }
 
     [ApiMethod(Name="api.status.getStatus")]
-    public byte[] getStatus(HttpListenerContext context)
+    public byte[] getStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
-        bool includeBroadcasts = parameters.Get("include_broadcasts") == "true";
+        bool includeBroadcasts = parameters["include_broadcasts"] == "true";
 
         var response = new StatusResponseContract{
             Stat = "ok",

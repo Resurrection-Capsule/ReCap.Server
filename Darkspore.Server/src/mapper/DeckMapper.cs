@@ -29,7 +29,7 @@ public class DeckMapper
     }
 
     public DeckContract toContract(Deck deck, List<Creature> creatures) {
-        return new DeckContract{
+        var deckContract = new DeckContract{
             ID = deck.ID,
             Name = deck.Name,
             Category = deck.Category,
@@ -37,5 +37,12 @@ public class DeckMapper
             Locked = deck.Locked ? 1 : 0,
             Creatures = deck.CreatureIds.Select(creatureId => creatureMapper.toContract(creatures.Find(c => c.ID == creatureId))).ToList()
         };
+        // TODO: Temporary code
+        deckContract.Creatures = [
+            creatureMapper.toContract(creatures[deck.Slot*3]),
+            creatureMapper.toContract(creatures[deck.Slot*3 + 1]),
+            creatureMapper.toContract(creatures[deck.Slot*3 + 2])
+        ];
+        return deckContract;
     }
 }

@@ -58,7 +58,7 @@ public class AuthenticationComponent : IComponent
     private static bool GetAuthToken(Client client, Packet packet)
     {
         Guid myuuid = Guid.NewGuid();
-        client.AuthToken = "1"; //myuuid.ToString();
+        client.AuthToken = myuuid.ToString();
 
         var response = new GetAuthTokenResponse
         {

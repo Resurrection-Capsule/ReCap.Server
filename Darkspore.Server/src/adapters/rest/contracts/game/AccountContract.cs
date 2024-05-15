@@ -91,6 +91,7 @@ public class AccountContract {
 
     [XmlElement(ElementName = "grant_online_access")]
     public int? grantOnlineAccess { get; set; }
+    public bool ShouldSerializegrantOnlineAccess() => grantOnlineAccess.HasValue;
 
     [XmlElement(ElementName = "cap_level")]
     public int? capLevel { get; set; }

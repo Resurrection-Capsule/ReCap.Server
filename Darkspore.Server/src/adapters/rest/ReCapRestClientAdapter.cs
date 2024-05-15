@@ -68,12 +68,6 @@ public class ReCapRestClientAdapter
 		if (isTest) {
             var creatures = creatureService.addAllCreatures(account);
             var decks = deckService.createDecksForAccount(account);
-            // decks[0].CreatureIds.Add(creatures[0].ID);
-            // decks[1].CreatureIds.Add(creatures[1].ID);
-            // decks[2].CreatureIds.Add(creatures[2].ID);
-            // deckService.updateDeck(decks[0]);
-            // deckService.updateDeck(decks[1]);
-            // deckService.updateDeck(decks[2]);
         }
 
         var response = new ResponseContract{

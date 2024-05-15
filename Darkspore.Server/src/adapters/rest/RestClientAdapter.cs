@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 
 using HttpServer;
+using HttpMultipartParser;
 
 namespace HttpServer;
 
@@ -38,9 +39,42 @@ public class RestClientAdapter
         }
     }
 
+    private Dictionary<string,string> GetParameters(HttpListenerContext context)
+    {
+        var parameters = new Dictionary<string,string>();
+
+        // Query parameters
+        var query = context.Request.QueryString;
+        foreach (string key in query.Keys) {
+            parameters.Add(key, query.Get(key));
+        }
+
+        // Multipart form parameters
+        if (context.Request.HttpMethod == "POST") {
+            var inputStream = context.Request.InputStream;
+            var parser = MultipartFormDataParser.Parse(inputStream);
+            foreach(var entry in parser.Parameters) {
+                parameters.Add(entry.Name, entry.Data);
+            }
+        }
+
+        var cookies = context.Request.Cookies;
+        foreach(Cookie cookie in cookies) {
+            if (parameters.ContainsKey(cookie.Name)) {
+                if (parameters[cookie.Name] == "cookie") {
+                    parameters[cookie.Name] = cookie.Value;
+                }
+            }
+        }
+
+        // Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
+
+        return parameters;
+    }
+
     private void ProcessRequest(HttpListenerContext context)
     {
-        var query = context.Request.QueryString;
+        var parameters = GetParameters(context);
         string uri = context.Request.Url.LocalPath;
         byte[] fileBytes = null;
 
@@ -56,27 +90,19 @@ public class RestClientAdapter
             }
             else if (uri.StartsWith("/recap/api"))
             {
-                var method = GetMethod(typeof(ReCapRestClientAdapter), query.Get("method"));
+                var method = GetMethod(typeof(ReCapRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context });
             }
             else if (uri.StartsWith("/bootstrap/api"))
             {
-                var method = GetMethod(typeof(BootstrapRestClientAdapter), query.Get("method"));
+                var method = GetMethod(typeof(BootstrapRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/game/api"))
             {
-                var methodName = query.Get("method");
-                if (String.IsNullOrEmpty(methodName)) {
-                    if (String.IsNullOrEmpty(query.Get("token"))) {
-                        methodName = "api.account.auth";
-                    } else {
-                        methodName = "api.account.getAccount";
-                    }
-                }
-                var method = GetMethod(typeof(GameRestClientAdapter), methodName);
-                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context });
+                var method = GetMethod(typeof(GameRestClientAdapter), parameters["method"]);
+                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
 
                 if (fileBytes != null) {
@@ -85,7 +111,7 @@ public class RestClientAdapter
             }
             else if (uri.StartsWith("/survey/api"))
             {
-                var method = GetMethod(typeof(SurveyRestClientAdapter), query.Get("method"));
+                var method = GetMethod(typeof(SurveyRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
