@@ -77,7 +77,7 @@ public class AccountService
             account.grantOnlineAccess = true;
         }
 
-        accountRepository.saveAccount(account);
+        accountRepository.insertAccount(account);
         return account;
     }
 }

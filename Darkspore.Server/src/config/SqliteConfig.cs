@@ -10,6 +10,7 @@ public class SqliteConfig : DbContext
     public DbSet<CreatureModel> Creatures { get; set; }
     public DbSet<CreatureTemplateModel> CreatureTemplates { get; set; }
     public DbSet<CreaturePartTemplateModel> CreaturePartTemplates { get; set; }
+    public DbSet<DeckModel> Decks { get; set; }
 
     private string DbPath;
 

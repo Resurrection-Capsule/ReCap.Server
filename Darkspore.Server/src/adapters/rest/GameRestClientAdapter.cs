@@ -15,12 +15,16 @@ public class GameRestClientAdapter
     private AccountService accountService;
     private CreatureMapper creatureMapper;
     private CreatureService creatureService;
+    private DeckMapper deckMapper;
+    private DeckService deckService;
 
     public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountMapper = new AccountMapper();
         accountService = new AccountService(newSqliteConfig);
         creatureMapper = new CreatureMapper();
         creatureService = new CreatureService(newSqliteConfig);
+        deckMapper = new DeckMapper();
+        deckService = new DeckService(newSqliteConfig);
     }
 
     [ApiMethod(Name="api.account.auth")]
@@ -67,13 +71,14 @@ public class GameRestClientAdapter
         bool includeServerTuning = Convert.ToBoolean(parser.GetParameterValue("include_server_tuning"));
         bool includeTokenCookie = Convert.ToBoolean(parser.GetParameterValue("cookie"));
 
+        var creatures = creatureService.getCreaturesByAccount(account);
+
         if (includeCreatures) {
-            response.Creatures = creatureService.getCreaturesByAccount(account).Select(creature => creatureMapper.toContract(creature)).ToList();
+            response.Creatures = creatures.Select(creature => creatureMapper.toContract(creature)).ToList();
         }
 
         if (includeDecks) {
-            // TODO: Not implemented
-            response.Decks = [];
+            response.Decks = deckService.getDecksByAccount(account).Select(deck => deckMapper.toContract(deck, creatures)).ToList();
         }
 
         if (includeFeed) {

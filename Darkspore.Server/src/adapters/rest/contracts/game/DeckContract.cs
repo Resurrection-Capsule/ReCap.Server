@@ -9,7 +9,7 @@ namespace HttpServer;
 public class DeckContract {
 
     [XmlElement(ElementName = "id")]
-    public int? ID { get; set; }
+    public ulong? ID { get; set; }
 
     [XmlElement(ElementName = "name")]
     public string? Name { get; set; }
@@ -25,6 +25,6 @@ public class DeckContract {
 
     [XmlArray("creatures")]
     [XmlArrayItem("creature")]
-    public List<DeckCreatureContract>? Creatures { get; set; }
+    public List<CreatureContract>? Creatures { get; set; }
 
 }

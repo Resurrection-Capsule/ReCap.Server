@@ -38,7 +38,7 @@ public class CreatureService
             GearScore = 0,
             ItemPoints = 300
         };
-        creatureRepository.saveCreature(creature);
+        creatureRepository.insertCreature(creature);
         return creature;
     }
 }

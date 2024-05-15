@@ -11,12 +11,13 @@ namespace HttpServer;
 public class ReCapRestClientAdapter
 {
     private AccountService accountService;
-
     private CreatureService creatureService;
+    private DeckService deckService;
 
     public ReCapRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountService = new AccountService(newSqliteConfig);
         creatureService = new CreatureService(newSqliteConfig);
+        deckService = new DeckService(newSqliteConfig);
     }
 
     private string getBodyFromRequest(HttpListenerContext context)
@@ -65,21 +66,15 @@ public class ReCapRestClientAdapter
 		// Repository::CreatureParts::Save();
 
 		if (isTest) {
-            creatureService.addAllCreatures(account);
+            var creatures = creatureService.addAllCreatures(account);
+            var decks = deckService.createDecksForAccount(account);
+            // decks[0].CreatureIds.Add(creatures[0].ID);
+            // decks[1].CreatureIds.Add(creatures[1].ID);
+            // decks[2].CreatureIds.Add(creatures[2].ID);
+            // deckService.updateDeck(decks[0]);
+            // deckService.updateDeck(decks[1]);
+            // deckService.updateDeck(decks[2]);
         }
-
-		// for (uint16_t squadSlot = 1; squadSlot <= 3; squadSlot++) {
-		// 	uint16_t templateId = squadSlot - 1;
-		// 	Squad squad1;
-		// 	squad1.id = squadSlot;
-		// 	squad1.slot = squadSlot;
-		// 	squad1.name = "Slot " + std::to_string(squadSlot);
-		// 	squad1.locked = false;
-		// 	squad1.creatures.Add(templates[templateId]->id);
-		// 	user->get_squads().data().push_back(squad1);
-		// }
-
-		// Repository::Users::SaveUser(user);
 
         var response = new ResponseContract{
             Stat = "ok",

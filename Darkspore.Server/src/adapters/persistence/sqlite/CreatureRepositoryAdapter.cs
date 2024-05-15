@@ -23,7 +23,7 @@ public class CreatureRepositoryAdapter
         return creatureModels.Select(creatureModel => creatureMapper.toDomain(creatureModel)).ToList();
     }
 
-    public void saveCreature(Creature creature)
+    public void insertCreature(Creature creature)
     {
         var creatureModel = creatureMapper.toModel(creature);
         sqliteConfig.Creatures.Add(creatureModel);

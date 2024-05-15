@@ -42,9 +42,9 @@ public class AccountRepositoryAdapter
         return accountMapper.toDomain(accountModel);
     }
 
-    public void saveAccount(Account account)
+    public void insertAccount(Account account)
     {
-        account.Id = 1;
+        account.Id = 1; // TODO: Generate ID dynamically
 
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);
