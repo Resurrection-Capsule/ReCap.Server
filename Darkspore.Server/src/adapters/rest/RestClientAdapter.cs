@@ -58,6 +58,7 @@ public class RestClientAdapter
             }
         }
 
+        // Cookies parameters
         var cookies = context.Request.Cookies;
         foreach(Cookie cookie in cookies) {
             if (parameters.ContainsKey(cookie.Name)) {
