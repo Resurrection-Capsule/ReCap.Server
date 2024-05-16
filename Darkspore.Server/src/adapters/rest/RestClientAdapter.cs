@@ -68,7 +68,7 @@ public class RestClientAdapter
             }
         }
 
-        // Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
+        Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
 
         return parameters;
     }
@@ -105,10 +105,6 @@ public class RestClientAdapter
                 var method = GetMethod(typeof(GameRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
-
-                if (fileBytes != null) {
-                    Console.WriteLine(System.Text.Encoding.Latin1.GetString(fileBytes, 0, fileBytes.Length));
-                }
             }
             else if (uri.StartsWith("/survey/api"))
             {
@@ -137,7 +133,7 @@ public class RestClientAdapter
             else {
                 context.Response.StatusCode = 501;
                 context.Response.StatusDescription = "Method not implemented";
-                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 501");
+                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {parameters.GetValueOrDefault("method", "<unknown>")}");
             }
             context.Response.Close();
         }
