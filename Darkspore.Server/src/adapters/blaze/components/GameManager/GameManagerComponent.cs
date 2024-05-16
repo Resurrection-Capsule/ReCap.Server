@@ -108,7 +108,7 @@ public class GameManagerComponent : IComponent
         //    notify.GameData.GameAttribs.Add("GameType", "");
 
         if (!notify.GameData.GameAttribs.ContainsKey("GameOwnerName"))
-            notify.GameData.GameAttribs.Add("GameOwnerName", "HelloDawngate");
+            notify.GameData.GameAttribs.Add("GameOwnerName", "HelloDarkspore");
 
         if (!notify.GameData.GameAttribs.ContainsKey("GameFlags"))
             notify.GameData.GameAttribs.Add("GameFlags", "0");
@@ -155,7 +155,7 @@ public class GameManagerComponent : IComponent
             SlotType = SlotType.Public,
             GameId = game.Id,
             AccountLocale = 0x656E5553,
-            PlayerName = "HelloDawngate",
+            PlayerName = "HelloDarkspore",
             PlayerId = 1,
             JoinedGameTimestamp = CurrentUnixTime,
             PlayerState = PlayerState.ActiveConnected,

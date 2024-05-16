@@ -35,7 +35,7 @@ public class RoomsComponent : IComponent
             // {
             //     DisplayName = "",
             //     MaxUserRooms = 255,
-            //     Name = "HelloDawngate's Room",
+            //     Name = "HelloDarkspore's Room",
             //     NumUserRooms = 1,
             //     ViewId = 1
             // }, Id, 0xA);
