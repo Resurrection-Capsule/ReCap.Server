@@ -44,13 +44,13 @@ public class AssociationListsComponent : IComponent
             if (type == 4) {
                 // Ignore list
 
-                // newList.Members.Add(new GetListsResponseListMember{
-                //     ID = new GetListsResponseListMemberId{
-                //         ID = user->get_id(),
-                //         Name = user->get_name()
-                //     },
-                //     TIME = 0
-                // });
+                newList.Members.Add(new GetListsResponseListMember{
+                    ID = new GetListsResponseListMemberId{
+                        ID = 101,
+                        Name = "Ignoredude"
+                    },
+                    TIME = 0
+                });
             } else if (type == 5) {
                 // Friend list
 
@@ -147,21 +147,6 @@ public class BlazeList : Tdf
 
     [TdfField("PRID", 0)]
     public ulong PRID { get; set; }
-}
-
-public class BlazeObjectId : Tdf
-{
-    [TdfField("_Type", 0x9)]
-    public uint Type { get; set; }
-
-    [TdfField("_X", 0)]
-    public uint X { get; set; }
-
-    [TdfField("_Y", 0)]
-    public uint Y { get; set; }
-
-    [TdfField("_Z", 0)]
-    public ulong Z { get; set; }
 }
 
 public class GetListsResponse : Tdf

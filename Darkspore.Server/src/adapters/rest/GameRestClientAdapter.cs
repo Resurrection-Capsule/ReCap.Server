@@ -171,7 +171,17 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.account.setSettings")]
     public byte[] setPlayerAccountSettings(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        string authToken = parameters["token"];
+        string settings = parameters["settings"]; // Example: Key1,Val1;Key2,Val2;Key3,Val3;
+
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.account.unlock")]
