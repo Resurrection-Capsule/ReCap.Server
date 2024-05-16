@@ -105,7 +105,7 @@ public class AuthenticationComponent : IComponent
             DisplayName = account.Username,
             LastLoginTime = CurrentUnixTime,
             PersonaId = account.Id,
-            Status = PersonaStatus.Active,
+            Status = PersonaStatus.Active
         });
 
         client.RespondTo(packet, response);
@@ -454,7 +454,7 @@ public class PersonaDetails : Tdf
     [TdfField("PID", 0)]
     public ulong PersonaId { get; set; }
 
-    [TdfField("PLAT", ConnectionProfileType.Invalid)]
+    [TdfField("XTYP", ConnectionProfileType.Invalid)]
     public ConnectionProfileType Platform { get; set; } = ConnectionProfileType.Invalid;
 
     [TdfField("STAS", PersonaStatus.Unknown)]

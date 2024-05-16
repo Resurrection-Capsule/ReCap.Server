@@ -152,6 +152,8 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.account.logout")]
     public byte[] logoutPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string authToken = parameters["token"];
+
         var response = new ResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),

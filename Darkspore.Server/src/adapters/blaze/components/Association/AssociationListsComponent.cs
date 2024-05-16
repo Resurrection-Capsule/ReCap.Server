@@ -153,6 +153,18 @@ public class GetListsResponse : Tdf
 {
     [TdfField("LMAP")]
     public TdfStructVector<GetListsResponseList> Lists { get; } = [];
+
+    [TdfField("GRP", 0xFF)]
+    public ulong GRP { get; set; }
+
+    [TdfField("LVL", 0xCC)]
+    public ulong LVL { get; set; }
+
+    [TdfField("STAT", 0x02)]
+    public ulong STAT { get; set; }
+
+    [TdfField("XTRA", 0xAA)]
+    public ulong XTRA { get; set; }
 }
 
 public class GetListsResponseList : Tdf
