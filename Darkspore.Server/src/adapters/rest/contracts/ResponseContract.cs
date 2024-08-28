@@ -13,6 +13,12 @@ public class ResponseContract {
     [XmlElement(ElementName = "stat")]
     public string? Stat { get; set; }
 
+    [XmlElement(ElementName = "code")]
+    public int? Code { get; set; }
+
+    [XmlElement(ElementName = "result")]
+    public int? Result { get; set; }
+
     [XmlElement(ElementName = "version")]
     public string? Version { get; set; }
 

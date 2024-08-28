@@ -17,10 +17,9 @@ public class DeckRepositoryAdapter
         deckMapper = new DeckMapper();
     }
 
-    public List<Deck> getDecksByAccountId(ulong accountId)
+    public List<DeckModel> getDecksByAccountId(ulong accountId)
     {
-        var deckModels = sqliteConfig.Decks.Where(b => b.AccountID == accountId).ToList();
-        return deckModels.Select(deckModel => deckMapper.toDomain(deckModel)).ToList();
+        return sqliteConfig.Decks.Where(b => b.AccountID == accountId).ToList();
     }
 
     public void insertDeck(Deck deck)

@@ -17,10 +17,9 @@ public class CreatureRepositoryAdapter
         creatureMapper = new CreatureMapper();
     }
 
-    public List<Creature> getCreaturesByAccountId(ulong accountId)
+    public List<CreatureModel> getCreaturesByAccountId(ulong accountId)
     {
-        var creatureModels = sqliteConfig.Creatures.Where(b => b.AccountID == accountId).ToList();
-        return creatureModels.Select(creatureModel => creatureMapper.toDomain(creatureModel)).ToList();
+        return sqliteConfig.Creatures.Where(b => b.AccountID == accountId).ToList();
     }
 
     public void insertCreature(Creature creature)

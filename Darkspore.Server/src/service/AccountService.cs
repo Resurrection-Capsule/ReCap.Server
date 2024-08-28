@@ -10,7 +10,7 @@ public class AccountService
         accountRepository = new AccountRepositoryAdapter(newSqliteConfig);
     }
 
-    public Account getAccountById(ulong id) {
+    public AccountModel getAccountById(ulong id) {
         var account = accountRepository.getAccountById(id);
         if (account == null) {
             throw new ForbiddenOperationException("Account ID not found");
@@ -18,7 +18,7 @@ public class AccountService
         return account;
     }
 
-    public Account getAccountByEmailAndPassword(string email, string password) {
+    public AccountModel getAccountByEmailAndPassword(string email, string password) {
         var account = accountRepository.getAccountByEmail(email);
         if (account == null) {
             throw new ForbiddenOperationException("This e-mail does not belong to any account");
@@ -29,7 +29,7 @@ public class AccountService
         return account;
     }
 
-    public Account getAccountByAuthToken(string authToken) {
+    public AccountModel getAccountByAuthToken(string authToken) {
         return accountRepository.getAccountByAuthToken(authToken);
     }
 

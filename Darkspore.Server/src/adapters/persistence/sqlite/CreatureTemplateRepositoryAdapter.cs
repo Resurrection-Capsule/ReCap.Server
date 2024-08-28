@@ -17,18 +17,13 @@ public class CreatureTemplateRepositoryAdapter
         creatureTemplateMapper = new CreatureTemplateMapper();
     }
 
-    public List<CreatureTemplate> getAllTemplates()
+    public List<CreatureTemplateModel> getAllTemplates()
     {
-        return sqliteConfig.CreatureTemplates.ToList()
-            .Select(creatureTemplate => creatureTemplateMapper.toDomain(creatureTemplate)).ToList();
+        return sqliteConfig.CreatureTemplates.ToList();
     }
 
-    public CreatureTemplate getTemplateById(ulong id)
+    public CreatureTemplateModel getTemplateById(ulong id)
     {
-        var creatureTemplateModel = sqliteConfig.CreatureTemplates.SingleOrDefault(b => b.id == id);
-        if (creatureTemplateModel == null) {
-            return null;
-        }
-        return creatureTemplateMapper.toDomain(creatureTemplateModel);
+        return sqliteConfig.CreatureTemplates.SingleOrDefault(b => b.id == id);
     }
 }

@@ -15,20 +15,15 @@ public class DeckMapper
         var configuration = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Deck, DeckModel>();
-            cfg.CreateMap<DeckModel, Deck>();
         });
         mapper = configuration.CreateMapper();
     }
 
-    public Deck toDomain(DeckModel deck) {
-        return mapper.Map<Deck>(deck);
-    }
-    
     public DeckModel toModel(Deck deck) {
         return mapper.Map<DeckModel>(deck);
     }
 
-    public DeckContract toContract(Deck deck, List<Creature> creatures) {
+    public DeckContract toContract(DeckModel deck, List<CreatureModel> creatures) {
         var deckContract = new DeckContract{
             ID = deck.ID,
             Name = deck.Name,

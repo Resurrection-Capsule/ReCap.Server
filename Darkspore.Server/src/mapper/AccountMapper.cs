@@ -12,22 +12,17 @@ public class AccountMapper
         var configuration = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Account, AccountModel>();
-            cfg.CreateMap<AccountModel, Account>();
-            cfg.CreateMap<Account, AccountContract>()
+            cfg.CreateMap<AccountModel, AccountContract>()
                 .ForMember(s => s.tutorialCompleted, opt => opt.MapFrom(src => src.tutorialCompleted ? "Y" : "N"));
         });
         mapper = configuration.CreateMapper();
     }
 
-    public Account toDomain(AccountModel account) {
-        return mapper.Map<Account>(account);
-    }
-    
     public AccountModel toModel(Account account) {
         return mapper.Map<AccountModel>(account);
     }
 
-    public AccountContract toContract(Account account) {
+    public AccountContract toContract(AccountModel account) {
         return mapper.Map<AccountContract>(account);
     }
 }

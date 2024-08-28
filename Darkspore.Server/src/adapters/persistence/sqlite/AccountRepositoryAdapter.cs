@@ -17,29 +17,20 @@ public class AccountRepositoryAdapter
         accountMapper = new AccountMapper();
     }
 
-    public Account getAccountByAuthToken(string authToken)
+    public AccountModel getAccountByAuthToken(string authToken)
     {
         // TODO: Not implemented yet
-        var accountModel = sqliteConfig.Accounts.First();
-        return accountMapper.toDomain(accountModel);
+        return sqliteConfig.Accounts.First();
     }
 
-    public Account getAccountById(ulong id)
+    public AccountModel getAccountById(ulong id)
     {
-        var accountModel = sqliteConfig.Accounts.SingleOrDefault(b => b.Id == id);
-        if (accountModel == null) {
-            return null;
-        }
-        return accountMapper.toDomain(accountModel);
+        return sqliteConfig.Accounts.SingleOrDefault(b => b.Id == id);
     }
 
-    public Account getAccountByEmail(string email)
+    public AccountModel getAccountByEmail(string email)
     {
-        var accountModel = sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
-        if (accountModel == null) {
-            return null;
-        }
-        return accountMapper.toDomain(accountModel);
+        return sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
     }
 
     public void insertAccount(Account account)

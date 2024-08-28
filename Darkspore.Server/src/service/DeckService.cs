@@ -10,7 +10,7 @@ public class DeckService
         deckRepository = new DeckRepositoryAdapter(newSqliteConfig);
     }
 
-    public List<Deck> getDecksByAccount(Account account) {
+    public List<DeckModel> getDecksByAccount(AccountModel account) {
         return deckRepository.getDecksByAccountId(account.Id);
     }
 

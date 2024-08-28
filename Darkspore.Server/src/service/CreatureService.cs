@@ -13,7 +13,7 @@ public class CreatureService
         creatureTemplateRepository = new CreatureTemplateRepositoryAdapter(newSqliteConfig);
     }
 
-    public List<Creature> getCreaturesByAccount(Account account) {
+    public List<CreatureModel> getCreaturesByAccount(AccountModel account) {
         return creatureRepository.getCreaturesByAccountId(account.Id);
     }
 
@@ -28,7 +28,7 @@ public class CreatureService
         return creatures;
     }
 
-    public Creature addCreature(Account account, CreatureTemplate creatureTemplate) {
+    public Creature addCreature(Account account, CreatureTemplateModel creatureTemplate) {
         var creature = new Creature{
             ID = creatureTemplate.id, // TODO: Replace with sequence
             Version = 1,

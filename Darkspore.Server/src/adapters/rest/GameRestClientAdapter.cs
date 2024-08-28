@@ -32,7 +32,7 @@ public class GameRestClientAdapter
         var request = context.Request;
 
         string authToken = null;
-        Account account = null;
+        AccountModel account = null;
 
         string key = parameters.GetValueOrDefault("key", null);
         if (key != null) {
@@ -40,34 +40,6 @@ public class GameRestClientAdapter
             string[] keyParts = key.Split("::");
             authToken = keyParts[0];
             account = accountService.getAccountByAuthToken(authToken);
-
-            // TODO: Temporary code
-            account.tutorialCompleted = false;
-            account.chainProgression = 24;
-            account.creatureRewards = 100;
-            account.currentGameId = 1;
-            account.currentPlaygroupId = 1;
-            account.defaultDeckPveId = 1;
-            account.defaultDeckPvpId = 1;
-            account.level = 100;
-            account.dna = 10000000;
-            account.newPlayerInventory = 1;
-            account.newPlayerProgress = 9500;
-            account.cashoutBonusTime = 1;
-            account.starLevel = 10;
-            account.unlockCatalysts = 1;
-            account.unlockDiagonalCatalysts = 1;
-            account.unlockFuelTanks = 1;
-            account.unlockInventory = 1;
-            account.unlockPveDecks = 2;
-            account.unlockPvpDecks = 1;
-            account.unlockStats = 1;
-            account.unlockInventoryIdentify = 2500;
-            account.unlockEditorFlairSlots = 1;
-            account.upsell = 1;
-            account.xp = 10000;
-            account.grantAllAccess = true;
-            account.grantOnlineAccess = null;
         }
         if (account == null) {
             throw new ForbiddenOperationException("Unindentified account");
@@ -77,8 +49,6 @@ public class GameRestClientAdapter
         if (newPlayerProgress != 0) {
             account.newPlayerProgress = newPlayerProgress;
         }
-
-        // account.Write(docAccount);
 
         var response = new AuthResponseContract{
             Stat = "ok",
