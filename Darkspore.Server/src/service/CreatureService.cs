@@ -5,7 +5,6 @@ namespace HttpServer;
 public class CreatureService
 {
     private CreatureRepositoryAdapter creatureRepository;
-
     private CreatureTemplateRepositoryAdapter creatureTemplateRepository;
 
     public CreatureService(SqliteConfig newSqliteConfig) {
@@ -30,7 +29,6 @@ public class CreatureService
 
     public Creature addCreature(Account account, CreatureTemplateModel creatureTemplate) {
         var creature = new Creature{
-            ID = creatureTemplate.id, // TODO: Replace with sequence
             Version = 1,
             AccountID = account.Id,
             TemplateID = creatureTemplate.id,

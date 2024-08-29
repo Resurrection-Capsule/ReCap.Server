@@ -18,7 +18,6 @@ public class DeckService
         List<Deck> decks = [];
         for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {
             var deck = new Deck{
-                ID = squadSlot, // TODO: Generate ID dynamically
                 Name = "Slot " + squadSlot.ToString(),
                 Slot = (int)squadSlot,
                 Category = "pve",
