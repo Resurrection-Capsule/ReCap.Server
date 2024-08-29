@@ -16,6 +16,8 @@ public class GameRestClientAdapter
     private CreatureService creatureService;
     private DeckMapper deckMapper;
     private DeckService deckService;
+    private PartMapper partMapper;
+    private PartService partService;
 
     public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountMapper = new AccountMapper();
@@ -24,6 +26,8 @@ public class GameRestClientAdapter
         creatureService = new CreatureService(newSqliteConfig);
         deckMapper = new DeckMapper();
         deckService = new DeckService(newSqliteConfig);
+        partMapper = new PartMapper();
+        partService = new PartService(newSqliteConfig);
     }
 
     [ApiMethod(Name="api.account.auth")]
@@ -228,9 +232,24 @@ public class GameRestClientAdapter
     public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
+
+        // TODO: count variable currently isn't being used
         int count = Convert.ToInt32(parameters.GetValueOrDefault("count", "100000"));
 
-        return null;
+        var account = accountService.getAccountByAuthToken(authToken);
+        var parts = partService.getPartsByAccount(account)
+            .Where(part => part.CreatureId is null).ToList();
+        // TODO: Should I list used parts as well?
+
+        var response = new PartListResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1,
+            Parts = parts.Select(part => partMapper.toContract(part)).ToList()
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.inventory.getPartOfferList")]

@@ -11,6 +11,7 @@ public class SqliteConfig : DbContext
     public DbSet<CreatureTemplateModel> CreatureTemplates { get; set; }
     public DbSet<CreaturePartTemplateModel> CreaturePartTemplates { get; set; }
     public DbSet<DeckModel> Decks { get; set; }
+    public DbSet<PartModel> Parts { get; set; }
 
     private string DbPath;
 
