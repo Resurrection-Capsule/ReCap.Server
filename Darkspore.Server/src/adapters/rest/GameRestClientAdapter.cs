@@ -227,6 +227,9 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.inventory.getPartList")]
     public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string authToken = parameters["token"];
+        int count = Convert.ToInt32(parameters.GetValueOrDefault("count", "100000"));
+
         return null;
     }
 
