@@ -12,5 +12,5 @@ public class PartListResponseContract : ResponseContract {
 
     [XmlArray("parts")]
     [XmlArrayItem("part")]
-    public List<PartContract>? Parts { get; set; }
+    public List<CreaturePartContract>? Parts { get; set; }
 }

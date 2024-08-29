@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-public enum PartRarity {
+public enum CreaturePartRarity {
     Basic = 0,
     Uncommon,
     Rare,

@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 namespace HttpServer;
 
 [XmlRoot("part")]
-public class PartContract
+public class CreaturePartContract
 {
     [XmlElement(ElementName = "creature_id")]
     public int CreatureId { get; set; }
@@ -23,7 +23,7 @@ public class PartContract
     
 
     [XmlElement(ElementName = "rarity")]
-    public PartRarity Rarity { get; set; }
+    public CreaturePartRarity Rarity { get; set; }
     
     [XmlElement(ElementName = "market_status")]
     public int MarketStatus { get; set; }

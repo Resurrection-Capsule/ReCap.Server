@@ -57,13 +57,14 @@ public class ReCapRestClientAdapter
 
         var account = accountService.createAccount(email, name, password, avatar, isTest);
 
-        // auto actualPartsSize = Repository::CreatureParts::ListAll().size();
-		// auto parts = Repository::Parts::ListAll();
+        // auto actualCreaturePartsSize = Repository::CreatureCreatureParts::ListAll().size();
+		// auto creatureCreatureParts = Repository::CreatureParts::ListAll();
 		// uint64_t index = 1;
-		// for (auto& part : parts) {
-		// 	Repository::CreatureParts::Add(std::make_shared<Game::CreaturePart>(actualPartsSize + index++, part->rigblock_asset_id, user->get_account().id));
+		// for (auto& creatureCreaturePart : creatureCreatureParts) {
+		// 	Repository::CreatureCreatureParts::Add(std::make_shared<Game::CreatureCreaturePart>(actualCreaturePartsSize + index++,
+        //      creatureCreaturePart->rigblock_asset_id, user->get_account().id));
 		// }
-		// Repository::CreatureParts::Save();
+		// Repository::CreatureCreatureParts::Save();
 
 		if (isTest) {
             var creatures = creatureService.addAllCreatures(account);

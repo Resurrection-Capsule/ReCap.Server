@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-public class PartModel
+public class CreaturePartModel
 {
     public ulong ID { get; set; }
     public ulong AccountId { get; set; }
@@ -12,7 +12,7 @@ public class PartModel
     public int Cost { get; set; }
     public int Level { get; set; }
 
-    public PartRarity Rarity { get; set; }
+    public CreaturePartRarity Rarity { get; set; }
     public int MarketStatus { get; set; }
     public int Status { get; set; }
     public int Usage { get; set; }

@@ -16,8 +16,8 @@ public class GameRestClientAdapter
     private CreatureService creatureService;
     private DeckMapper deckMapper;
     private DeckService deckService;
-    private PartMapper partMapper;
-    private PartService partService;
+    private CreaturePartMapper creaturePartMapper;
+    private CreaturePartService creaturePartService;
 
     public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountMapper = new AccountMapper();
@@ -26,8 +26,8 @@ public class GameRestClientAdapter
         creatureService = new CreatureService(newSqliteConfig);
         deckMapper = new DeckMapper();
         deckService = new DeckService(newSqliteConfig);
-        partMapper = new PartMapper();
-        partService = new PartService(newSqliteConfig);
+        creaturePartMapper = new CreaturePartMapper();
+        creaturePartService = new CreaturePartService(newSqliteConfig);
     }
 
     [ApiMethod(Name="api.account.auth")]
@@ -237,16 +237,16 @@ public class GameRestClientAdapter
         int count = Convert.ToInt32(parameters.GetValueOrDefault("count", "100000"));
 
         var account = accountService.getAccountByAuthToken(authToken);
-        var parts = partService.getPartsByAccount(account)
-            .Where(part => part.CreatureId is null).ToList();
-        // TODO: Should I list used parts as well?
+        var creatureParts = creaturePartService.getCreaturePartsByAccount(account)
+            .Where(creaturePart => creaturePart.CreatureId is null).ToList();
+        // TODO: Should I list used creatureParts as well?
 
         var response = new PartListResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
             Timestamp = 1,
             ExecTime = 1,
-            Parts = parts.Select(part => partMapper.toContract(part)).ToList()
+            Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
         };
 
         return XmlUtils.Serialize(response);
