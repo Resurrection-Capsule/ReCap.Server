@@ -51,23 +51,39 @@ public class UtilComponent : IComponent
             ServerVersion = "Blaze 3.9.3.1"
         };
 
-        response.ComponentIds.Add(0x19);
         response.ComponentIds.Add(1);
+        response.ComponentIds.Add(25);
         response.ComponentIds.Add(4);
-        response.ComponentIds.Add(0xF);
+        response.ComponentIds.Add(27);
+        response.ComponentIds.Add(28);
         response.ComponentIds.Add(6);
-        response.ComponentIds.Add(5);
-        response.ComponentIds.Add(0x15);
-        response.ComponentIds.Add(0x7802);
+        response.ComponentIds.Add(7);
         response.ComponentIds.Add(9);
+        response.ComponentIds.Add(10);
+        response.ComponentIds.Add(11);
+        response.ComponentIds.Add(30720);
+        response.ComponentIds.Add(30721);
+        response.ComponentIds.Add(30722);
+        response.ComponentIds.Add(30723);
+        response.ComponentIds.Add(20);
+        response.ComponentIds.Add(30725);
+        response.ComponentIds.Add(30726);
+        response.ComponentIds.Add(2000);
 
-        response.Config.Config.Add("pingPeriod", "20000");
-        response.Config.Config.Add("defaultRequestTimeout", "80000");
-        response.Config.Config.Add("connIdleTimeout", "90000");
+        response.Config.Config.Add("connIdleTimeout", "90s");
+        response.Config.Config.Add("defaultRequestTimeout", "80s");
+        response.Config.Config.Add("pingPeriod", "20s");
+        response.Config.Config.Add("voipHeadsetUpdateRate", "1000");
+        response.Config.Config.Add("xlspConnectionIdleTimeout", "300");
 
         response.QosSettings.BandwithPingSiteInfo.Address = "127.0.0.1";
-        response.QosSettings.BandwithPingSiteInfo.Port = 80;
+        response.QosSettings.BandwithPingSiteInfo.Port = 17502;
         response.QosSettings.BandwithPingSiteInfo.SiteName = "ams";
+
+        response.QosSettings.PingSiteInfoByAliasMap["ams"] = new();
+        response.QosSettings.PingSiteInfoByAliasMap["ams"].Address = "127.0.0.1";
+        response.QosSettings.PingSiteInfoByAliasMap["ams"].Port = 17502;
+        response.QosSettings.PingSiteInfoByAliasMap["ams"].SiteName = "ams";
 
         client.RespondTo(packet, response);
         return true;
