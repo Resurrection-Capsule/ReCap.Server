@@ -24,12 +24,12 @@ public class CreaturePartRepositoryAdapter
         return sqliteConfig.CreatureParts.Where(b => b.AccountId == accountId).ToList();
     }
 
-    // public void insertCreaturePart(CreaturePart creaturePart)
-    // {
-    //     creaturePart.ID = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
+    public void insertCreaturePart(CreaturePart creaturePart)
+    {
+        creaturePart.ID = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
 
-    //     var creaturePartModel = creaturePartMapper.toModel(creaturePart);
-    //     sqliteConfig.CreatureParts.Add(creaturePartModel);
-    //     sqliteConfig.SaveChanges();
-    // }
+        var creaturePartModel = creaturePartMapper.toModel(creaturePart);
+        sqliteConfig.CreatureParts.Add(creaturePartModel);
+        sqliteConfig.SaveChanges();
+    }
 }

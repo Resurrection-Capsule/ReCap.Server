@@ -46,6 +46,7 @@ public class BootstrapRestClientAdapter
         }
         if (includePatches)
         {
+            // TODO: Should we use the original Patches? I don't think so
             // response.Patches = new ConfigPatchesContract{
             //     Target = "test",
             //     Date = "test2",

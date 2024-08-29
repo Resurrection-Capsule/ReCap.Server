@@ -2,7 +2,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-public class CreaturePartModel
+public class CreaturePart
 {
     public ulong ID { get; set; }
     public ulong AccountId { get; set; }

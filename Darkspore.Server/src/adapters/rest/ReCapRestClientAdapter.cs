@@ -57,6 +57,7 @@ public class ReCapRestClientAdapter
 
         var account = accountService.createAccount(email, name, password, avatar, isTest);
 
+        // TODO: Initial parts
         // auto actualCreaturePartsSize = Repository::CreatureCreatureParts::ListAll().size();
 		// auto creatureCreatureParts = Repository::CreatureParts::ListAll();
 		// uint64_t index = 1;

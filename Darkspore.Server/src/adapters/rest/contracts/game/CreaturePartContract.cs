@@ -11,9 +11,9 @@ public class CreaturePartContract
     [XmlElement(ElementName = "creature_id")]
     public int CreatureId { get; set; }
 
-
     [XmlElement(ElementName = "creation_date")]
     public ulong CreationDate { get; set; }
+
 
     [XmlElement(ElementName = "cost")]
     public int Cost { get; set; }
