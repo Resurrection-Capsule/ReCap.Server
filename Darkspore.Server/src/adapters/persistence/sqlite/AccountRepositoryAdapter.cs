@@ -11,16 +11,37 @@ public class AccountRepositoryAdapter
 {
     private SqliteConfig sqliteConfig;
     private AccountMapper accountMapper;
+    private Random sequenceRandomGenerator;
+    private static Dictionary<string,ulong> idByAuthToken = new Dictionary<string,ulong>();
 
     public AccountRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         accountMapper = new AccountMapper();
+        sequenceRandomGenerator = new Random();
+    }
+
+    public void deleteAuthToken(string authToken)
+    {
+        Console.WriteLine($"Removing auth token {authToken}");
+        idByAuthToken.Remove(authToken);
+    }
+
+    public void setAccountAuthToken(ulong accountId, string authToken)
+    {
+        Console.WriteLine($"Setting auth token for account {accountId}: {authToken}");
+        idByAuthToken[authToken] = accountId;
     }
 
     public AccountModel getAccountByAuthToken(string authToken)
     {
-        // TODO: Not implemented yet
-        return sqliteConfig.Accounts.First();
+        ulong accountId = 0;
+        if (idByAuthToken.TryGetValue(authToken, out accountId))
+        {
+            Console.WriteLine($"Getting auth token for account {accountId}: {authToken}");
+            return getAccountById(accountId);
+        }
+
+        return null;
     }
 
     public AccountModel getAccountById(ulong id)
@@ -35,7 +56,7 @@ public class AccountRepositoryAdapter
 
     public void insertAccount(Account account)
     {
-        account.Id = 1; // TODO: Generate ID dynamically
+        account.Id = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
 
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);

@@ -29,6 +29,14 @@ public class AccountService
         return account;
     }
 
+    public void deleteAuthToken(string authToken) {
+        accountRepository.deleteAuthToken(authToken);
+    }
+
+    public void setAccountAuthToken(ulong accountId, string authToken) {
+        accountRepository.setAccountAuthToken(accountId, authToken);
+    }
+
     public AccountModel getAccountByAuthToken(string authToken) {
         return accountRepository.getAccountByAuthToken(authToken);
     }

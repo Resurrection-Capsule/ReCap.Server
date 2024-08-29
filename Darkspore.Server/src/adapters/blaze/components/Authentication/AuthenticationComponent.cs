@@ -55,10 +55,12 @@ public class AuthenticationComponent : IComponent
         }
     }
 
-    private static bool GetAuthToken(Client client, Packet packet)
+    private bool GetAuthToken(Client client, Packet packet)
     {
         Guid myuuid = Guid.NewGuid();
         client.AuthToken = myuuid.ToString();
+
+        accountService.setAccountAuthToken(client.UserId, client.AuthToken);
 
         var response = new GetAuthTokenResponse
         {

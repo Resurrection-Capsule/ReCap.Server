@@ -124,6 +124,8 @@ public class GameRestClientAdapter
     {
         string authToken = parameters["token"];
 
+        accountService.deleteAuthToken(authToken);
+
         var response = new ResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
