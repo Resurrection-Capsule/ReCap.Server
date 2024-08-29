@@ -9,9 +9,9 @@ public class CreaturePartTemplateModel
     [Key]
     public ulong rigblockAssetId { get; set; }
 
-    public int prefixAssetId { get; set; }
-    public int prefixSecondaryAssetId { get; set; }
-    public int suffixAssetId { get; set; }
+    public ulong prefixAssetId { get; set; }
+    public ulong prefixSecondaryAssetId { get; set; }
+    public ulong suffixAssetId { get; set; }
 
     public int cost { get; set; }
     public int level { get; set; }

@@ -40,14 +40,14 @@ public class CreaturePartContract
 
 
     [XmlElement(ElementName = "rigblock_asset_id")]
-    public int RigblockAssetHash { get; set; }
+    public ulong RigblockAssetHash { get; set; }
     
     [XmlElement(ElementName = "prefix_asset_id")]
-    public int PrefixAssetHash { get; set; }
+    public ulong PrefixAssetHash { get; set; }
     
     [XmlElement(ElementName = "prefix_secondary_asset_id")]
-    public int PrefixSecondaryAssetHash { get; set; }
+    public ulong PrefixSecondaryAssetHash { get; set; }
     
     [XmlElement(ElementName = "suffix_asset_id")]
-    public int SuffixAssetHash { get; set; }
+    public ulong SuffixAssetHash { get; set; }
 }

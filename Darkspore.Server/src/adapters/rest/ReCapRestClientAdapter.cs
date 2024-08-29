@@ -12,11 +12,13 @@ public class ReCapRestClientAdapter
 {
     private AccountService accountService;
     private CreatureService creatureService;
+    private CreaturePartService creaturePartService;
     private DeckService deckService;
 
     public ReCapRestClientAdapter(SqliteConfig newSqliteConfig) {
         accountService = new AccountService(newSqliteConfig);
         creatureService = new CreatureService(newSqliteConfig);
+        creaturePartService = new CreaturePartService(newSqliteConfig);
         deckService = new DeckService(newSqliteConfig);
     }
 
@@ -57,19 +59,10 @@ public class ReCapRestClientAdapter
 
         var account = accountService.createAccount(email, name, password, avatar, isTest);
 
-        // TODO: Initial parts
-        // auto actualCreaturePartsSize = Repository::CreatureCreatureParts::ListAll().size();
-		// auto creatureCreatureParts = Repository::CreatureParts::ListAll();
-		// uint64_t index = 1;
-		// for (auto& creatureCreaturePart : creatureCreatureParts) {
-		// 	Repository::CreatureCreatureParts::Add(std::make_shared<Game::CreatureCreaturePart>(actualCreaturePartsSize + index++,
-        //      creatureCreaturePart->rigblock_asset_id, user->get_account().id));
-		// }
-		// Repository::CreatureCreatureParts::Save();
-
 		if (isTest) {
             var creatures = creatureService.addAllCreatures(account);
             var decks = deckService.createDecksForAccount(account);
+            var parts = creaturePartService.addAllCreatureParts(account);
         }
 
         var response = new ResponseContract{

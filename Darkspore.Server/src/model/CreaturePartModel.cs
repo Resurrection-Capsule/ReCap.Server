@@ -19,13 +19,13 @@ public class CreaturePartModel
 
     public bool IsFlair { get; set; }
 
-    public int RigblockAssetHash { get; set; }
-    public int PrefixAssetHash { get; set; }
-    public int PrefixSecondaryAssetHash { get; set; }
-    public int SuffixAssetHash { get; set; }
+    public ulong RigblockAssetHash { get; set; } // FNV1-A hash
+    public ulong PrefixAssetHash { get; set; } // FNV1-A hash
+    public ulong PrefixSecondaryAssetHash { get; set; } // FNV1-A hash
+    public ulong SuffixAssetHash { get; set; } // FNV1-A hash
 
-    public int RigblockAssetId { get; set; }
-    public int PrefixAssetId { get; set; }
-    public int PrefixSecondaryAssetId { get; set; }
-    public int SuffixAssetId { get; set; }
+    public ulong RigblockAssetId { get; set; }
+    public ulong PrefixAssetId { get; set; }
+    public ulong PrefixSecondaryAssetId { get; set; }
+    public ulong SuffixAssetId { get; set; }
 }
