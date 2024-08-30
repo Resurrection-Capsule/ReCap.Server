@@ -25,10 +25,6 @@ public class ReCapRestClientAdapter
     private string getBodyFromRequest(HttpListenerContext context)
     {
         var request = context.Request;
-        if (!request.HasEntityBody)
-        {
-            return "";
-        }
         System.IO.Stream body = request.InputStream;
         System.Text.Encoding encoding = request.ContentEncoding;
         System.IO.StreamReader reader = new System.IO.StreamReader(body, encoding);
@@ -49,6 +45,9 @@ public class ReCapRestClientAdapter
     [ApiMethod(Name="api.game.registration")]
     public byte[] registerUser(HttpListenerContext context)
     {
+        // string jsonStr = getBodyFromRequest(context);
+        // dynamic request = JsonConvert.DeserializeObject(jsonStr);
+        
         var request = context.Request;
         var parameters = request.QueryString;
         string email = parameters.Get("email");
@@ -62,16 +61,9 @@ public class ReCapRestClientAdapter
 		if (isTest) {
             var creatures = creatureService.addAllCreatures(account);
             var decks = deckService.createDecksForAccount(account);
-            var parts = creaturePartService.addAllCreatureParts(account);
+            // var parts = creaturePartService.addAllCreatureParts(account);
         }
 
-        var response = new ResponseContract{
-            Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
-            Timestamp = 1,
-            ExecTime = 1
-        };
-
-        return XmlUtils.Serialize(response);
+        return Encoding.ASCII.GetBytes("{\"success\":true}");
     }
 }

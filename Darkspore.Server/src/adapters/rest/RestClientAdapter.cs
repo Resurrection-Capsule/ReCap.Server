@@ -51,11 +51,14 @@ public class RestClientAdapter
 
         // Multipart form parameters
         if (context.Request.HttpMethod == "POST") {
-            var inputStream = context.Request.InputStream;
-            var parser = MultipartFormDataParser.Parse(inputStream);
-            foreach(var entry in parser.Parameters) {
-                parameters.Add(entry.Name, entry.Data);
+            try {
+                var inputStream = context.Request.InputStream;
+                var parser = MultipartFormDataParser.Parse(inputStream);
+                foreach(var entry in parser.Parameters) {
+                    parameters.Add(entry.Name, entry.Data);
+                }
             }
+            catch (Exception ex) {}
         }
 
         // Cookies parameters
@@ -68,7 +71,9 @@ public class RestClientAdapter
             }
         }
 
-        Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
+        if (parameters.Count > 0) {
+            Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
+        }
 
         return parameters;
     }

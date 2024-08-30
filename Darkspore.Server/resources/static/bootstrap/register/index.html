@@ -96,13 +96,13 @@
                 $('#creatingAccountView').css('display', 'initial');
 
                 ReCapClient.getRequest("api.game.registration", {
-                    "name": $("#name").val(),
+                    "name":  $("#name").val(),
                     "email": $("#email").val(),
-                    "pass": $("#password").val(),
+                    "pass":  $("#password").val(),
                     "avatar": selectedAvatar
                 }, function(data) {
                     var response = JSON.parse(data);
-                    if (response.stat === true || response.stat === 'ok') {
+                    if (response.success === true) {
                         showModal('Success', "Account created successfully!", true);
                     } else {
                         showModal('Error', "Your account could not be created!", false);

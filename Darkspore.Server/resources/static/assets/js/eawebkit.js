@@ -74,7 +74,9 @@ var HTTP = {
 
 		var xmlHttp = new XMLHttpRequest(); 
 		xmlHttp.onreadystatechange = function () {
-			if (xmlHttp.status === 200 && callback !== undefined) callback(xmlHttp.responseText);
+			if (xmlHttp.status === 200 && callback !== undefined) {
+				callback(xmlHttp.responseText);
+			}
 		};
 		xmlHttp.open("GET", url + (params === undefined ? "" : ("?" + params)), true);
 		xmlHttp.send(null);
@@ -82,10 +84,12 @@ var HTTP = {
 	post: function(url, obj, callback) {
 		var xmlHttp = new XMLHttpRequest(); 
 		xmlHttp.onreadystatechange = function () {
-			if (xmlHttp.status === 200 && callback !== undefined) callback(xmlHttp.responseText);
+			if (xmlHttp.status === 200 && callback !== undefined) {
+				callback(xmlHttp.responseText);
+			}
 		};
 		xmlHttp.open("POST", url, true);
-		xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		xmlHttp.setRequestHeader("Content-Type", "application/json");
 		xmlHttp.send(JSON.stringify(obj));
 	}
 };
