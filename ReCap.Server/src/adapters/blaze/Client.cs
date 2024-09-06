@@ -159,7 +159,10 @@ public class Client
 
                 var totalPacketLength = (int)ms.Position;
 
-                Log($"Incoming packet: {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}");
+                if (packet.Component != 0x2678)
+                {
+                    Log($"Incoming packet: {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}");
+                }
 
                 Server.HandlePacket(this, packet);
 

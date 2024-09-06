@@ -72,7 +72,8 @@ public class Server
                 new RoomsComponent(),
                 new UserSessionsComponent(),
                 new UtilComponent(),
-                new GameReportingComponent()
+                new GameReportingComponent(),
+                new UnknownComponent1()
             };
             Dictionary<ushort, IComponent> Components = [];
             foreach (var component in components) {
