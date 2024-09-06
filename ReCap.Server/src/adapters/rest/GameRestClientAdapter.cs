@@ -54,14 +54,6 @@ public class GameRestClientAdapter
             account.newPlayerProgress = newPlayerProgress;
         }
 
-        var response = new AuthResponseContract{
-            Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
-            Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
-            ExecTime = 1,
-            Account = accountMapper.toContract(account)
-        };
-
         bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", null));
         bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", null));
         bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", null));
@@ -70,6 +62,14 @@ public class GameRestClientAdapter
         bool includeTokenCookie = Convert.ToBoolean(parameters.GetValueOrDefault("cookie", null));
 
         var creatures = creatureService.getCreaturesByAccount(account);
+
+        var response = new AuthResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
+            ExecTime = 1,
+            Account = accountMapper.toContract(account)
+        };
 
         if (includeCreatures) {
             response.Creatures = creatures.Select(creature => creatureMapper.toContract(creature)).ToList();
@@ -120,6 +120,78 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.account.getAccount")]
     public byte[] getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string authToken = parameters["token"];
+        var account = accountService.getAccountByAuthToken(authToken);
+
+        string httpMethod = context.Request.HttpMethod;
+        if (httpMethod == "GET")
+        {
+            var creatures = creatureService.getCreaturesByAccount(account);
+            var response = new GetAccountResponseContract{
+                Stat = "ok",
+                Version = ServerConfig.GetDarksporeVersion(),
+                Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
+                ExecTime = 1,
+                Account = accountMapper.toContract(account),
+                Decks = deckService.getDecksByAccount(account).Select(deck => deckMapper.toContract(deck, creatures)).ToList()
+            };
+            return XmlUtils.Serialize(response);
+        }
+        if (httpMethod == "POST")
+        {
+            bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", null));
+            bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", null));
+            bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", null));
+            bool includeStats = Convert.ToBoolean(parameters.GetValueOrDefault("include_stats", null));
+            
+            if (includeCreatures || includeDecks || includeFeed || includeStats) {
+                var creatures = creatureService.getCreaturesByAccount(account);
+
+                var response = new PostAccountResponseContract{
+                    Stat = "ok",
+                    Version = ServerConfig.GetDarksporeVersion(),
+                    Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
+                    ExecTime = 1,
+                    Account = accountMapper.toContract(account)
+                };
+
+                if (includeCreatures) {
+                    response.Creatures = creatures.Select(creature => creatureMapper.toContract(creature)).ToList();
+                }
+
+                if (includeDecks) {
+                    response.Decks = deckService.getDecksByAccount(account).Select(deck => deckMapper.toContract(deck, creatures)).ToList();
+                }
+
+                if (includeFeed) {
+                    // TODO: Not implemented
+                    response.Feed = new FeedContract{
+                        // Items = []
+                    };
+                }
+
+                if (includeStats) {
+                    response.Stats = [new StatContract{
+                        Wins = 0
+                    }];
+                }
+
+                return XmlUtils.Serialize(response);
+            }
+            else {
+                var response = new PostAccountResponseContract{
+                    Stat = "ok",
+                    Version = ServerConfig.GetDarksporeVersion(),
+                    Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
+                    ExecTime = 1,
+                    BlazeID = account.Id,
+                    Name = account.Username,
+                    GrantOnlineAccess = (account.grantOnlineAccess ?? false) ? 1 : 0,
+                    CashoutBonusTime = account.cashoutBonusTime
+                };
+                return XmlUtils.Serialize(response);
+            }
+        }
         return null;
     }
 
