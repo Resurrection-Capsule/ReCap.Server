@@ -231,6 +231,7 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.inventory.getPartList")]
     public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        // parameters["filter"] (eg.: "market_status_full-owned;")
         string authToken = parameters["token"];
 
         // TODO: count variable currently isn't being used

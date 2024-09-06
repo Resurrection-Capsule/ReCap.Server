@@ -117,13 +117,24 @@ public class RestClientAdapter
                 fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context });
                 context.Response.ContentType = "text/xml";
             }
-            else if (uri == "/web/sporelabsgame/register")
+            else if (uri.StartsWith("/web/sporelabsgame/"))
             {
-                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/register/index.html");
-            }
-            else if (uri.StartsWith("/web/sporelabsgame/register/"))
-            {
-                fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
+                if (uri == "/web/sporelabsgame/register")
+                {
+                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/register/index.html");
+                }
+                else if (uri.StartsWith("/web/sporelabsgame/register/"))
+                {
+                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
+                }
+                else if (uri == "/web/sporelabsgame/announceen")
+                {
+                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/announce/index.html");
+                }
+                else
+                {
+                    fileBytes = StaticStorageAdapter.GetFile(uri);
+                }
             }
             else
             {
