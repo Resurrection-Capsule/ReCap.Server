@@ -9,14 +9,16 @@ namespace HttpServer;
 
 public class CreaturePartRepositoryAdapter
 {
+    private static string CREATURE_PART_SEQUENCE_NAME = "CREATURE_PART_SEQUENCE";
+
     private SqliteConfig sqliteConfig;
     private CreaturePartMapper creaturePartMapper;
-    private Random sequenceRandomGenerator;
+    private DbSequenceAdapter sequenceRandomGenerator;
 
     public CreaturePartRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         creaturePartMapper = new CreaturePartMapper();
-        sequenceRandomGenerator = new Random();
+        sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
     public List<CreaturePartModel> getCreaturePartsByAccountId(ulong accountId)
@@ -26,7 +28,7 @@ public class CreaturePartRepositoryAdapter
 
     public void insertCreaturePart(CreaturePart creaturePart)
     {
-        creaturePart.ID = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
+        creaturePart.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME);
 
         var creaturePartModel = creaturePartMapper.toModel(creaturePart);
         sqliteConfig.CreatureParts.Add(creaturePartModel);

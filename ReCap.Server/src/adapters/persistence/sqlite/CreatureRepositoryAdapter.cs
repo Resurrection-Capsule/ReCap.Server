@@ -9,14 +9,16 @@ namespace HttpServer;
 
 public class CreatureRepositoryAdapter
 {
+    private static string CREATURE_SEQUENCE_NAME = "CREATURE_SEQUENCE";
+
     private SqliteConfig sqliteConfig;
     private CreatureMapper creatureMapper;
-    private Random sequenceRandomGenerator;
+    private DbSequenceAdapter sequenceRandomGenerator;
 
     public CreatureRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         creatureMapper = new CreatureMapper();
-        sequenceRandomGenerator = new Random();
+        sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
     public List<CreatureModel> getCreaturesByAccountId(ulong accountId)
@@ -26,7 +28,7 @@ public class CreatureRepositoryAdapter
 
     public void insertCreature(Creature creature)
     {
-        creature.ID = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
+        creature.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_SEQUENCE_NAME);
 
         var creatureModel = creatureMapper.toModel(creature);
         sqliteConfig.Creatures.Add(creatureModel);

@@ -6,6 +6,7 @@ namespace HttpServer;
 
 public class SqliteConfig : DbContext
 {
+    public DbSet<DbSequenceModel> DbSequences { get; set; }
     public DbSet<AccountModel> Accounts { get; set; }
     public DbSet<CreatureModel> Creatures { get; set; }
     public DbSet<CreatureTemplateModel> CreatureTemplates { get; set; }

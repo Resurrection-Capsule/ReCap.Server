@@ -9,15 +9,18 @@ namespace HttpServer;
 
 public class AccountRepositoryAdapter
 {
+    private static string ACCOUNT_SEQUENCE_NAME = "ACCOUNT_SEQUENCE";
+
     private SqliteConfig sqliteConfig;
     private AccountMapper accountMapper;
-    private Random sequenceRandomGenerator;
+    private DbSequenceAdapter sequenceRandomGenerator;
+
     private static Dictionary<string,ulong> idByAuthToken = new Dictionary<string,ulong>();
 
     public AccountRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         accountMapper = new AccountMapper();
-        sequenceRandomGenerator = new Random();
+        sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
     public void deleteAuthToken(string authToken)
@@ -56,7 +59,7 @@ public class AccountRepositoryAdapter
 
     public void insertAccount(Account account)
     {
-        account.Id = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
+        account.Id = (ulong)sequenceRandomGenerator.Next(ACCOUNT_SEQUENCE_NAME);
 
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);

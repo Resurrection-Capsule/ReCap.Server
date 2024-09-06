@@ -9,14 +9,16 @@ namespace HttpServer;
 
 public class DeckRepositoryAdapter
 {
+    private static string DECK_SEQUENCE_NAME = "DECK_SEQUENCE";
+
     private SqliteConfig sqliteConfig;
     private DeckMapper deckMapper;
-    private Random sequenceRandomGenerator;
+    private DbSequenceAdapter sequenceRandomGenerator;
 
     public DeckRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         deckMapper = new DeckMapper();
-        sequenceRandomGenerator = new Random();
+        sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
     public List<DeckModel> getDecksByAccountId(ulong accountId)
@@ -26,7 +28,7 @@ public class DeckRepositoryAdapter
 
     public void insertDeck(Deck deck)
     {
-        deck.ID = (ulong)sequenceRandomGenerator.Next(10000000); // TODO: Generate ID dynamically
+        deck.ID = (ulong)sequenceRandomGenerator.Next(DECK_SEQUENCE_NAME);
 
         var deckModel = deckMapper.toModel(deck);
         sqliteConfig.Decks.Add(deckModel);
