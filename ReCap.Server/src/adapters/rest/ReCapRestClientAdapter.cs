@@ -61,7 +61,7 @@ public class ReCapRestClientAdapter
 		if (isTest) {
             var creatures = creatureService.addAllCreatures(account);
             var decks = deckService.createDecksForAccount(account);
-            // var parts = creaturePartService.addAllCreatureParts(account);
+            var parts = creaturePartService.addAllCreatureParts(account);
         }
 
         return Encoding.ASCII.GetBytes("{\"success\":true}");

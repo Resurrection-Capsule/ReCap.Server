@@ -34,4 +34,15 @@ public class CreaturePartRepositoryAdapter
         sqliteConfig.CreatureParts.Add(creaturePartModel);
         sqliteConfig.SaveChanges();
     }
+
+    public void insertCreatureParts(List<CreaturePart> creatureParts)
+    {
+        foreach (var creaturePart in creatureParts) {
+            creaturePart.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME);
+
+            var creaturePartModel = creaturePartMapper.toModel(creaturePart);
+            sqliteConfig.CreatureParts.Add(creaturePartModel);
+        }
+        sqliteConfig.SaveChanges();
+    }
 }
