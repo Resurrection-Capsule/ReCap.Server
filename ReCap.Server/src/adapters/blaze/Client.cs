@@ -159,7 +159,7 @@ public class Client
 
                 var totalPacketLength = (int)ms.Position;
 
-                if (packet.Component != 0x2678)
+                if (packet.Component != 0x2678) // If I don't ignore that specific component, the log gets spammed
                 {
                     Log($"Incoming packet: {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}");
                 }
