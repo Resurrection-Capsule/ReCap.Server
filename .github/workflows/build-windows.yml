@@ -36,4 +36,4 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: ReCapServer-windows-x86_64
-        path: ReCap/ReCap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
+        path: ReCap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
