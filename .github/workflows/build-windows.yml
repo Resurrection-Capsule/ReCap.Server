@@ -1,0 +1,40 @@
+name: Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOTNET_CONFIG: Release
+  DOTNET_RUNTIME: win-x64
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - name: Check out sources
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build
+      run: |
+        cd Recap.Server
+        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{env.DOTNET_RUNTIME}}
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: MelonMix-appimage-x86_64
+        path: Recap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
