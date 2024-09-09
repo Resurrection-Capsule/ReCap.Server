@@ -30,12 +30,10 @@ jobs:
 
     - name: Build
       run: |
-        ls
         cd ReCap.Server
-        ls
         dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{env.DOTNET_RUNTIME}}
 
     - uses: actions/upload-artifact@v4
       with:
         name: ReCapServer-windows-x86_64
-        path: Recap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
+        path: Recap/Recap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
