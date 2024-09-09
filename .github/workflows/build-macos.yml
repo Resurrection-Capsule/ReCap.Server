@@ -1,0 +1,42 @@
+name: Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOTNET_CONFIG: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        runtime: [ 'osx-x64', 'osx-arm64' ]
+
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+    steps:
+    - name: Check out sources
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4.0.1
+      with:
+        dotnet-version: '8.0'
+
+    - name: Build
+      run: |
+        cd ReCap.Server
+        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ReCapServer-windows-x86_64
+        path: ReCap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{matrix.runtime}}
