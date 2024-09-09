@@ -29,7 +29,7 @@ jobs:
         dotnet-version: '8.0'
 
     - name: Build
-      working-directory: ${{runner.workspace}}/Recap.Server
+      working-directory: ${{runner.workspace}}/ReCap.Server
       run: dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{env.DOTNET_RUNTIME}}
 
     - uses: actions/upload-artifact@v4
