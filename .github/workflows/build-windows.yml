@@ -30,9 +30,8 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Build
-      run: |
-        cd Recap.Server
-        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{env.DOTNET_RUNTIME}}
+      working-directory: Recap.Server
+      run: dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{env.DOTNET_RUNTIME}}
 
     - uses: actions/upload-artifact@v4
       with:
