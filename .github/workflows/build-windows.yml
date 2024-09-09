@@ -20,7 +20,15 @@ jobs:
     defaults:
       run:
         shell: msys2 {0}
+
     steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          curl
+          git
+
     - name: Check out sources
       uses: actions/checkout@v4
 
@@ -35,5 +43,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: MelonMix-appimage-x86_64
+        name: ReCapServer-windows-x86_64
         path: Recap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{env.DOTNET_RUNTIME}}
