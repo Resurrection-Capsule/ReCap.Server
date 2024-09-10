@@ -11,6 +11,6 @@ public class Deck
 
     public required ulong AccountID { get; set; }
 
-    public required bool Locked { get; set; } = false;
+    public bool Locked { get; set; } = false;
     public required List<ulong> CreatureIds { get; set; }
 }
