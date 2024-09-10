@@ -4,48 +4,48 @@ namespace HttpServer;
 
 public class AccountModel
 {
-    public ulong Id { get; set; }
+    public required ulong Id { get; set; }
 
-    public string Email { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
+    public required string Email { get; set; }
+    public required string Username { get; set; }
+    public required string Password { get; set; }
 
-    public bool tutorialCompleted = false;
-    public bool grantAllAccess = false;
-    public bool? grantOnlineAccess = false;
+    public required bool tutorialCompleted;
+    public required bool grantAllAccess;
+    public required bool? grantOnlineAccess;
 
-    public int chainProgression = 0;
-    public int creatureRewards = 0;
+    public required int chainProgression;
+    public required int creatureRewards;
 
-    public int currentGameId = 1;
-    public int currentPlaygroupId = 1;
+    public required int currentGameId;
+    public required int currentPlaygroupId;
 
-    public int defaultDeckPveId = 1;
-    public int defaultDeckPvpId = 1;
+    public required int defaultDeckPveId;
+    public required int defaultDeckPvpId;
 
-    public int level = 1;
-    public int xp = 0;
-    public int dna = 0;
-    public int avatarId = 0;
+    public required int level;
+    public required int xp;
+    public required int dna;
+    public required int avatarId;
 
-    public int newPlayerInventory = 0;
-    public int newPlayerProgress = 0;
+    public required int newPlayerInventory;
+    public required int newPlayerProgress;
 
-    public int cashoutBonusTime = 0;
-    public int starLevel = 0;
+    public required int cashoutBonusTime;
+    public required int starLevel;
 
-    public int unlockCatalysts = 0;
-    public int unlockDiagonalCatalysts = 0;
-    public int unlockInventory = 0;
-    public int unlockFuelTanks = 0;
-    public int unlockPveDecks = 0;
-    public int unlockPvpDecks = 0;
-    public int unlockStats = 0;
-    public int unlockInventoryIdentify = 0;
-    public int unlockEditorFlairSlots = 0;
+    public required int unlockCatalysts;
+    public required int unlockDiagonalCatalysts;
+    public required int unlockInventory;
+    public required int unlockFuelTanks;
+    public required int unlockPveDecks;
+    public required int unlockPvpDecks;
+    public required int unlockStats;
+    public required int unlockInventoryIdentify;
+    public required int unlockEditorFlairSlots;
 
-    public int upsell = 0;
+    public required int upsell;
 
-    public int capLevel = 0;
-    public int capProgression = 0;
+    public required int capLevel;
+    public required int capProgression;
 }
