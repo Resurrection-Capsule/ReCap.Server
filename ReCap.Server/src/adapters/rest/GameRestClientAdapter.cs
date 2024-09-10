@@ -255,6 +255,19 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.creature.getTemplate")]
     public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string authToken = parameters["token"];
+        int templateId = Convert.ToInt32(parameters["id"]);
+        bool includeAbilities = parameters["include_abilities"] == "true";
+
+        var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
+
+        var template = creatureService.getCreatureTemplateById((ulong)templateId);
+
+        // TODO: Implement getTemplate returning GetCreatureTemplateResponseContract
+
         return null;
     }
 
