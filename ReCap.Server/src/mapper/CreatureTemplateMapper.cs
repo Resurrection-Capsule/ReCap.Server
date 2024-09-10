@@ -11,12 +11,12 @@ public class CreatureTemplateMapper
     public CreatureTemplateMapper() {
         var configuration = new MapperConfiguration(cfg =>
         {
-            cfg.CreateMap<CreatureTemplate, CreatureTemplateModel>();
+            cfg.CreateMap<CreatureTemplateModel, GetCreatureTemplateResponseContract>();
         });
         mapper = configuration.CreateMapper();
     }
 
-    public CreatureTemplateModel toModel(CreatureTemplate creatureTemplate) {
-        return mapper.Map<CreatureTemplateModel>(creatureTemplate);
+    public GetCreatureTemplateResponseContract toContract(CreatureTemplateModel creatureTemplate) {
+        return mapper.Map<GetCreatureTemplateResponseContract>(creatureTemplate);
     }
 }
