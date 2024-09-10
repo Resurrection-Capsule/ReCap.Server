@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using HttpServer;
 using HttpMultipartParser;
@@ -119,21 +120,13 @@ public class RestClientAdapter
             }
             else if (uri.StartsWith("/web/sporelabsgame/"))
             {
-                if (uri == "/web/sporelabsgame/register")
+                if (Regex.IsMatch(uri, @"^/web/sporelabsgame/[a-zA-Z]+$"))
                 {
-                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/register/index.html");
-                }
-                else if (uri.StartsWith("/web/sporelabsgame/register/"))
-                {
-                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
-                }
-                else if (uri == "/web/sporelabsgame/announceen")
-                {
-                    fileBytes = StaticStorageAdapter.GetFile("/bootstrap/announce/index.html");
+                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/") + "/index.html");
                 }
                 else
                 {
-                    fileBytes = StaticStorageAdapter.GetFile(uri);
+                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
                 }
             }
             else
