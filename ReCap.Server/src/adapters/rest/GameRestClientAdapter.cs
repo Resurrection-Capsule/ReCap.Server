@@ -261,7 +261,26 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.creature.resetCreature")]
     public byte[] resetCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        string authToken = parameters["token"];
+        int creatureId = Convert.ToInt32(parameters["id"]);
+
+        var account = accountService.getAccountByAuthToken(authToken);
+
+        var creature = creatureService.getCreatureById((ulong)creatureId);
+        if (creature.AccountID != account.Id) {
+            throw new ForbiddenOperationException("Creature does not belong to this account");
+        }
+
+        // TODO: Actually reset creature
+
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.creature.unlockCreature")]

@@ -21,6 +21,11 @@ public class CreatureRepositoryAdapter
         sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
+    public CreatureModel getCreatureById(ulong creatureId)
+    {
+        return sqliteConfig.Creatures.SingleOrDefault(b => b.ID == creatureId);
+    }
+
     public List<CreatureModel> getCreaturesByAccountId(ulong accountId)
     {
         return sqliteConfig.Creatures.Where(b => b.AccountID == accountId).ToList();

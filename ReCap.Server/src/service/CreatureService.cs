@@ -12,6 +12,10 @@ public class CreatureService
         creatureTemplateRepository = new CreatureTemplateRepositoryAdapter(newSqliteConfig);
     }
 
+    public CreatureModel getCreatureById(ulong creatureId) {
+        return creatureRepository.getCreatureById(creatureId);
+    }
+
     public List<CreatureModel> getCreaturesByAccount(AccountModel account) {
         return creatureRepository.getCreaturesByAccountId(account.Id);
     }
