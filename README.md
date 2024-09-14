@@ -14,9 +14,12 @@ Sadly, the entire game - singleplayer included - was rendered completely unplaya
 
 ...and that's where we come in.
 
-## Download
+## Where do I download?
 
-<h1>[Download](/docs/user/getting-started.md)</h1>...and instructions.
+<a href="/docs/user/getting-started.md">
+	<object type="image/svg+xml" data="/docs/assets/download-button.svg"></object>
+</a>
+...and instructions.
 
 ## Overall server development progress
 - [ ] Make the game playable offline
