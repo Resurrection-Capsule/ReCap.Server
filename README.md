@@ -16,7 +16,7 @@ Sadly, the entire game - singleplayer included - was rendered completely unplaya
 
 ## Download
 
-# <big>[Download + instructions](/docs/user/getting-started.md)</big>
+<h1>[Download](/docs/user/getting-started.md)</h1>...and instructions.
 
 ## Overall server development progress
 - [ ] Make the game playable offline
