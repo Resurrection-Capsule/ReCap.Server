@@ -20,7 +20,7 @@ Before you begin, you will need the following:
 
 ### Resurrection Capsule Hub
 
-Download the [Resurrection Capsule Hub](https://github.com/Resurrection-Capsule/hub-repo-url-tbd/releases/latest)
+Download the [Resurrection Capsule Hub](https://github.com/Resurrection-Capsule/hub-repo-url-tbd/releases/latest) [TODO: Finalize repo URL]
 
 ---
 
