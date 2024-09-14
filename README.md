@@ -25,8 +25,6 @@ Right here:
 	<img alt="DOWNLOAD" src="/docs/assets/download-button.svg">
 </a>
 
-...and instructions.
-
 ## Overall server development progress
 - [ ] Make the game playable offline
 	- [ ] Redirect Darkspore requests to localhost
