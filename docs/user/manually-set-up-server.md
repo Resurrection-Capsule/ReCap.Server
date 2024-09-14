@@ -1,10 +1,21 @@
-# Setting up Resurrection Capsule
+# Manually setting up Resurrection Capsule Server
 
-## Prerequisites
-- A computer with Windows 7 (or above)
-- Darkspore installed
-- [Microsoft Visual C++ 2019 redistributable](https://aka.ms/vs/16/release/vc_redist.x64.exe)
-- [Resurrection Capsule Server/Hub/TBD](https://github.com/Resurrection-Capsule/ReCap/releases/latest) 
+> [!WARNING]
+> This method is intended for [TODO: advanced use only? dedicated Darkspore server hosting only?]
+> If you're just looking to play Darkspore, [use the Resurrection Capsule Hub](/docs/user/how-to-setup.md) instead.
+
+> [!NOTE]
+> This page is under construction. All content within is subject to change, and may well be inaccurate for the time being.
+
+## Additional prerequisites
+
+- [.NET 8.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) [TODO: decide whether or not to publish the server self-contained, remove this if so]
+- [Microsoft Visual C++ 2019 redistributable](https://aka.ms/vs/16/release/vc_redist.x64.exe) [TODO: old/C++ server only?]
+- [Resurrection Capsule Server](https://github.com/Resurrection-Capsule/ReCap/releases/latest) 
+
+---
+
+## Prepare the game and the ReCap Server
 
 1. Find `Darkspore.exe` - depending of your Darkspore version, its location will be different:
 - Steam: `%programfiles(x86)%\Steam\steamapps\common\Darkspore\DarksporeBin\Darkspore.exe` by default
@@ -14,6 +25,8 @@
 4. Once the success message appears, you can close it, after which a new file called `Darkspore_local.exe` should appear in the `DarksporeBin` folder.
 
 **NOTE**: From now on, you should launch `Darkspore_local.exe` instead of the original `Darkspore.exe`.
+
+---
 
 ## Start Darkspore
 
