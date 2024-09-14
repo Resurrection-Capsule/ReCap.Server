@@ -1,7 +1,7 @@
 # Getting started with the Resurrection Capsule Hub
 
 > [!NOTE]
-> This page is under construction. All content within is subject to change, and may well be inaccurate for the time being.
+> This page is under construction. All content within is subject to change, and might not be accurate.
 
 # Prerequisites
 Before you begin, you will need the following:
@@ -36,6 +36,7 @@ Download the [Resurrection Capsule Hub](https://github.com/Resurrection-Capsule/
 
 > [!WARNING]
 > This method is intended for [TODO: advanced use only? dedicated Darkspore server hosting only?]
-> If you're just looking to play Darkspore, use the Resurrection Capsule Hub (see above) instead.
+> 
+> If you're just looking to play Darkspore, [use the Resurrection Capsule Hub](/docs/user/how-to-setup.md) instead.
 
 Refer to [setup instructions](/docs/user/manually-set-up-server.md).

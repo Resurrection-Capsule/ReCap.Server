@@ -1,11 +1,12 @@
 # Manually setting up Resurrection Capsule Server
 
+> [!NOTE]
+> This page is under construction. All content within is subject to change, and might not be accurate.
+
 > [!WARNING]
 > This method is intended for [TODO: advanced use only? dedicated Darkspore server hosting only?]
+> 
 > If you're just looking to play Darkspore, [use the Resurrection Capsule Hub](/docs/user/how-to-setup.md) instead.
-
-> [!NOTE]
-> This page is under construction. All content within is subject to change, and may well be inaccurate for the time being.
 
 ## Additional prerequisites
 
