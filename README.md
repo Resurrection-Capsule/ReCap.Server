@@ -16,9 +16,15 @@ Sadly, the entire game - singleplayer included - was rendered completely unplaya
 
 ## Where do I download?
 
+Right here:
+
 <a href="/docs/user/getting-started.md">
+	<!--
 	<object type="image/svg+xml" data="/docs/assets/download-button.svg"></object>
+	-->
+	<img alt="DOWNLOAD" src="/docs/assets/download-button.svg">
 </a>
+
 ...and instructions.
 
 ## Overall server development progress
