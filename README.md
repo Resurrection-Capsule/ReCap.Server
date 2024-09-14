@@ -1,6 +1,4 @@
-![Resurrection Capsule logo and title](/branding/logo.png)
-
-# Resurrection Capsule
+# ![Resurrection Capsule logo and title](/branding/logo.png)
 
 Resurrection Capsule (or "ReCap" for short) is an ongoing, work-in-progress effort to make Darkspore playable again.
 
