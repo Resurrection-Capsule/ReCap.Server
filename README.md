@@ -16,7 +16,7 @@ Sadly, the entire game - singleplayer included - was rendered completely unplaya
 
 ## Download
 
-Just want to play Darkspore? See [Getting started](/docs/user/getting-started.md).
+<big>[Download + instructions](/docs/user/getting-started.md)</big>
 
 ## Overall server development progress
 - [ ] Make the game playable offline

@@ -3,7 +3,8 @@
 > [!NOTE]
 > This page is under construction. All content within is subject to change, and might not be accurate.
 
-# Prerequisites
+## Prerequisites
+
 Before you begin, you will need the following:
 
 ### Operating system
@@ -32,7 +33,6 @@ Download the [Resurrection Capsule Hub](https://github.com/Resurrection-Capsule/
 ---
 
 # Manually setting up Resurrection Capsule Server
-
 
 > [!WARNING]
 > This method is intended for [TODO: advanced use only? dedicated Darkspore server hosting only?]

@@ -8,8 +8,9 @@
 > 
 > If you're just looking to play Darkspore, [use the Resurrection Capsule Hub](/docs/user/how-to-setup.md) instead.
 
-## Additional prerequisites
+## Prerequisites
 
+- Operating system and Darkspore version listed in the Prerequisites section of [Getting started](/docs/user/getting-started.md)
 - [.NET 8.0 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) [TODO: decide whether or not to publish the server self-contained, remove this if so]
 - [Microsoft Visual C++ 2019 redistributable](https://aka.ms/vs/16/release/vc_redist.x64.exe) [TODO: old/C++ server only?]
 - [Resurrection Capsule Server](https://github.com/Resurrection-Capsule/ReCap/releases/latest) 
