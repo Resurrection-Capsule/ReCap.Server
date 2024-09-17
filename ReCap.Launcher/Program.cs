@@ -43,6 +43,13 @@ class DarksporeLauncher
             return false;
         }
 
+        {
+            byte[] buff = new byte[size];
+            int read = 0;
+            ReadProcessMemory(hProcess, address, buff, size, ref read);
+            Console.WriteLine($"OverwriteMemory ORIGINAL: 0x{address:X8} = {BitConverter.ToString(buff).Replace("-","")}");
+        }
+
         bool writeSuccess = true;
 
         int written = 0;
