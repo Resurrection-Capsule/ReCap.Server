@@ -17,6 +17,7 @@ jobs:
 
     strategy:
       matrix:
+        project: [ 'server', 'launcher' ]
         runtime: [ 'win-x64', 'linux-x64', 'osx-x64', 'osx-arm64' ]
 
     env:
@@ -32,21 +33,25 @@ jobs:
         dotnet-version: '8.0'
 
     - name: Build launcher
+      if: ${{ matrix.project == 'launcher' }}
       run: |
         cd ReCap.Launcher
         dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime win-x64
 
     - name: Build server
+      if: ${{ matrix.project == 'server' }}
       run: |
         cd ReCap.Server
         dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
 
     - uses: actions/upload-artifact@v4
+      if: ${{ matrix.project == 'launcher' }}
       with:
         name: ReCapLauncher-win-x64
         path: ReCap.Launcher/bin/${{env.DOTNET_CONFIG}}/net8.0/win-x64
     
     - uses: actions/upload-artifact@v4
+      if: ${{ matrix.project == 'server' }}
       with:
         name: ReCapServer-${{matrix.runtime}}
         path: ReCap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{matrix.runtime}}
