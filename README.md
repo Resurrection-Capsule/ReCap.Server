@@ -30,9 +30,9 @@ Right here:
 	- [ ] Redirect Darkspore requests to localhost
 	- [X] Make Darkspore believe that the server is online (Error code 102)
 	- [X] Make Darkspore open after the Play button has been pressed (Error 3001)
-	- [ ] Make the login screen appear properly (Network connection was lost / Error 73000)
-	- [ ] Make it possible to access the arsenal
-	- [ ] Make it possible to access the hero editor
+	- [X] Make the login screen appear properly (Network connection was lost / Error 73000)
+	- [ ] Make the arsenal completely functional
+	- [ ] Make the hero editor completely functional
 	- [ ] Make it possible to unlock any of the Heroes in the arsenal
 	- [ ] Make it possible to unlock any of the parts for Heroes
 	- [ ] Make hero profiles work
