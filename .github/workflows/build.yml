@@ -31,11 +31,21 @@ jobs:
       with:
         dotnet-version: '8.0'
 
-    - name: Build
+    - name: Build launcher
+      run: |
+        cd ReCap.Launcher
+        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime win-x64
+
+    - name: Build server
       run: |
         cd ReCap.Server
         dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
 
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ReCapLauncher-win-x64
+        path: ReCap.Launcher/bin/${{env.DOTNET_CONFIG}}/net8.0/win-x64
+    
     - uses: actions/upload-artifact@v4
       with:
         name: ReCapServer-${{matrix.runtime}}
