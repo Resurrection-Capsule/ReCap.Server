@@ -2,8 +2,7 @@
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-
-DarksporeLauncher.Launch();
+using NDesk.Options;
 
 class DarksporeLauncher
 {
@@ -79,14 +78,36 @@ class DarksporeLauncher
         return writeSuccess;
     }
 
-    public static void Launch()
+    public static void Main(string[] args)
     {
         var domain = "localhost"; // max: 17 characters
+        var exePath = "Darkspore.exe";
+        var showHelp = false;
+
+        var p = new OptionSet () {
+            { "d|domain", v => { if (v != null) domain = v; } },
+            { "h|?|help", v => { showHelp = v != null; } },
+            { "e|exe=",   v => { exePath = v; } },
+        };
+
+        List<string> extra;
+        try {
+            extra = p.Parse (args);
+        }
+        catch (OptionException e) {
+            Console.WriteLine("Try `greet --help` for more information.");
+            return;
+        }
+
+        if (showHelp) {
+            Console.WriteLine("Use `--domain' to specify the domain, and --exe to specify the Darkspore EXE path.");
+            return;
+        }
 
         // Create the event, so the game doesn't close itself instantly
         var eventHandle = CreateEvent(IntPtr.Zero, false, false, "Global\\Darkspore L2G");
 
-        var process = Process.Start("Darkspore.exe");
+        var process = Process.Start(exePath);
 
         nint handle = OpenProcess(PROCESS_ALL_ACCESS, false, process.Id);
 
