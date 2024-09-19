@@ -78,6 +78,13 @@ class DarksporeLauncher
         return writeSuccess;
     }
 
+    private static void OverwriteMemory(nint hProcess, string ogValue, nint address, byte[] buffer)
+    {
+        if (!OverwriteMemory(hProcess, address, buffer, buffer.Length)) {
+            Console.WriteLine($"ERROR: Unable to overwrite {ogValue}!");
+        }
+    }
+
     public static void Main(string[] args)
     {
         var domain = "localhost"; // max: 17 characters
@@ -107,6 +114,10 @@ class DarksporeLauncher
         // Create the event, so the game doesn't close itself instantly
         var eventHandle = CreateEvent(IntPtr.Zero, false, false, "Global\\Darkspore L2G");
 
+        var versionInfo = FileVersionInfo.GetVersionInfo(exePath);
+        string version = versionInfo.FileVersion;
+        Console.WriteLine($"Darkspore {version} has been detected!");
+
         var process = Process.Start(exePath);
 
         nint handle = OpenProcess(PROCESS_ALL_ACCESS, false, process.Id);
@@ -115,62 +126,19 @@ class DarksporeLauncher
 
         // Override bootstrap API URL (config.darkspore.com)
         var extraChars = String.Concat(Enumerable.Repeat("A", 17 - domain.Length));
-        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z={extraChars}\0");
-        if (!OverwriteMemory(handle, 0x401200 + 0xBD9A9C, bootstrapApi, bootstrapApi.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite bootstrap API URL!");
-            return;
-        }
+        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z={extraChars}");
+        OverwriteMemory(handle, "http://config.darkspore.com/bootstrap/api?version=1", 0x401200 + 0xBD9A9C, bootstrapApi);
 
-        // Override content.darkspore.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xBDA678, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite content.darkspore.com!");
-            return;
-        }
-
-        // Override content.darkspore.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xBDA690, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite api.darkspore.com!");
-            return;
-        }
-
-        // Override gosredirector.ea.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xCD887C, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.ea.com!");
-            return;
-        }
-
-        // Override gosredirector.scert.ea.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xCD8894, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.scert.ea.com!");
-            return;
-        }
-
-        // Override gosredirector.stest.ea.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xCD88B0, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.stest.ea.com!");
-            return;
-        }
-
-        // Override gosredirector.online.ea.com
-        if (!OverwriteMemory(handle, 0x401200 + 0xCD88CC, localhost, localhost.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.online.ea.com!");
-            return;
-        }
+        OverwriteMemory(handle, "content.darkspore.com",       0x401200 + 0xBDA678, localhost);
+        OverwriteMemory(handle, "api.darkspore.com",           0x401200 + 0xBDA690, localhost);
+        OverwriteMemory(handle, "gosredirector.ea.com",        0x401200 + 0xCD887C, localhost);
+        OverwriteMemory(handle, "gosredirector.scert.ea.com",  0x401200 + 0xCD8894, localhost);
+        OverwriteMemory(handle, "gosredirector.stest.ea.com",  0x401200 + 0xCD88B0, localhost);
+        OverwriteMemory(handle, "gosredirector.online.ea.com", 0x401200 + 0xCD88CC, localhost);
 
         // Disable secure connection for redirector (it's local anyways)
         var insecureRedirector = new byte[] { 0x01 };
-        if (!OverwriteMemory(handle, 0x400C00 + 0xA4CF9D, insecureRedirector, insecureRedirector.Length))
-        {
-            Console.WriteLine($"ERROR: Unable to overwrite redirector secure bool param!");
-            return;
-        }
+        OverwriteMemory(handle, "redirector secure bool param", 0x400C00 + 0xA4CF9D, insecureRedirector);
 
         CloseHandle(handle);
 
