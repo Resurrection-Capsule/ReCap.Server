@@ -9,8 +9,6 @@ class DarksporeLauncher
 {
     const int PROCESS_ALL_ACCESS = 0x1F0FFF;
 
-    const int DARKSPORE_EXE_OFFSET = 0x400C00;
-
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern IntPtr CreateEvent(IntPtr lpEventAttributes, bool bManualReset, bool bInitialState, string lpName);
 
@@ -50,6 +48,8 @@ class DarksporeLauncher
             int read = 0;
             ReadProcessMemory(hProcess, address, buff, size, ref read);
             Console.WriteLine($"OverwriteMemory ORIGINAL: 0x{address:X8} = {BitConverter.ToString(buff).Replace("-","")}");
+            Console.WriteLine($"OverwriteMemory ORIGINAL: 0x{address:X8} = {Encoding.ASCII.GetString(buff)}");
+            Console.WriteLine("");
         }
 
         bool writeSuccess = true;
@@ -81,6 +81,8 @@ class DarksporeLauncher
 
     public static void Launch()
     {
+        var domain = "127.0.0.1";
+
         // Create the event, so the game doesn't close itself instantly
         var eventHandle = CreateEvent(IntPtr.Zero, false, false, "Global\\Darkspore L2G");
 
@@ -88,39 +90,61 @@ class DarksporeLauncher
 
         nint handle = OpenProcess(PROCESS_ALL_ACCESS, false, process.Id);
 
-        var localhost = Encoding.ASCII.GetBytes("localhost\0");
+        var localhost = Encoding.ASCII.GetBytes($"{domain}\0");
 
-        // // Override redirector hostname 1
-        // if (!OverwriteMemory(handle, 0x12E2AD8, localhost, localhost.Length))
-        // {
-        //     Console.WriteLine($"ERROR: Unable to overwrite redirector hostname 1!");
-        //     return;
-        // }
+        // Override bootstrap API URL
+        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1\0");
+        if (!OverwriteMemory(handle, 0x401200 + 0xBD9A9C, bootstrapApi, bootstrapApi.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite bootstrap API URL!");
+            return;
+        }
 
-        // // Override redirector hostname 2
-        // if (!OverwriteMemory(handle, 0x12E2AF0, localhost, localhost.Length))
-        // {
-        //     Console.WriteLine($"ERROR: Unable to overwrite redirector hostname 2!");
-        //     return;
-        // }
+        // Override content.darkspore.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xBDA678, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite content.darkspore.com!");
+            return;
+        }
 
-        // // Override redirector hostname 3
-        // if (!OverwriteMemory(handle, 0x12E2B0C, localhost, localhost.Length))
-        // {
-        //     Console.WriteLine($"ERROR: Unable to overwrite redirector hostname 3!");
-        //     return;
-        // }
+        // Override content.darkspore.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xBDA690, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite api.darkspore.com!");
+            return;
+        }
 
-        // // Override redirector hostname 4
-        // if (!OverwriteMemory(handle, 0x12E2B28, localhost, localhost.Length))
-        // {
-        //     Console.WriteLine($"ERROR: Unable to overwrite redirector hostname 4!");
-        //     return;
-        // }
+        // Override gosredirector.ea.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xCD887C, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.ea.com!");
+            return;
+        }
+
+        // Override gosredirector.scert.ea.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xCD8894, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.scert.ea.com!");
+            return;
+        }
+
+        // Override gosredirector.stest.ea.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xCD88B0, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.stest.ea.com!");
+            return;
+        }
+
+        // Override gosredirector.online.ea.com
+        if (!OverwriteMemory(handle, 0x401200 + 0xCD88CC, localhost, localhost.Length))
+        {
+            Console.WriteLine($"ERROR: Unable to overwrite gosredirector.online.ea.com!");
+            return;
+        }
 
         // Disable secure connection for redirector (it's local anyways)
         var insecureRedirector = new byte[] { 0x01 };
-        if (!OverwriteMemory(handle, DARKSPORE_EXE_OFFSET + 0xA4CF9D, insecureRedirector, insecureRedirector.Length))
+        if (!OverwriteMemory(handle, 0x400C00 + 0xA4CF9D, insecureRedirector, insecureRedirector.Length))
         {
             Console.WriteLine($"ERROR: Unable to overwrite redirector secure bool param!");
             return;
