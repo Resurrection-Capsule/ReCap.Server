@@ -9,6 +9,8 @@ class DarksporeLauncher
 {
     const int PROCESS_ALL_ACCESS = 0x1F0FFF;
 
+    const int DARKSPORE_EXE_OFFSET = 0x400C00;
+
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern IntPtr CreateEvent(IntPtr lpEventAttributes, bool bManualReset, bool bInitialState, string lpName);
 
@@ -118,7 +120,7 @@ class DarksporeLauncher
 
         // Disable secure connection for redirector (it's local anyways)
         var insecureRedirector = new byte[] { 0x01 };
-        if (!OverwriteMemory(handle, 0xA4CF9D, insecureRedirector, insecureRedirector.Length))
+        if (!OverwriteMemory(handle, DARKSPORE_EXE_OFFSET + 0xA4CF9D, insecureRedirector, insecureRedirector.Length))
         {
             Console.WriteLine($"ERROR: Unable to overwrite redirector secure bool param!");
             return;
