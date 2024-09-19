@@ -398,11 +398,12 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.status.getStatus")]
     public byte[] getStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string darksporeVersion = parameters.GetValueOrDefault("build", null);
         bool includeBroadcasts = parameters["include_broadcasts"] == "true";
 
         var response = new StatusResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = darksporeVersion,
             Timestamp = 1,
             ExecTime = 1,
             Status = StatusService.getStatus()
