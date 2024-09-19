@@ -13,6 +13,7 @@ public class ServerConfig
     public static string[] GetDarksporeHosts()
     {
         return new string[]{
+            "localhost",
             "config.darkspore.com",
             "gosredirector.online.ea.com",
             "gosredirector.ea.com",

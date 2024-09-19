@@ -81,7 +81,7 @@ class DarksporeLauncher
 
     public static void Launch()
     {
-        var domain = "127.0.0.1";
+        var domain = "localhost"; // max: 17 characters
 
         // Create the event, so the game doesn't close itself instantly
         var eventHandle = CreateEvent(IntPtr.Zero, false, false, "Global\\Darkspore L2G");
@@ -92,8 +92,8 @@ class DarksporeLauncher
 
         var localhost = Encoding.ASCII.GetBytes($"{domain}\0");
 
-        // Override bootstrap API URL
-        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1\0");
+        // Override bootstrap API URL (config.darkspore.com)
+        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z=AAAAAAAA\0");
         if (!OverwriteMemory(handle, 0x401200 + 0xBD9A9C, bootstrapApi, bootstrapApi.Length))
         {
             Console.WriteLine($"ERROR: Unable to overwrite bootstrap API URL!");
