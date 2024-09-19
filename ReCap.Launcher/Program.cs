@@ -102,7 +102,7 @@ class DarksporeLauncher
             extra = p.Parse (args);
         }
         catch (OptionException e) {
-            Console.WriteLine("Try `greet --help` for more information.");
+            Console.WriteLine("Try `--help` for more information.");
             return;
         }
 
