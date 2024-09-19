@@ -57,7 +57,7 @@ public class Server
 
         if (isSecure) {
             AttachComponent(new RedirectorComponent{
-                HostName = "localhost",
+                HostName = HostName,
                 Ip = 0,
                 Port = 42125
             });
