@@ -93,7 +93,8 @@ class DarksporeLauncher
         var localhost = Encoding.ASCII.GetBytes($"{domain}\0");
 
         // Override bootstrap API URL (config.darkspore.com)
-        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z=AAAAAAAA\0");
+        var extraChars = String.Concat(Enumerable.Repeat("A", 17 - domain.Length));
+        var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z={extraChars}\0");
         if (!OverwriteMemory(handle, 0x401200 + 0xBD9A9C, bootstrapApi, bootstrapApi.Length))
         {
             Console.WriteLine($"ERROR: Unable to overwrite bootstrap API URL!");
