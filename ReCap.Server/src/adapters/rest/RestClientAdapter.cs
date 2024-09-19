@@ -103,7 +103,7 @@ public class RestClientAdapter
             else if (uri.StartsWith("/bootstrap/api"))
             {
                 var method = GetMethod(typeof(BootstrapRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context });
+                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/game/api"))
@@ -115,7 +115,7 @@ public class RestClientAdapter
             else if (uri.StartsWith("/survey/api"))
             {
                 var method = GetMethod(typeof(SurveyRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context });
+                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/web/sporelabsgame/"))

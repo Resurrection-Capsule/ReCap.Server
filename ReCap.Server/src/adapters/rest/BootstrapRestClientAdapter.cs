@@ -15,12 +15,11 @@ namespace HttpServer;
 public class BootstrapRestClientAdapter
 {
     [ApiMethod(Name="api.config.getConfigs")]
-    public byte[] getConfigs(HttpListenerContext context)
+    public byte[] getConfigs(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
-        string darksporeVersion = parameters.Get("build");
-        bool includeSettings = parameters.Get("include_settings") == "true";
-        bool includePatches = parameters.Get("include_patches") == "true";
+        string darksporeVersion = parameters.GetValueOrDefault("build", null);
+        bool includeSettings = parameters.GetValueOrDefault("include_settings", null) == "true";
+        bool includePatches = parameters.GetValueOrDefault("include_patches", null) == "true";
 
         string host = ServerConfig.GetDarksporeHosts()[0];
 

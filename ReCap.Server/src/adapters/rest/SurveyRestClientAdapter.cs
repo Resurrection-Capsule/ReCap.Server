@@ -11,10 +11,8 @@ namespace HttpServer;
 public class SurveyRestClientAdapter
 {
     [ApiMethod(Name="api.survey.getSurveyList")]
-    public byte[] getSurveyList(HttpListenerContext context)
+    public byte[] getSurveyList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var parameters = context.Request.QueryString;
-
         var response = new SurveyResponseContract{
             Stat = "ok",
             Version = ServerConfig.GetDarksporeVersion(),
