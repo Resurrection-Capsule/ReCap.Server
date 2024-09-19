@@ -127,18 +127,34 @@ class DarksporeLauncher
         // Override bootstrap API URL (config.darkspore.com)
         var extraChars = String.Concat(Enumerable.Repeat("A", 17 - domain.Length));
         var bootstrapApi = Encoding.ASCII.GetBytes($"http://{domain}/bootstrap/api?version=1&z={extraChars}");
-        OverwriteMemory(handle, "http://config.darkspore.com/bootstrap/api?version=1", 0x401200 + 0xBD9A9C, bootstrapApi);
 
-        OverwriteMemory(handle, "content.darkspore.com",       0x401200 + 0xBDA678, localhost);
-        OverwriteMemory(handle, "api.darkspore.com",           0x401200 + 0xBDA690, localhost);
-        OverwriteMemory(handle, "gosredirector.ea.com",        0x401200 + 0xCD887C, localhost);
-        OverwriteMemory(handle, "gosredirector.scert.ea.com",  0x401200 + 0xCD8894, localhost);
-        OverwriteMemory(handle, "gosredirector.stest.ea.com",  0x401200 + 0xCD88B0, localhost);
-        OverwriteMemory(handle, "gosredirector.online.ea.com", 0x401200 + 0xCD88CC, localhost);
+        if (version == "5.3.0.103") {
+            OverwriteMemory(handle, "http://config.darkspore.com/bootstrap/api?version=1", 0x401A00 + 0xBD6C5C, bootstrapApi);
+            OverwriteMemory(handle, "content.darkspore.com",       0x401A00 + 0xBD7C4C, localhost);
+            OverwriteMemory(handle, "api.darkspore.com",           0x401A00 + 0xBD7C64, localhost);
+            OverwriteMemory(handle, "gosredirector.ea.com",        0x401A00 + 0xCD173C, localhost);
+            OverwriteMemory(handle, "gosredirector.scert.ea.com",  0x401A00 + 0xCD1754, localhost);
+            OverwriteMemory(handle, "gosredirector.stest.ea.com",  0x401A00 + 0xCD1770, localhost);
+            OverwriteMemory(handle, "gosredirector.online.ea.com", 0x401A00 + 0xCD178C, localhost);
 
-        // Disable secure connection for redirector (it's local anyways)
-        var insecureRedirector = new byte[] { 0x01 };
-        OverwriteMemory(handle, "redirector secure bool param", 0x400C00 + 0xA4CF9D, insecureRedirector);
+            // Disable secure connection for redirector (it's local anyways)
+            var insecureRedirector = new byte[] { 0x01 };
+            OverwriteMemory(handle, "redirector secure bool param", 0x400C00 + 0xA46B1D, insecureRedirector);
+        }
+
+        if (version == "5.3.0.127") {
+            OverwriteMemory(handle, "http://config.darkspore.com/bootstrap/api?version=1", 0x401200 + 0xBD9A9C, bootstrapApi);
+            OverwriteMemory(handle, "content.darkspore.com",       0x401200 + 0xBDA678, localhost);
+            OverwriteMemory(handle, "api.darkspore.com",           0x401200 + 0xBDA690, localhost);
+            OverwriteMemory(handle, "gosredirector.ea.com",        0x401200 + 0xCD887C, localhost);
+            OverwriteMemory(handle, "gosredirector.scert.ea.com",  0x401200 + 0xCD8894, localhost);
+            OverwriteMemory(handle, "gosredirector.stest.ea.com",  0x401200 + 0xCD88B0, localhost);
+            OverwriteMemory(handle, "gosredirector.online.ea.com", 0x401200 + 0xCD88CC, localhost);
+
+            // Disable secure connection for redirector (it's local anyways)
+            var insecureRedirector = new byte[] { 0x01 };
+            OverwriteMemory(handle, "redirector secure bool param", 0x400C00 + 0xA4CF9D, insecureRedirector);
+        }
 
         CloseHandle(handle);
 
