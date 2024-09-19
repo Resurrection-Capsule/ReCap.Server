@@ -4,9 +4,8 @@ namespace HttpServer;
 
 public class ConfigService
 {
-    public static ConfigContract getGameConfig() {
+    public static ConfigContract getGameConfig(string darksporeVersion) {
         string host = ServerConfig.GetDarksporeHosts()[0];
-        string darksporeVersion = ServerConfig.GetDarksporeVersion();
 
         return new ConfigContract{
             BlazeServiceName = "darkspore", // Directly linked to BlazeServiceName

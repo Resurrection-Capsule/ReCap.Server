@@ -18,13 +18,13 @@ public class BootstrapRestClientAdapter
     public byte[] getConfigs(HttpListenerContext context)
     {
         var parameters = context.Request.QueryString;
+        string darksporeVersion = parameters.Get("build");
         bool includeSettings = parameters.Get("include_settings") == "true";
         bool includePatches = parameters.Get("include_patches") == "true";
 
         string host = ServerConfig.GetDarksporeHosts()[0];
-        string darksporeVersion = ServerConfig.GetDarksporeVersion();
 
-        var config = ConfigService.getGameConfig();
+        var config = ConfigService.getGameConfig(darksporeVersion);
 
         var configs = new List<ConfigContract>(){config};
         var response = new ConfigResponseContract{
