@@ -20,6 +20,9 @@ public class UserSessionsComponent : IComponent
             case 0x14:
                 return HandleUpdateNetworkInfo(client, packet);
 
+            case 0x19:
+                return HandleUpdateUserSessionClientData(client, packet);
+
             case 0x1A:
                 return HandleSetUserInfoAttribute(client, packet);
 
@@ -74,6 +77,12 @@ public class UserSessionsComponent : IComponent
         update.ExtendedData.UserInfoAttribute = 0x4000000000000000; // disable popup about multiple locations
 
         client.Notify(update, 0x7802, 1);
+        return true;
+    }
+
+    private static bool HandleUpdateUserSessionClientData(Client client, Packet packet)
+    {
+        client.RespondTo(packet);
         return true;
     }
 
