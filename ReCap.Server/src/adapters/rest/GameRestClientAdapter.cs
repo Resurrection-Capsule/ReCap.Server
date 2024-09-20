@@ -360,18 +360,72 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.inventory.getPartOfferList")]
     public byte[] getPartOfferList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string authToken = parameters["token"];
+
         return null;
     }
 
     [ApiMethod(Name="api.inventory.updatePartStatus")]
     public byte[] updatePartStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        // TODO: api.inventory.updatePartStatus
+
+        // auto partIds = utils::explode_string(request.uri.parameter("part_id"), ',');
+		// auto statuses = utils::explode_string(request.uri.parameter("status"), ',');
+
+		// size_t len = std::min<size_t>(partIds.size(), statuses.size());
+		// if (len > 0) {
+		// 	for (size_t i = 0; i < len; i++) {
+		// 		uint32_t partId = utils::to_number<uint32_t>(partIds[i]);
+		// 		uint8_t  status = utils::to_number<uint8_t>(statuses[i]);
+
+		// 		auto part = Repository::UserParts::getById(partId);
+		// 		if (part != nullptr) {
+		// 			part->SetStatus(status);
+		// 		}
+		// 	}
+		// 	Repository::UserParts::Save();
+		// }
+
         return null;
     }
 
     [ApiMethod(Name="api.inventory.vendorParts")]
     public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        // TODO: api.inventory.vendorParts
+
+        string authToken = parameters["token"];
+        string[] transactions = parameters["transactions"].Split(";"); // eg. w1
+        foreach (string transaction in transactions) {
+            // char type = transaction[0];
+            // int64_t index = utils::to_number<int64_t>(&transaction[1]);
+            
+            // if (type == 's') { // sell item
+            //     auto part = Repository::UserParts::getById(index);
+            //     Repository::UserParts::Remove(part);
+            //     user->get_account().dna += Repository::Parts::getById(part->rigblock_asset_id)->cost;
+            // }
+            // else if (type == 'f') { // turn item into detail/flair
+            //     auto part = Repository::UserParts::getById(index);
+            //     part->flair = true;
+            // }
+            // else if (type == 'w'){ // buy weapon
+            //     // TODO: Implement buying weapon
+            // }
+            // else {
+            //     logger::info("Transaction: " + transaction);
+            //     // TODO: check for more later
+            // }
+        }
+
+        // auto allParts = Repository::UserParts::ListAll();
+        // if (auto parts = docResponse.append_child("parts")) {
+        //     for (const auto& part : allParts) {
+        //         if (part->equipped_to_creature_id == 0) part->WriteXml(parts, true);
+        //     }
+        // }
+
         return null;
     }
 
