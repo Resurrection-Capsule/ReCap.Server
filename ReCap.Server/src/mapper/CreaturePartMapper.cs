@@ -22,7 +22,9 @@ public class CreaturePartMapper
     }
 
     public CreaturePartContract toContract(CreaturePartModel creaturePart) {
-        return mapper.Map<CreaturePartContract>(creaturePart);
+        var contract = mapper.Map<CreaturePartContract>(creaturePart);
+        contract.ReferenceID = contract.ID;
+        return contract;
     }
 
     private ulong fnv1aHashOfString(string val) {

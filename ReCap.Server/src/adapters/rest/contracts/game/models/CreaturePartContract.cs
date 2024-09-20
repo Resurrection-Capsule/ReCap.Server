@@ -8,8 +8,16 @@ namespace HttpServer;
 [XmlRoot("part")]
 public class CreaturePartContract
 {
+    [XmlElement(ElementName = "id")]
+    public ulong ID { get; set; }
+
+    [XmlElement(ElementName = "reference_id")]
+    public ulong ReferenceID { get; set; }
+
+
     [XmlElement(ElementName = "creature_id")]
-    public int CreatureId { get; set; }
+    public int? CreatureId { get; set; }
+    public bool ShouldSerializeCreatureId() => CreatureId.HasValue;
 
     [XmlElement(ElementName = "creation_date")]
     public ulong CreationDate { get; set; }
@@ -23,7 +31,7 @@ public class CreaturePartContract
     
 
     [XmlElement(ElementName = "rarity")]
-    public CreaturePartRarity Rarity { get; set; }
+    public int Rarity { get; set; }
     
     [XmlElement(ElementName = "market_status")]
     public int MarketStatus { get; set; }

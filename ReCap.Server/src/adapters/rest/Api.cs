@@ -10,14 +10,14 @@ using HttpMultipartParser;
 
 namespace HttpServer;
 
-public class RestClientAdapter
+public class Api
 {
     private BootstrapRestClientAdapter bootstrapRestClientAdapter;
     private GameRestClientAdapter gameRestClientAdapter;
     private ReCapRestClientAdapter reCapRestClientAdapter;
     private SurveyRestClientAdapter surveyRestClientAdapter;
 
-    public RestClientAdapter(SqliteConfig newSqliteConfig) {
+    public Api(SqliteConfig newSqliteConfig) {
         bootstrapRestClientAdapter = new BootstrapRestClientAdapter();
         gameRestClientAdapter = new GameRestClientAdapter(newSqliteConfig);
         reCapRestClientAdapter = new ReCapRestClientAdapter(newSqliteConfig);

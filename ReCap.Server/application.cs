@@ -26,7 +26,7 @@ public class Application
             blazeHttpServer.Start();
         });
 
-        var restClientAdapter = new RestClientAdapter(dbConfig);
+        var restClientAdapter = new Api(dbConfig);
         restClientAdapter.Run();
     }
 }
