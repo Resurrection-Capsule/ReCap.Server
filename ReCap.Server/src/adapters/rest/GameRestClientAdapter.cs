@@ -5,7 +5,7 @@ using System.Text;
 using System.Collections.Specialized;
 
 using HttpServer;
-using Logger;
+using LoggerUtil;
 
 namespace HttpServer;
 
@@ -376,12 +376,12 @@ public class GameRestClientAdapter
 		List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
 		if (len > 0) {
 			for (int i = 0; i < len; i++) {
-				ulong partId = Convert.ToInt32(partIds[i]);
+				ulong partId = (ulong)Convert.ToInt32(partIds[i]);
 				int status = Convert.ToInt32(statuses[i]);
 
 				var part = creaturePartService.getCreaturePartById(partId);
 				if (part != null) {
-					part.Status(status);
+					part.Status = status;
 					creatureParts.Add(part);
 				}
 			}

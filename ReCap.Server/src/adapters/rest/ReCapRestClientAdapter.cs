@@ -23,22 +23,10 @@ public class ReCapRestClientAdapter
         deckService = new DeckService(newSqliteConfig);
     }
 
-    private string getBodyFromRequest(HttpListenerContext context)
-    {
-        var request = context.Request;
-        System.IO.Stream body = request.InputStream;
-        System.Text.Encoding encoding = request.ContentEncoding;
-        System.IO.StreamReader reader = new System.IO.StreamReader(body, encoding);
-        string s = reader.ReadToEnd();
-        body.Close();
-        reader.Close();
-        return s;
-    }
-
     [ApiMethod(Name="api.game.log")]
     public byte[] log(HttpListenerContext context)
     {
-        string message = getBodyFromRequest(context);
+        string message = HttpUtils.GetBodyFromRequest(context.Request);
         Logger.info(message);
         return new byte[]{};
     }
@@ -46,7 +34,7 @@ public class ReCapRestClientAdapter
     [ApiMethod(Name="api.game.registration")]
     public byte[] registerUser(HttpListenerContext context)
     {
-        // string jsonStr = getBodyFromRequest(context);
+        // string jsonStr = HttpUtils.GetBodyFromRequest(context.Request);
         // dynamic request = JsonConvert.DeserializeObject(jsonStr);
         
         var request = context.Request;
