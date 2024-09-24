@@ -61,7 +61,7 @@ public class CreaturePartMapper
 		return fnv1aHashOfString($"_Generated/LootSuffix{suffix}.LootSuffix");
 	}
 
-    public CreaturePart toDomain(CreaturePartTemplateModel creaturePartTemplate) {
+    public CreaturePart toDomain(CreaturePartTemplateModel creaturePartTemplate, bool isDetail) {
         return new CreaturePart{
             CreationDate = 0, // TODO: current timestamp?
 
@@ -73,7 +73,7 @@ public class CreaturePartMapper
             Status = creaturePartTemplate.status,
             Usage = creaturePartTemplate.usage,
 
-            IsFlair = false, // TODO: what is that again?
+            IsFlair = isDetail,
 
             RigblockAssetHash = hashOfRigblock(creaturePartTemplate.rigblockAssetId),
             PrefixAssetHash = hashOfPrefix(creaturePartTemplate.prefixAssetId),

@@ -26,16 +26,20 @@ public class CreaturePartService
         List<CreaturePart> parts = [];
         var allTemplates = creaturePartTemplateRepository.getAllTemplates();
         foreach (var template in allTemplates) {
-            var part = creaturePartMapper.toDomain(template);
-            part.AccountId = account.Id;
-            parts.Add(part);
+            var part1 = creaturePartMapper.toDomain(template, false);
+            part1.AccountId = account.Id;
+            parts.Add(part1);
+
+            var part2 = creaturePartMapper.toDomain(template, true);
+            part2.AccountId = account.Id;
+            parts.Add(part2);
         }
         creaturePartRepository.insertCreatureParts(parts);
         return parts;
     }
 
     public CreaturePart addCreaturePart(Account account, CreaturePartTemplateModel creaturePartTemplate) {
-        var part = creaturePartMapper.toDomain(creaturePartTemplate);
+        var part = creaturePartMapper.toDomain(creaturePartTemplate, false);
         part.AccountId = account.Id;
         creaturePartRepository.insertCreaturePart(part);
         return part;
