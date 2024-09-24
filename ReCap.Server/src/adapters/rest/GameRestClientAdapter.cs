@@ -5,6 +5,7 @@ using System.Text;
 using System.Collections.Specialized;
 
 using HttpServer;
+using Logger;
 
 namespace HttpServer;
 
@@ -417,7 +418,7 @@ public class GameRestClientAdapter
                 // TODO: Implement buying weapon
             }
             else {
-                // logger::info("Transaction: " + transaction);
+                Logger.info($"Unknown transaction: {transaction}");
                 // TODO: check for more later
             }
         }
