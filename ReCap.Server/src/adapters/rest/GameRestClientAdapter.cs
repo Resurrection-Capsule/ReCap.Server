@@ -388,9 +388,14 @@ public class GameRestClientAdapter
 			creaturePartService.updateCreatureParts(creatureParts);
 		}
 
-        // TODO: api.inventory.updatePartStatus response
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
 
-        return null;
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.inventory.vendorParts")]
@@ -446,6 +451,8 @@ public class GameRestClientAdapter
             ExecTime = 1,
             Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
         };
+
+        // utils::xml_add_text_node(docResponse, "dna", user->get_account().dna);
 
         return XmlUtils.Serialize(response);
     }
