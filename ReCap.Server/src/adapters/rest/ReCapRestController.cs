@@ -10,14 +10,14 @@ using LoggerUtil;
 namespace HttpServer;
 
 [RestController(Value="/recap/api", ContentType="application/json")]
-public class ReCapRestClientAdapter
+public class ReCapRestController
 {
     private AccountService accountService;
     private CreatureService creatureService;
     private CreaturePartService creaturePartService;
     private DeckService deckService;
 
-    public ReCapRestClientAdapter(SqliteConfig newSqliteConfig) {
+    public ReCapRestController(SqliteConfig newSqliteConfig) {
         accountService = new AccountService(newSqliteConfig);
         creatureService = new CreatureService(newSqliteConfig);
         creaturePartService = new CreaturePartService(newSqliteConfig);

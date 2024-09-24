@@ -9,9 +9,9 @@ using HttpServer;
 namespace HttpServer;
 
 [RestController(Value="/survey/api", ContentType="text/xml")]
-public class SurveyRestClientAdapter
+public class SurveyRestController
 {
-    public SurveyRestClientAdapter(SqliteConfig newSqliteConfig) {}
+    public SurveyRestController(SqliteConfig newSqliteConfig) {}
 
     [RequestMapping(Name="api.survey.getSurveyList")]
     public byte[] getSurveyList(HttpListenerContext context, Dictionary<string,string> parameters)

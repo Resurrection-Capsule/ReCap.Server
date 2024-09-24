@@ -10,7 +10,7 @@ using LoggerUtil;
 namespace HttpServer;
 
 [RestController(Value="/game/api", ContentType="text/xml")]
-public class GameRestClientAdapter
+public class GameRestController
 {
     private AccountMapper accountMapper;
     private AccountService accountService;
@@ -21,7 +21,7 @@ public class GameRestClientAdapter
     private CreaturePartMapper creaturePartMapper;
     private CreaturePartService creaturePartService;
 
-    public GameRestClientAdapter(SqliteConfig newSqliteConfig) {
+    public GameRestController(SqliteConfig newSqliteConfig) {
         accountMapper = new AccountMapper();
         accountService = new AccountService(newSqliteConfig);
         creatureMapper = new CreatureMapper();
