@@ -369,24 +369,26 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.inventory.updatePartStatus")]
     public byte[] updatePartStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        // TODO: api.inventory.updatePartStatus
+        string[] partIds = parameters["part_id"].Split(",");
+        string[] statuses = parameters["status"].Split(",");
 
-        // auto partIds = utils::explode_string(request.uri.parameter("part_id"), ',');
-		// auto statuses = utils::explode_string(request.uri.parameter("status"), ',');
+        int len = partIds.Length < statuses.Length ? partIds.Length : statuses.Length;
+		List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
+		if (len > 0) {
+			for (int i = 0; i < len; i++) {
+				ulong partId = Convert.ToInt32(partIds[i]);
+				int status = Convert.ToInt32(statuses[i]);
 
-		// size_t len = std::min<size_t>(partIds.size(), statuses.size());
-		// if (len > 0) {
-		// 	for (size_t i = 0; i < len; i++) {
-		// 		uint32_t partId = utils::to_number<uint32_t>(partIds[i]);
-		// 		uint8_t  status = utils::to_number<uint8_t>(statuses[i]);
+				var part = creaturePartService.getCreaturePartById(partId);
+				if (part != null) {
+					part.Status(status);
+					creatureParts.Add(part);
+				}
+			}
+			creaturePartService.updateCreatureParts(creatureParts);
+		}
 
-		// 		auto part = Repository::UserParts::getById(partId);
-		// 		if (part != nullptr) {
-		// 			part->SetStatus(status);
-		// 		}
-		// 	}
-		// 	Repository::UserParts::Save();
-		// }
+        // TODO: api.inventory.updatePartStatus response
 
         return null;
     }

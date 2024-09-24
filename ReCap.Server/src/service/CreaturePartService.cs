@@ -45,6 +45,10 @@ public class CreaturePartService
         creaturePartRepository.updateCreaturePart(creaturePartModel);
     }
 
+    public void updateCreatureParts(List<CreaturePartModel> creaturePartModels) {
+        creaturePartRepository.updateCreatureParts(creaturePartModels);
+    }
+
     public void deleteCreaturePart(CreaturePartModel creaturePartModel) {
         creaturePartRepository.deleteCreaturePart(creaturePartModel);
     }
