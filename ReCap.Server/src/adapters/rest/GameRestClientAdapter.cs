@@ -399,34 +399,45 @@ public class GameRestClientAdapter
         string authToken = parameters["token"];
         var account = accountService.getAccountByAuthToken(authToken);
 
+        List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1
         foreach (string transaction in transactions) {
             char type = transaction[0];
             ulong partId = (ulong)Convert.ToInt32(transaction[1]);
+            CreaturePartModel part = null;
             
             if (type == 's') { // sell item
-                var part = creaturePartService.getCreaturePartById(partId);
+                part = creaturePartService.getCreaturePartById(partId);
                 creaturePartService.deleteCreaturePart(part);
 
                 account.dna += part.Cost;
-                accountService.updateAccount(account);
+                part = null;
             }
             else if (type == 'f') { // turn item into detail/flair
-                var part = creaturePartService.getCreaturePartById(partId);
+                part = creaturePartService.getCreaturePartById(partId);
                 part.IsFlair = true;
-                creaturePartService.updateCreaturePart(part);
             }
-            else if (type == 'w'){ // buy weapon
+            else if (type == 'w') { // buy weapon
                 // TODO: Implement buying weapon
+            }
+            else if (type == 'p') { // parts?
+                // TODO: Implement parts
+            }
+            else if (type == 'b') { // buyback?
+                // TODO: Implement buyback
             }
             else {
                 Logger.info($"Unknown transaction: {transaction}");
                 // TODO: check for more later
             }
+
+            if (part != null) {
+                creatureParts.Add(part);
+            }
         }
 
-        var creatureParts = creaturePartService.getCreaturePartsByAccount(account)
-            .Where(creaturePart => creaturePart.CreatureId is null).ToList();
+        accountService.updateAccount(account);
+        creaturePartService.updateCreatureParts(creatureParts);
 
         var response = new PartListResponseContract{
             Stat = "ok",
