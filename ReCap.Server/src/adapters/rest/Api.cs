@@ -13,16 +13,17 @@ namespace HttpServer;
 
 public class Api
 {
-    private BootstrapRestClientAdapter bootstrapRestClientAdapter;
-    private GameRestClientAdapter gameRestClientAdapter;
-    private ReCapRestClientAdapter reCapRestClientAdapter;
-    private SurveyRestClientAdapter surveyRestClientAdapter;
+    private List<object> restControllers;
 
     public Api(SqliteConfig newSqliteConfig) {
-        bootstrapRestClientAdapter = new BootstrapRestClientAdapter();
-        gameRestClientAdapter = new GameRestClientAdapter(newSqliteConfig);
-        reCapRestClientAdapter = new ReCapRestClientAdapter(newSqliteConfig);
-        surveyRestClientAdapter = new SurveyRestClientAdapter();
+        restControllers = new List<object>();
+        var assembly = Assembly.GetExecutingAssembly();
+        foreach(Type type in assembly.GetTypes()) {
+            if (type.GetCustomAttributes(typeof(RestController), true).Length > 0) {
+                var instance = Activator.CreateInstance(type, [newSqliteConfig]);
+                restControllers.Add(instance);
+            }
+        }
     }
 
     public void Run()
@@ -88,98 +89,56 @@ public class Api
 
         try
         {
-            if (isRestController(typeof(ReCapRestClientAdapter), uri))
+            foreach(object restController in restControllers)
             {
-                var reCapRestClientAdapterType = reCapRestClientAdapter.GetType();
-                var method = GetMethod(reCapRestClientAdapterType, parameters["method"]);
-                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = GetContentType(reCapRestClientAdapterType);
-            }
-            else if (isRestController(typeof(BootstrapRestClientAdapter), uri))
-            {
-                var bootstrapRestClientAdapterType = bootstrapRestClientAdapter.GetType();
-                var method = GetMethod(bootstrapRestClientAdapterType, parameters["method"]);
-                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = GetContentType(bootstrapRestClientAdapterType);
-            }
-            else if (isRestController(typeof(GameRestClientAdapter), uri))
-            {
-                var gameRestClientAdapterType = gameRestClientAdapter.GetType();
-                var method = GetMethod(gameRestClientAdapterType, parameters["method"]);
-                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = GetContentType(gameRestClientAdapterType);
-            }
-            else if (isRestController(typeof(SurveyRestClientAdapter), uri))
-            {
-                var surveyRestClientAdapterType = surveyRestClientAdapter.GetType();
-                var method = GetMethod(surveyRestClientAdapterType, parameters["method"]);
-                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = GetContentType(surveyRestClientAdapterType);
-            }
-            else if (uri == "/bootstrap/launcher/")
-            {
-                fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
-            }
-            else if (uri == "/bootstrap/launcher/notes")
-            {
-                fileBytes = new byte[]{};
-            }
-            else if (uri.StartsWith("/web/sporelabsgame/"))
-            {
-                if (Regex.IsMatch(uri, @"^/web/sporelabsgame/[a-zA-Z]+$"))
+                var restControllerType = restController.GetType();
+                if (isRestController(restControllerType, uri))
                 {
-                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/") + "/index.html");
-                }
-                else
-                {
-                    fileBytes = StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
+                    var method = GetMethod(restControllerType, parameters["method"]);
+                    fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
+                    context.Response.ContentType = GetContentType(restControllerType);
                 }
             }
-            else
-            {
-                fileBytes = StaticStorageAdapter.GetFile(uri);
+            
+            if (fileBytes == null) {
+                fileBytes = GetBytesByFilePath(uri);
             }
 
-            if (fileBytes != null) {
-                context.Response.ContentLength64 = fileBytes.Length;
-                context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-                Logger.debug($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
+            if (fileBytes == null) {
+                throw new UnimplementedMethodException(parameters.GetValueOrDefault("method", "<unknown>"));
             }
-            else {
-                context.Response.StatusCode = 501;
-                context.Response.StatusDescription = "Method not implemented";
-                Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {parameters.GetValueOrDefault("method", "<unknown>")}");
-            }
+
+            context.Response.ContentLength64 = fileBytes.Length;
+            context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
+            Logger.debug($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
             context.Response.Close();
-        }
-        catch (BadRequestException ex)
-        {
-            context.Response.StatusCode = 400;
-            context.Response.StatusDescription = ex.Message;
-            context.Response.Close();
-            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
-        }
-        catch (ForbiddenOperationException ex)
-        {
-            context.Response.StatusCode = 403;
-            context.Response.StatusDescription = ex.Message;
-            context.Response.Close();
-            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
-        }
-        catch (FileNotFoundException ex)
-        {
-            context.Response.StatusCode = 404;
-            context.Response.StatusDescription = "File not found: " + ex.Message;
-            context.Response.Close();
-            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
         }
         catch (Exception ex)
         {
-            context.Response.StatusCode = 500;
-            context.Response.StatusDescription = "Error serving file: " + ex.Message;
-            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
-            context.Response.Close();
+            var method = GetExceptionMethod(ex.GetType());
+            method.Invoke(typeof(GlobalExceptionHandler), new object[] { context, ex });
         }
+    }
+
+    private byte[] GetBytesByFilePath(string uri)
+    {
+        if (uri == "/bootstrap/launcher/")
+        {
+            return StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
+        }
+        if (uri == "/bootstrap/launcher/notes")
+        {
+            return new byte[]{};
+        }
+        if (uri.StartsWith("/web/sporelabsgame/"))
+        {
+            if (Regex.IsMatch(uri, @"^/web/sporelabsgame/[a-zA-Z]+$"))
+            {
+                return StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/") + "/index.html");
+            }
+            return StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
+        }
+        return StaticStorageAdapter.GetFile(uri);
     }
 
     private MethodInfo GetMethod(Type serviceType, string methodName)
@@ -200,6 +159,22 @@ public class Api
         }
 
         throw new Exception("Invalid method " + methodName);
+    }
+
+    private MethodInfo GetExceptionMethod(Type exceptionType)
+    {
+        MethodInfo[] methods = typeof(GlobalExceptionHandler).GetMethods(BindingFlags.Static | BindingFlags.Public);
+
+        foreach (MethodInfo method in methods)
+        {
+            if (method.GetCustomAttribute(typeof(ExceptionHandler)) != null &&
+                ((ExceptionHandler)method.GetCustomAttribute(typeof(ExceptionHandler))).Type == exceptionType)
+            {
+                return method;
+            }
+        }
+
+        return GetExceptionMethod(exceptionType.BaseType);
     }
 
     private bool isRestController(System.Type restControllerType, string apiPath)

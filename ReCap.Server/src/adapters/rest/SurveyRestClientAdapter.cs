@@ -11,6 +11,8 @@ namespace HttpServer;
 [RestController(Value="/survey/api", ContentType="text/xml")]
 public class SurveyRestClientAdapter
 {
+    public SurveyRestClientAdapter(SqliteConfig newSqliteConfig) {}
+
     [RequestMapping(Name="api.survey.getSurveyList")]
     public byte[] getSurveyList(HttpListenerContext context, Dictionary<string,string> parameters)
     {

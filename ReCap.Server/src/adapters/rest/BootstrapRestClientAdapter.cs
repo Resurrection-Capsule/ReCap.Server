@@ -15,6 +15,8 @@ namespace HttpServer;
 [RestController(Value="/bootstrap/api", ContentType="text/xml")]
 public class BootstrapRestClientAdapter
 {
+    public BootstrapRestClientAdapter(SqliteConfig newSqliteConfig) {}
+
     [RequestMapping(Name="api.config.getConfigs")]
     public byte[] getConfigs(HttpListenerContext context, Dictionary<string,string> parameters)
     {
