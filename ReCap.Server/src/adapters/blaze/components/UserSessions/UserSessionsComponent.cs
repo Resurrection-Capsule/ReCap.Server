@@ -4,6 +4,7 @@ namespace ReCap.Server.Adapters.Blaze.Component.UserSessions;
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class UserSessionsComponent : IComponent
 {
@@ -143,7 +144,7 @@ public class UserSessionsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[UserSessions component]: {message}");
+    private static void Log(string message) => Logger.debug($"[UserSessions component]: {message}");
 }
 
 public class NotifyUserAdded : Tdf

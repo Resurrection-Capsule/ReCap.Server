@@ -1,6 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Util;
 
 using BlazeServer;
+using LoggerUtil;
 
 public class UtilComponent : IComponent
 {
@@ -157,7 +158,7 @@ public class UtilComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Util component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Util component]: {message}");
 }
 
 public enum ClientType

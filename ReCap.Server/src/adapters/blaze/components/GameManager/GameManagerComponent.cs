@@ -2,6 +2,7 @@
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class GameManagerComponent : IComponent
 {
@@ -280,7 +281,7 @@ public class GameManagerComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Game Manager component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Game Manager component]: {message}");
 }
 
 public enum GameEntryType

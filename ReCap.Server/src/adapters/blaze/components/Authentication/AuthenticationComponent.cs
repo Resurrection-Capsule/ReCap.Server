@@ -7,6 +7,7 @@ using BlazeServer;
 using HttpServer;
 using ReCap.Server.Adapters.Blaze.Component.UserSessions;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class AuthenticationComponent : IComponent
 {
@@ -295,7 +296,7 @@ public class AuthenticationComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Authentication component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Authentication component]: {message}");
 }
 
 public class CreateAccountResponse : Tdf

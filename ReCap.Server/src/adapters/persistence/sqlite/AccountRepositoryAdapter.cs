@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 
 using HttpServer;
+using LoggerUtil;
 
 namespace HttpServer;
 
@@ -25,13 +26,13 @@ public class AccountRepositoryAdapter
 
     public void deleteAuthToken(string authToken)
     {
-        Console.WriteLine($"Removing auth token {authToken}");
+        Logger.info($"Removing auth token {authToken}");
         idByAuthToken.Remove(authToken);
     }
 
     public void setAccountAuthToken(ulong accountId, string authToken)
     {
-        Console.WriteLine($"Setting auth token for account {accountId}: {authToken}");
+        Logger.info($"Setting auth token for account {accountId}: {authToken}");
         idByAuthToken[authToken] = accountId;
     }
 
@@ -40,7 +41,7 @@ public class AccountRepositoryAdapter
         ulong accountId = 0;
         if (idByAuthToken.TryGetValue(authToken, out accountId))
         {
-            Console.WriteLine($"Getting auth token for account {accountId}: {authToken}");
+            Logger.info($"Getting auth token for account {accountId}: {authToken}");
             return getAccountById(accountId);
         }
 

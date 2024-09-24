@@ -5,6 +5,7 @@ using System.Text;
 using System.Collections.Specialized;
 
 using HttpServer;
+using LoggerUtil;
 
 namespace HttpServer;
 
@@ -38,7 +39,7 @@ public class ReCapRestClientAdapter
     public byte[] log(HttpListenerContext context)
     {
         string message = getBodyFromRequest(context);
-        Console.WriteLine(message);
+        Logger.info(message);
         return new byte[]{};
     }
 

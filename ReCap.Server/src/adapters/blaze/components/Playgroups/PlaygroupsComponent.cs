@@ -3,6 +3,7 @@
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class PlaygroupsComponent : IComponent
 {
@@ -68,7 +69,7 @@ public class PlaygroupsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Playgroups component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Playgroups component]: {message}");
 }
 
 public class CreatePlaygroupRequest : Tdf

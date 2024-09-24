@@ -1,6 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.GameManager;
 
 using BlazeServer;
+using LoggerUtil;
 
 public class GameReportingComponent : IComponent
 {
@@ -49,5 +50,5 @@ public class GameReportingComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Game Reporting component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Game Reporting component]: {message}");
 }

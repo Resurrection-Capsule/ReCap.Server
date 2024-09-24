@@ -1,6 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Rooms;
 
 using BlazeServer;
+using LoggerUtil;
 
 public class RoomsComponent : IComponent
 {
@@ -78,7 +79,7 @@ public class RoomsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Rooms component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Rooms component]: {message}");
 }
 
 public class SelectViewUpdatesRequest : Tdf

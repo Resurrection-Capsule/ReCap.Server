@@ -1,6 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Association;
 
 using BlazeServer;
+using LoggerUtil;
 
 public class AssociationListsComponent : IComponent
 {
@@ -107,7 +108,7 @@ public class AssociationListsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Association Lists component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Association Lists component]: {message}");
 }
 
 public class ListIdentification : Tdf

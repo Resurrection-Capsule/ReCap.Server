@@ -2,6 +2,7 @@
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class RedirectorComponent : IComponent
 {
@@ -82,7 +83,7 @@ public class RedirectorComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Redirector component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Redirector component]: {message}");
 }
 
 public class AddressRemapEntry : Tdf

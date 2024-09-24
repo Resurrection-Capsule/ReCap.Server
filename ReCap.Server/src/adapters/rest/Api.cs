@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 using HttpServer;
 using HttpMultipartParser;
+using LoggerUtil;
 
 namespace HttpServer;
 
@@ -73,7 +74,7 @@ public class Api
         }
 
         if (parameters.Count > 0) {
-            Console.WriteLine($"Parameters: {string.Join(", ", parameters)}");
+            Logger.debug($"Parameters: {string.Join(", ", parameters)}");
         }
 
         return parameters;
@@ -137,12 +138,12 @@ public class Api
             if (fileBytes != null) {
                 context.Response.ContentLength64 = fileBytes.Length;
                 context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
+                Logger.debug($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
             }
             else {
                 context.Response.StatusCode = 501;
                 context.Response.StatusDescription = "Method not implemented";
-                Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {parameters.GetValueOrDefault("method", "<unknown>")}");
+                Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {parameters.GetValueOrDefault("method", "<unknown>")}");
             }
             context.Response.Close();
         }
@@ -151,27 +152,27 @@ public class Api
             context.Response.StatusCode = 400;
             context.Response.StatusDescription = ex.Message;
             context.Response.Close();
-            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
+            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
         }
         catch (ForbiddenOperationException ex)
         {
             context.Response.StatusCode = 403;
             context.Response.StatusDescription = ex.Message;
             context.Response.Close();
-            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
+            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
         }
         catch (FileNotFoundException ex)
         {
             context.Response.StatusCode = 404;
             context.Response.StatusDescription = "File not found: " + ex.Message;
             context.Response.Close();
-            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
+            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
         }
         catch (Exception ex)
         {
             context.Response.StatusCode = 500;
             context.Response.StatusDescription = "Error serving file: " + ex.Message;
-            Console.WriteLine($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
+            Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
             context.Response.Close();
         }
     }

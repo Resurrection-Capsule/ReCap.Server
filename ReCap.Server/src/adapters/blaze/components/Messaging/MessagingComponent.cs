@@ -1,6 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Messaging;
 
 using BlazeServer;
+using LoggerUtil;
 
 public class MessagingComponent : IComponent
 {
@@ -83,7 +84,7 @@ public class MessagingComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Messaging component]: {message}");
+    private static void Log(string message) => Logger.debug($"[Messaging component]: {message}");
 }
 
 public enum MessageOrder

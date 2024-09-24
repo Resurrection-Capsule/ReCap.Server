@@ -2,6 +2,7 @@ namespace ReCap.Server.Adapters.Blaze.Component.Playgroups;
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using LoggerUtil;
 
 public class UnknownComponent1 : IComponent
 {
@@ -36,6 +37,6 @@ public class UnknownComponent1 : IComponent
         return "<unknown>";
     }
 
-    private static void Log(string message) => Console.WriteLine($"[Unknown component 1]: {message}");
+    private static void Log(string message) => Logger.debug($"[Unknown component 1]: {message}");
 }
 
