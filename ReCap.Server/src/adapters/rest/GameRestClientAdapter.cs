@@ -393,8 +393,6 @@ public class GameRestClientAdapter
     [ApiMethod(Name="api.inventory.vendorParts")]
     public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        // TODO: api.inventory.vendorParts
-
         string authToken = parameters["token"];
         var account = accountService.getAccountByAuthToken(authToken);
 
@@ -424,14 +422,18 @@ public class GameRestClientAdapter
             }
         }
 
-        // auto allParts = Repository::UserParts::ListAll();
-        // if (auto parts = docResponse.append_child("parts")) {
-        //     for (const auto& part : allParts) {
-        //         if (part->equipped_to_creature_id == 0) part->WriteXml(parts, true);
-        //     }
-        // }
+        var creatureParts = creaturePartService.getCreaturePartsByAccount(account)
+            .Where(creaturePart => creaturePart.CreatureId is null).ToList();
 
-        return null;
+        var response = new PartListResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1,
+            Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [ApiMethod(Name="api.leaderboard.getLeaderboard")]
