@@ -399,7 +399,7 @@ public class GameRestClientAdapter
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1
         foreach (string transaction in transactions) {
             char type = transaction[0];
-            int partId = Convert.ToInt32(transaction[1]);
+            ulong partId = (ulong)Convert.ToInt32(transaction[1]);
             
             if (type == 's') { // sell item
                 var part = creaturePartService.getCreaturePartById(partId);
