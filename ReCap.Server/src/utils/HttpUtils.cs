@@ -1,17 +1,10 @@
-using System;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Web;
-using System.Collections.Specialized;
-
 using HttpServer;
 
 namespace HttpServer;
 
 public class HttpUtils
 {
-    public static string GetBodyFromRequest(HttpListenerRequest request)
+    public static string GetBodyFromRequest(System.Net.HttpListenerRequest request)
     {
         System.IO.Stream body = request.InputStream;
         System.Text.Encoding encoding = request.ContentEncoding;
