@@ -9,6 +9,7 @@ using LoggerUtil;
 
 namespace HttpServer;
 
+[RestController(Value="/recap/api")]
 public class ReCapRestClientAdapter
 {
     private AccountService accountService;
@@ -23,7 +24,7 @@ public class ReCapRestClientAdapter
         deckService = new DeckService(newSqliteConfig);
     }
 
-    [ApiMethod(Name="api.game.log")]
+    [RequestMapping(Name="api.game.log")]
     public byte[] log(HttpListenerContext context)
     {
         string message = HttpUtils.GetBodyFromRequest(context.Request);
@@ -31,7 +32,7 @@ public class ReCapRestClientAdapter
         return new byte[]{};
     }
 
-    [ApiMethod(Name="api.game.registration")]
+    [RequestMapping(Name="api.game.registration")]
     public byte[] registerUser(HttpListenerContext context)
     {
         // string jsonStr = HttpUtils.GetBodyFromRequest(context.Request);

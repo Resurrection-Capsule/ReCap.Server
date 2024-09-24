@@ -9,6 +9,7 @@ using LoggerUtil;
 
 namespace HttpServer;
 
+[RestController(Value="/game/api")]
 public class GameRestClientAdapter
 {
     private AccountMapper accountMapper;
@@ -31,7 +32,7 @@ public class GameRestClientAdapter
         creaturePartService = new CreaturePartService(newSqliteConfig);
     }
 
-    [ApiMethod(Name="api.account.auth")]
+    [RequestMapping(Name="api.account.auth")]
     public byte[] loginPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         var request = context.Request;
@@ -118,7 +119,7 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.account.getAccount")]
+    [RequestMapping(Name="api.account.getAccount")]
     public byte[] getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -196,7 +197,7 @@ public class GameRestClientAdapter
         return null;
     }
 
-    [ApiMethod(Name="api.account.logout")]
+    [RequestMapping(Name="api.account.logout")]
     public byte[] logoutPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -213,13 +214,13 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.account.searchAccounts")]
+    [RequestMapping(Name="api.account.searchAccounts")]
     public byte[] searchPlayerAccounts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.account.setSettings")]
+    [RequestMapping(Name="api.account.setSettings")]
     public byte[] setPlayerAccountSettings(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -235,25 +236,25 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.account.unlock")]
+    [RequestMapping(Name="api.account.unlock")]
     public byte[] unlockPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.account.setNewPlayerStats")]
+    [RequestMapping(Name="api.account.setNewPlayerStats")]
     public byte[] setNewPlayerStats(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.creature.getCreature")]
+    [RequestMapping(Name="api.creature.getCreature")]
     public byte[] getCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.creature.getTemplate")]
+    [RequestMapping(Name="api.creature.getTemplate")]
     public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -272,7 +273,7 @@ public class GameRestClientAdapter
         return null;
     }
 
-    [ApiMethod(Name="api.creature.resetCreature")]
+    [RequestMapping(Name="api.creature.resetCreature")]
     public byte[] resetCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -297,43 +298,43 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.creature.unlockCreature")]
+    [RequestMapping(Name="api.creature.unlockCreature")]
     public byte[] unlockCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.creature.updateCreature")]
+    [RequestMapping(Name="api.creature.updateCreature")]
     public byte[] updateCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.deck.updateDecks")]
+    [RequestMapping(Name="api.deck.updateDecks")]
     public byte[] updateDecks(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.game.exitGame")]
+    [RequestMapping(Name="api.game.exitGame")]
     public byte[] exitGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.game.getGame")]
+    [RequestMapping(Name="api.game.getGame")]
     public byte[] getGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.game.getRandomGame")]
+    [RequestMapping(Name="api.game.getRandomGame")]
     public byte[] getRandomGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.inventory.getPartList")]
+    [RequestMapping(Name="api.inventory.getPartList")]
     public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         // parameters["filter"] (eg.: "market_status_full-owned;")
@@ -358,7 +359,7 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.inventory.getPartOfferList")]
+    [RequestMapping(Name="api.inventory.getPartOfferList")]
     public byte[] getPartOfferList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -366,7 +367,7 @@ public class GameRestClientAdapter
         return null;
     }
 
-    [ApiMethod(Name="api.inventory.updatePartStatus")]
+    [RequestMapping(Name="api.inventory.updatePartStatus")]
     public byte[] updatePartStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string[] partIds = parameters["part_id"].Split(",");
@@ -398,7 +399,7 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.inventory.vendorParts")]
+    [RequestMapping(Name="api.inventory.vendorParts")]
     public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
@@ -457,13 +458,13 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.leaderboard.getLeaderboard")]
+    [RequestMapping(Name="api.leaderboard.getLeaderboard")]
     public byte[] getLeaderboard(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
-    [ApiMethod(Name="api.status.getBroadcastList")]
+    [RequestMapping(Name="api.status.getBroadcastList")]
     public byte[] getBroadcastList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         var response = new StatusResponseContract{
@@ -477,7 +478,7 @@ public class GameRestClientAdapter
         return XmlUtils.Serialize(response);
     }
 
-    [ApiMethod(Name="api.status.getStatus")]
+    [RequestMapping(Name="api.status.getStatus")]
     public byte[] getStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string darksporeVersion = parameters.GetValueOrDefault("build", null);

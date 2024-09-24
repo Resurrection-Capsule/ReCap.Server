@@ -1,6 +1,6 @@
 namespace HttpServer;
 
-public class ApiMethod : Attribute
+public class RequestMapping : Attribute
 {
     public string? Name;
 }

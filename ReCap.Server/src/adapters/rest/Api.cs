@@ -96,24 +96,24 @@ public class Api
             {
                 fileBytes = new byte[]{};
             }
-            else if (uri.StartsWith("/recap/api"))
+            else if (isRestController(typeof(ReCapRestClientAdapter), uri))
             {
                 var method = GetMethod(typeof(ReCapRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context });
             }
-            else if (uri.StartsWith("/bootstrap/api"))
+            else if (isRestController(typeof(BootstrapRestClientAdapter), uri))
             {
                 var method = GetMethod(typeof(BootstrapRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
             }
-            else if (uri.StartsWith("/game/api"))
+            else if (isRestController(typeof(GameRestClientAdapter), uri))
             {
                 var method = GetMethod(typeof(GameRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
                 context.Response.ContentType = "text/xml";
             }
-            else if (uri.StartsWith("/survey/api"))
+            else if (isRestController(typeof(SurveyRestClientAdapter), uri))
             {
                 var method = GetMethod(typeof(SurveyRestClientAdapter), parameters["method"]);
                 fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context, parameters });
@@ -187,13 +187,24 @@ public class Api
 
         foreach (MethodInfo method in methods)
         {
-            if (method.GetCustomAttribute(typeof(ApiMethod)) != null &&
-                ((ApiMethod)method.GetCustomAttribute(typeof(ApiMethod))).Name == methodName)
+            if (method.GetCustomAttribute(typeof(RequestMapping)) != null &&
+                ((RequestMapping)method.GetCustomAttribute(typeof(RequestMapping))).Name == methodName)
             {
                 return method;
             }
         }
 
         throw new Exception("Invalid method " + methodName);
+    }
+
+    private bool isRestController(System.Type restControllerType, string apiPath)
+    {
+        var dnAttribute = restControllerType.GetCustomAttributes(typeof(RestController), true).FirstOrDefault() as RestController;
+        if (dnAttribute != null)
+        {
+            // return apiPath == dnAttribute.Value;
+            return apiPath.StartsWith(dnAttribute.Value);
+        }
+        return false;
     }
 }

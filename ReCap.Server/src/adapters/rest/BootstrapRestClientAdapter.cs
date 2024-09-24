@@ -12,9 +12,10 @@ using HttpServer;
 
 namespace HttpServer;
 
+[RestController(Value="/bootstrap/api")]
 public class BootstrapRestClientAdapter
 {
-    [ApiMethod(Name="api.config.getConfigs")]
+    [RequestMapping(Name="api.config.getConfigs")]
     public byte[] getConfigs(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string darksporeVersion = parameters.GetValueOrDefault("build", null);
