@@ -54,4 +54,9 @@ public class CreaturePartRepositoryAdapter
     public void updateCreaturePart(CreaturePartModel creaturePartModel) {
         sqliteConfig.SaveChanges();
     }
+
+    public void deleteCreaturePart(CreaturePartModel creaturePartModel) {
+        sqliteConfig.CreatureParts.Remove(creaturePartModel);
+        sqliteConfig.SaveChanges();
+    }
 }

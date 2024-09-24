@@ -396,16 +396,19 @@ public class GameRestClientAdapter
         // TODO: api.inventory.vendorParts
 
         string authToken = parameters["token"];
+        var account = accountService.getAccountByAuthToken(authToken);
+
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1
         foreach (string transaction in transactions) {
             char type = transaction[0];
             int partId = Convert.ToInt32(transaction[1]);
             
             if (type == 's') { // sell item
-                // auto part = Repository::UserParts::getById(index);
-                // Repository::UserParts::Remove(part);
+                var part = creaturePartService.getCreaturePartById(partId);
+                creaturePartService.deleteCreaturePart(part);
 
-                // user->get_account().dna += Repository::Parts::getById(part->rigblock_asset_id)->cost;
+                account.dna += part.Cost;
+                accountService.updateAccount(account);
             }
             else if (type == 'f') { // turn item into detail/flair
                 var part = creaturePartService.getCreaturePartById(partId);

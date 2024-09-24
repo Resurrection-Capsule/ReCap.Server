@@ -88,4 +88,8 @@ public class AccountService
         accountRepository.insertAccount(account);
         return account;
     }
+
+    public void updateAccount(AccountModel accountModel) {
+        accountRepository.updateAccount(accountModel);
+    }
 }

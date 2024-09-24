@@ -65,4 +65,8 @@ public class AccountRepositoryAdapter
         sqliteConfig.Accounts.Add(accountModel);
         sqliteConfig.SaveChanges();
     }
+
+    public void updateAccount(AccountModel accountModel) {
+        sqliteConfig.SaveChanges();
+    }
 }
