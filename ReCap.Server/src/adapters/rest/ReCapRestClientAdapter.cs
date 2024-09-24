@@ -9,7 +9,7 @@ using LoggerUtil;
 
 namespace HttpServer;
 
-[RestController(Value="/recap/api")]
+[RestController(Value="/recap/api", ContentType="application/json")]
 public class ReCapRestClientAdapter
 {
     private AccountService accountService;
@@ -25,7 +25,7 @@ public class ReCapRestClientAdapter
     }
 
     [RequestMapping(Name="api.game.log")]
-    public byte[] log(HttpListenerContext context)
+    public byte[] log(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string message = HttpUtils.GetBodyFromRequest(context.Request);
         Logger.info(message);
@@ -33,17 +33,16 @@ public class ReCapRestClientAdapter
     }
 
     [RequestMapping(Name="api.game.registration")]
-    public byte[] registerUser(HttpListenerContext context)
+    public byte[] registerUser(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         // string jsonStr = HttpUtils.GetBodyFromRequest(context.Request);
         // dynamic request = JsonConvert.DeserializeObject(jsonStr);
         
         var request = context.Request;
-        var parameters = request.QueryString;
-        string email = parameters.Get("email");
-        string name = parameters.Get("name");
-        string password = parameters.Get("pass");
-        int avatar = Int32.Parse(parameters.Get("avatar"));
+        string email = parameters["email"];
+        string name = parameters["name"];
+        string password = parameters["pass"];
+        int avatar = Int32.Parse(parameters["avatar"]);
         bool isTest = true; // TODO: Unlocking everything from start to test; make that configurable through parameters
 
         var account = accountService.createAccount(email, name, password, avatar, isTest);

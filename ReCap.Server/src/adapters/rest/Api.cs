@@ -88,36 +88,41 @@ public class Api
 
         try
         {
-            if (uri == "/bootstrap/launcher/")
+            if (isRestController(typeof(ReCapRestClientAdapter), uri))
+            {
+                var reCapRestClientAdapterType = reCapRestClientAdapter.GetType();
+                var method = GetMethod(reCapRestClientAdapterType, parameters["method"]);
+                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context, parameters });
+                context.Response.ContentType = GetContentType(reCapRestClientAdapterType);
+            }
+            else if (isRestController(typeof(BootstrapRestClientAdapter), uri))
+            {
+                var bootstrapRestClientAdapterType = bootstrapRestClientAdapter.GetType();
+                var method = GetMethod(bootstrapRestClientAdapterType, parameters["method"]);
+                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context, parameters });
+                context.Response.ContentType = GetContentType(bootstrapRestClientAdapterType);
+            }
+            else if (isRestController(typeof(GameRestClientAdapter), uri))
+            {
+                var gameRestClientAdapterType = gameRestClientAdapter.GetType();
+                var method = GetMethod(gameRestClientAdapterType, parameters["method"]);
+                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
+                context.Response.ContentType = GetContentType(gameRestClientAdapterType);
+            }
+            else if (isRestController(typeof(SurveyRestClientAdapter), uri))
+            {
+                var surveyRestClientAdapterType = surveyRestClientAdapter.GetType();
+                var method = GetMethod(surveyRestClientAdapterType, parameters["method"]);
+                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context, parameters });
+                context.Response.ContentType = GetContentType(surveyRestClientAdapterType);
+            }
+            else if (uri == "/bootstrap/launcher/")
             {
                 fileBytes = StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
             }
             else if (uri == "/bootstrap/launcher/notes")
             {
                 fileBytes = new byte[]{};
-            }
-            else if (isRestController(typeof(ReCapRestClientAdapter), uri))
-            {
-                var method = GetMethod(typeof(ReCapRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(reCapRestClientAdapter, new object[] { context });
-            }
-            else if (isRestController(typeof(BootstrapRestClientAdapter), uri))
-            {
-                var method = GetMethod(typeof(BootstrapRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(bootstrapRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = "text/xml";
-            }
-            else if (isRestController(typeof(GameRestClientAdapter), uri))
-            {
-                var method = GetMethod(typeof(GameRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(gameRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = "text/xml";
-            }
-            else if (isRestController(typeof(SurveyRestClientAdapter), uri))
-            {
-                var method = GetMethod(typeof(SurveyRestClientAdapter), parameters["method"]);
-                fileBytes = (byte[])method.Invoke(surveyRestClientAdapter, new object[] { context, parameters });
-                context.Response.ContentType = "text/xml";
             }
             else if (uri.StartsWith("/web/sporelabsgame/"))
             {
@@ -206,5 +211,15 @@ public class Api
             return apiPath.StartsWith(dnAttribute.Value);
         }
         return false;
+    }
+
+    private string GetContentType(System.Type restControllerType)
+    {
+        var dnAttribute = restControllerType.GetCustomAttributes(typeof(RestController), true).FirstOrDefault() as RestController;
+        if (dnAttribute != null)
+        {
+            return dnAttribute.ContentType;
+        }
+        return null;
     }
 }

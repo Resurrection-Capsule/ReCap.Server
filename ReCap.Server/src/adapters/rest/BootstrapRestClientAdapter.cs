@@ -12,7 +12,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-[RestController(Value="/bootstrap/api")]
+[RestController(Value="/bootstrap/api", ContentType="text/xml")]
 public class BootstrapRestClientAdapter
 {
     [RequestMapping(Name="api.config.getConfigs")]

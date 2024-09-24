@@ -9,7 +9,7 @@ using LoggerUtil;
 
 namespace HttpServer;
 
-[RestController(Value="/game/api")]
+[RestController(Value="/game/api", ContentType="text/xml")]
 public class GameRestClientAdapter
 {
     private AccountMapper accountMapper;

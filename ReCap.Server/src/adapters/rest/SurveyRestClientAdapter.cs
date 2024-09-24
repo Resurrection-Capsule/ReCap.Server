@@ -8,7 +8,7 @@ using HttpServer;
 
 namespace HttpServer;
 
-[RestController(Value="/survey/api")]
+[RestController(Value="/survey/api", ContentType="text/xml")]
 public class SurveyRestClientAdapter
 {
     [RequestMapping(Name="api.survey.getSurveyList")]
