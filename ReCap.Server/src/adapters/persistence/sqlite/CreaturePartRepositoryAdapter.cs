@@ -21,6 +21,11 @@ public class CreaturePartRepositoryAdapter
         sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
+    public CreaturePartModel getCreaturePartsById(ulong id)
+    {
+        return sqliteConfig.CreatureParts.SingleOrDefault(b => b.ID == id);
+    }
+
     public List<CreaturePartModel> getCreaturePartsByAccountId(ulong accountId)
     {
         return sqliteConfig.CreatureParts.Where(b => b.AccountId == accountId).ToList();
@@ -43,6 +48,10 @@ public class CreaturePartRepositoryAdapter
             var creaturePartModel = creaturePartMapper.toModel(creaturePart);
             sqliteConfig.CreatureParts.Add(creaturePartModel);
         }
+        sqliteConfig.SaveChanges();
+    }
+
+    public void updateCreaturePart(CreaturePartModel creaturePartModel) {
         sqliteConfig.SaveChanges();
     }
 }

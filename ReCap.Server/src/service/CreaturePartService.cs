@@ -14,6 +14,10 @@ public class CreaturePartService
         creaturePartTemplateRepository = new CreaturePartTemplateRepositoryAdapter(newSqliteConfig);
     }
 
+    public CreaturePartModel getCreaturePartById(ulong id) {
+        return creaturePartRepository.getCreaturePartById(id);
+    }
+
     public List<CreaturePartModel> getCreaturePartsByAccount(AccountModel account) {
         return creaturePartRepository.getCreaturePartsByAccountId(account.Id);
     }
@@ -35,5 +39,9 @@ public class CreaturePartService
         part.AccountId = account.Id;
         creaturePartRepository.insertCreaturePart(part);
         return part;
+    }
+
+    public void updateCreaturePart(CreaturePartModel creaturePartModel) {
+        creaturePartRepository.updateCreaturePart(creaturePartModel);
     }
 }

@@ -398,25 +398,27 @@ public class GameRestClientAdapter
         string authToken = parameters["token"];
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1
         foreach (string transaction in transactions) {
-            // char type = transaction[0];
-            // int64_t index = utils::to_number<int64_t>(&transaction[1]);
+            char type = transaction[0];
+            int partId = Convert.ToInt32(transaction[1]);
             
-            // if (type == 's') { // sell item
-            //     auto part = Repository::UserParts::getById(index);
-            //     Repository::UserParts::Remove(part);
-            //     user->get_account().dna += Repository::Parts::getById(part->rigblock_asset_id)->cost;
-            // }
-            // else if (type == 'f') { // turn item into detail/flair
-            //     auto part = Repository::UserParts::getById(index);
-            //     part->flair = true;
-            // }
-            // else if (type == 'w'){ // buy weapon
-            //     // TODO: Implement buying weapon
-            // }
-            // else {
-            //     logger::info("Transaction: " + transaction);
-            //     // TODO: check for more later
-            // }
+            if (type == 's') { // sell item
+                // auto part = Repository::UserParts::getById(index);
+                // Repository::UserParts::Remove(part);
+
+                // user->get_account().dna += Repository::Parts::getById(part->rigblock_asset_id)->cost;
+            }
+            else if (type == 'f') { // turn item into detail/flair
+                var part = creaturePartService.getCreaturePartById(partId);
+                part.IsFlair = true;
+                creaturePartService.updateCreaturePart(part);
+            }
+            else if (type == 'w'){ // buy weapon
+                // TODO: Implement buying weapon
+            }
+            else {
+                // logger::info("Transaction: " + transaction);
+                // TODO: check for more later
+            }
         }
 
         // auto allParts = Repository::UserParts::ListAll();
