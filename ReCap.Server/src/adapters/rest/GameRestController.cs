@@ -311,6 +311,48 @@ public class GameRestController
     [RequestMapping(Name="api.creature.updateCreature")]
     public byte[] updateCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
+        int creatureVersion = Convert.ToInt32(parameters["version"]);
+
+        ulong cost = (ulong)Convert.ToInt32(parameters["cost"]);
+        double gearScore = Convert.ToDouble(parameters["gear"]);
+        double itemPoints = Convert.ToDouble(parameters["points"]);
+        ulong partsCount = (ulong)Convert.ToInt32(parameters["parts"]);
+
+        string stats = parameters["stats"];
+        string statsAbilityKeyvalues = parameters["stats_ability_keyvalues"];
+
+        string largePngBase64 = parameters["large"];
+        ulong largeCrc = (ulong)Convert.ToInt32(parameters["large_crc"]);
+        string thumbPngBase64 = parameters["thumb"];
+        ulong thumbCrc = (ulong)Convert.ToInt32(parameters["thumb_crc"]);
+
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
+        var creature = creatureService.getCreatureById(creatureId);
+        if (creature.AccountID != account.Id) {
+            throw new ForbiddenOperationException("Creature does not belong to this account");
+        }
+
+        creature.Version = creatureVersion;
+
+        creature.Cost = cost;
+        creature.GearScore = gearScore;
+        creature.ItemPoints = itemPoints;
+        creature.PartsCount = partsCount;
+
+        // TODO: stats
+        // TODO: statsAbilityKeyvalues
+
+        // creature.LargePngUrl
+        creature.LargePngBase64 = largePngBase64;
+        creature.LargeCrc = largeCrc;
+
+        // creature.ThumbPngUrl { get; set; }
+        creature.ThumbPngBase64 = thumbPngBase64;
+        creature.ThumbCrc = thumbCrc;
+
+        creatureService.updateCreature(creature);
+
         return null;
     }
 

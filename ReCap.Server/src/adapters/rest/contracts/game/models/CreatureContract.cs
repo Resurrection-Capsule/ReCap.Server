@@ -27,8 +27,8 @@ public class CreatureContract {
     public double? ItemPoints { get; set; }
 
     [XmlElement(ElementName = "png_large_url")]
-    public string? PngLargeUrl { get; set; }
+    public string? LargePngUrl { get; set; }
 
     [XmlElement(ElementName = "png_thumb_url")]
-    public string? PngThumbUrl { get; set; }
+    public string? ThumbPngUrl { get; set; }
 }

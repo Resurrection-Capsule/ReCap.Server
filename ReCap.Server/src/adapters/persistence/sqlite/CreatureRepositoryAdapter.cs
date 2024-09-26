@@ -41,4 +41,9 @@ public class CreatureRepositoryAdapter
 
         return creatureModel;
     }
+
+    public void updateCreature(CreatureModel creatureModel)
+    {
+        sqliteConfig.SaveChanges();
+    }
 }

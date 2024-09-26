@@ -46,4 +46,8 @@ public class CreatureService
         account.creatureRewards++;
         return creatureModel;
     }
+
+    public void updateCreature(CreatureModel creatureModel) {
+        creatureRepository.updateCreature(creatureModel);
+    }
 }
