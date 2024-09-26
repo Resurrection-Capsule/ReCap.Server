@@ -321,8 +321,26 @@ public class GameRestController
         double itemPoints = Convert.ToDouble(parameters["points"]);
         // List<ulong> partsList = parameters["parts"];
 
-        string stats = parameters["stats"];
-        string statsAbilityKeyvalues = parameters["stats_ability_keyvalues"];
+         // STR,14,3;DEX,23,5;MIND,13,0;HLTH,200,107;MANA,100,13;PDEF,150,168;EDEF,50,78;CRTR,100,112
+        List<CreatureModelStat> stats = parameters["stats"].Split(";").ToList().Select(stat => {
+            var statVals = stat.Split(",");
+            return new CreatureModelStat{
+                statName = statVals[0],
+                maxValue = Convert.ToInt32(statVals[1]),
+                currentValue = Convert.ToInt32(statVals[2])
+            };
+        }).ToList();
+
+        // 868969257!minDamage,4;868969257!maxDamage,12;4022963036!percent,50;1137096183!minDamage,24;1137096183!maxDamage,36;1137096183!stunDuration,3;3492557026!minSecondaryDamage,8;3492557026!maxSecondaryDamage,20;3492557026!minDamage,24;3492557026!maxDamage,40;3492557026!radius,4;2779439490!numOrbs,6;2779439490!minDamage,16;2779439490!maxDamage,40;2779439490!deflectionIncrease,100
+        List<CreatureModelAbilityStat> abilityStats = parameters["stats_ability_keyvalues"].Split(";").ToList().Select(stat => {
+            var statVals1 = stat.Split("!");
+            var statVals2 = statVals1[1].Split(",");
+            return new CreatureModelAbilityStat{
+                key = statVals1[0],
+                token = statVals2[0],
+                value = statVals2[1]
+            };
+        }).ToList();
 
         string largePngBase64 = parameters["large"];
         ulong largeCrc = (ulong)Convert.ToInt32(parameters["large_crc"]);
@@ -340,10 +358,10 @@ public class GameRestController
         creature.Cost = cost;
         creature.GearScore = gearScore;
         creature.ItemPoints = itemPoints;
-        // TODO: creature.Parts = partsList;
 
-        // TODO: stats
-        // TODO: statsAbilityKeyvalues
+        // TODO: creature.Parts = partsList;
+        creature.Stats = stats;
+        creature.AbilityStats = abilityStats;
 
         creature.LargePngUrl = $"http://{host}/recap/api?method=api.game.getCreatureLargePng&id={creatureId}";
         creature.LargePngBase64 = largePngBase64;

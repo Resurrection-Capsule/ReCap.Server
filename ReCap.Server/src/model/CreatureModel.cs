@@ -15,7 +15,10 @@ public class CreatureModel
     public ulong Cost;
     public double GearScore; // Shows up as "level" ingame
     public double ItemPoints;
-    public List<ulong> Parts;
+
+    public List<ulong> Parts = new List<ulong>();
+    public List<CreatureModelStat> Stats = new List<CreatureModelStat>();
+    public List<CreatureModelAbilityStat> AbilityStats = new List<CreatureModelAbilityStat>();
 
     public string? LargePngUrl { get; set; }
     public string? LargePngBase64 { get; set; }
@@ -24,4 +27,16 @@ public class CreatureModel
     public string? ThumbPngUrl { get; set; }
     public string? ThumbPngBase64 { get; set; }
     public ulong? ThumbCrc { get; set; }
+}
+
+public class CreatureModelStat {
+    public string statName;
+    public int maxValue;
+    public int currentValue;
+}
+
+public class CreatureModelAbilityStat {
+    public string key;
+    public string token;
+    public string value;
 }
