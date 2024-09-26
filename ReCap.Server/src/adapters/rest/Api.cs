@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 using HttpServer;
-using HttpMultipartParser;
 using LoggerUtil;
 
 namespace HttpServer;
@@ -44,35 +43,7 @@ public class Api
 
     private Dictionary<string,string> GetParameters(HttpListenerContext context)
     {
-        var parameters = new Dictionary<string,string>();
-
-        // Query parameters
-        var query = context.Request.QueryString;
-        foreach (string key in query.Keys) {
-            parameters.Add(key, query.Get(key));
-        }
-
-        // Multipart form parameters
-        if (context.Request.HttpMethod == "POST") {
-            try {
-                var inputStream = context.Request.InputStream;
-                var parser = MultipartFormDataParser.Parse(inputStream);
-                foreach(var entry in parser.Parameters) {
-                    parameters.Add(entry.Name, entry.Data);
-                }
-            }
-            catch (Exception ex) {}
-        }
-
-        // Cookies parameters
-        var cookies = context.Request.Cookies;
-        foreach(Cookie cookie in cookies) {
-            if (parameters.ContainsKey(cookie.Name)) {
-                if (parameters[cookie.Name] == "cookie") {
-                    parameters[cookie.Name] = cookie.Value;
-                }
-            }
-        }
+        var parameters = HttpUtils.GetParametersFromRequest(context.Request);
 
         if (parameters.Count > 0) {
             Logger.debug($"Parameters: {string.Join(", ", parameters)}");
