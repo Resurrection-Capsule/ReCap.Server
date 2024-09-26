@@ -35,19 +35,10 @@ public class GameRestController
     [RequestMapping(Name="api.account.auth")]
     public byte[] loginPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = null;
-        AccountModel account = null;
-
-        string key = parameters.GetValueOrDefault("key", null);
-        if (key != null) {
-            // key = "{auth_token}::0" (example: "1::0")
-            string[] keyParts = key.Split("::");
-            authToken = keyParts[0];
-            account = accountService.getAccountByAuthToken(authToken);
-        }
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        string key = parameters["key"]; // "{auth_token}::0" (example: "1::0")
+        string[] keyParts = key.Split("::");
+        string authToken = keyParts[0];
+        AccountModel account = accountService.getAccountByAuthToken(authToken);
 
         int newPlayerProgress = Convert.ToInt32(parameters.GetValueOrDefault("new_player_progress", "0"));
         if (newPlayerProgress != 0) {
@@ -119,11 +110,7 @@ public class GameRestController
     [RequestMapping(Name="api.account.getAccount")]
     public byte[] getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         string httpMethod = context.Request.HttpMethod;
         if (httpMethod == "GET")
@@ -200,9 +187,7 @@ public class GameRestController
     [RequestMapping(Name="api.account.logout")]
     public byte[] logoutPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
-
-        accountService.deleteAuthToken(authToken);
+        accountService.deleteAuthToken(parameters["token"]);
 
         var response = new ResponseContract{
             Stat = "ok",
@@ -223,13 +208,9 @@ public class GameRestController
     [RequestMapping(Name="api.account.setSettings")]
     public byte[] setPlayerAccountSettings(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
         string settingsStr = parameters["settings"]; // Example: Key1,Val1;Key2,Val2;Key3,Val3;
 
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         string[] settings = settingsStr.Split(";");
         foreach (string setting in settings) {
@@ -272,14 +253,10 @@ public class GameRestController
     [RequestMapping(Name="api.creature.getTemplate")]
     public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
         int templateId = Convert.ToInt32(parameters["id"]);
         bool includeAbilities = parameters["include_abilities"] == "true";
 
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         var template = creatureService.getCreatureTemplateById((ulong)templateId);
 
@@ -291,13 +268,9 @@ public class GameRestController
     [RequestMapping(Name="api.creature.resetCreature")]
     public byte[] resetCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
         int creatureId = Convert.ToInt32(parameters["id"]);
 
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         var creature = creatureService.getCreatureById((ulong)creatureId);
         if (creature.AccountID != account.Id) {
@@ -356,15 +329,11 @@ public class GameRestController
     public byte[] getPartList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         // parameters["filter"] (eg.: "market_status_full-owned;")
-        string authToken = parameters["token"];
 
         // TODO: count variable currently isn't being used
         int count = Convert.ToInt32(parameters.GetValueOrDefault("count", "100000"));
 
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         var creatureParts = creaturePartService.getCreaturePartsByAccount(account)
             .Where(creaturePart => creaturePart.CreatureId is null).ToList();
@@ -435,12 +404,7 @@ public class GameRestController
     [RequestMapping(Name="api.inventory.vendorParts")]
     public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
-
-        var account = accountService.getAccountByAuthToken(authToken);
-        if (account == null) {
-            throw new ForbiddenOperationException("Unindentified account");
-        }
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
 
         List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1

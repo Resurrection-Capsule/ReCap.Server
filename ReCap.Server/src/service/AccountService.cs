@@ -38,7 +38,11 @@ public class AccountService
     }
 
     public AccountModel getAccountByAuthToken(string authToken) {
-        return accountRepository.getAccountByAuthToken(authToken);
+        var account = accountRepository.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
+        return account;
     }
 
     public Account createAccount(string email, string name, string password, int avatarId, bool isTestAccount) {
