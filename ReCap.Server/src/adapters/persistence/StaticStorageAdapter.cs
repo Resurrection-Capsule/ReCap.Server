@@ -19,7 +19,7 @@ public class StaticStorageAdapter
             throw new FileNotFoundException(fullPath);
         }
         if (filePath.EndsWith(".html") || filePath.EndsWith(".js")) {
-            string host = ServerConfig.GetDarksporeHosts()[0];
+            string host = ServerConfig.GetHost();
             string fileContents = File.ReadAllText(fullPath);
             fileContents = fileContents.Replace("{{host}}", host);
             fileContents = fileContents.Replace("{{recap-version}}", "1.0");

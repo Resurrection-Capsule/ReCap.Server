@@ -10,29 +10,9 @@ namespace HttpServer;
 
 public class ServerConfig
 {
-    public static string[] GetDarksporeHosts()
+    public static string GetHost()
     {
-        return new string[]{
-            "localhost",
-            "config.darkspore.com",
-            "gosredirector.online.ea.com",
-            "gosredirector.ea.com",
-            "api.darkspore.com",
-            "content.darkspore.com",
-            "beta.darkspore.ea.com",
-            "beta-sn.darkspore.ea.com",
-            "beta-sn2.darkspore.ea.com",
-            "dev.darkspore.ea.com",
-            "dev-sn.darkspore.ea.com",
-            "dev-sn2.darkspore.ea.com",
-            "fail.spore.rws.ad.ea.com",
-            "ea6.com.edgesuite.net",
-            "darkspore.alpha.lockbox.ea.com",
-            "www.sporelabs.com",
-            "splabbetamydb1b.rspc-iad.ea.com",
-            "321917-prodmydb009.spore.rspc-iad.ea.com",
-            "telemetry.maxis.com"
-        };
+        return "localhost";
     }
 
     public static string GetDarksporeVersion()
