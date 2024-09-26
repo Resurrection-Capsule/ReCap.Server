@@ -27,11 +27,8 @@ public class Api
 
     public void Run()
     {
-        string[] hosts = ServerConfig.GetDarksporeHosts();
         HttpListener listener = new HttpListener();
-        for(int i = 0; i < hosts.Length; i++) {
-            listener.Prefixes.Add(String.Format("http://{0}/", hosts[i]));
-        }
+        listener.Prefixes.Add("http://*:80/");
         listener.Start();
 
         while (true)
@@ -41,20 +38,13 @@ public class Api
         }
     }
 
-    private Dictionary<string,string> GetParameters(HttpListenerContext context)
+    private void ProcessRequest(HttpListenerContext context)
     {
         var parameters = HttpUtils.GetParametersFromRequest(context.Request);
-
         if (parameters.Count > 0) {
             Logger.debug($"Parameters: {string.Join(", ", parameters)}");
         }
 
-        return parameters;
-    }
-
-    private void ProcessRequest(HttpListenerContext context)
-    {
-        var parameters = GetParameters(context);
         string uri = context.Request.Url.LocalPath.Split("?")[0];
         byte[] fileBytes = null;
 
