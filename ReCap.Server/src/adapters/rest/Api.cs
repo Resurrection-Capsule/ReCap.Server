@@ -55,14 +55,9 @@ public class Api
                 var restControllerType = restController.GetType();
                 if (isRestController(restControllerType, uri))
                 {
-                    var method = GetMethod(restControllerType, parameters["method"]);
+                    var method = GetMethod(restControllerType, parameters.GetValueOrDefault("method", "<unknown>"));
                     fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
                     context.Response.ContentType = GetContentType(restControllerType);
-
-                    if (fileBytes == null)
-                    {
-                        throw new UnimplementedMethodException(parameters.GetValueOrDefault("method", "<unknown>"));
-                    }
                 }
             }
             
@@ -96,10 +91,6 @@ public class Api
 
     private MethodInfo GetMethod(Type serviceType, string methodName)
     {
-        if (methodName == null) {
-            throw new BadRequestException("Method must not be null");
-        }
-
         MethodInfo[] methods = serviceType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
         foreach (MethodInfo method in methods)
@@ -111,7 +102,7 @@ public class Api
             }
         }
 
-        throw new Exception("Invalid method " + methodName);
+        throw new UnimplementedMethodException(methodName);
     }
 
     private MethodInfo GetExceptionMethod(Type exceptionType)

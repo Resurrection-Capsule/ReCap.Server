@@ -18,7 +18,7 @@ public class ConfigService
             HttpSecure = "N",
             LiferayHost = host,
             LauncherAction = 2,
-            LauncherUrl = "http://" + host + "/bootstrap/launcher/?version=" + darksporeVersion
+            LauncherUrl = $"http://{host}/bootstrap/launcher/?version={darksporeVersion}"
         };
     }
 }
