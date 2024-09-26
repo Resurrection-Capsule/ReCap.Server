@@ -35,8 +35,6 @@ public class GameRestController
     [RequestMapping(Name="api.account.auth")]
     public byte[] loginPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var request = context.Request;
-
         string authToken = null;
         AccountModel account = null;
 
