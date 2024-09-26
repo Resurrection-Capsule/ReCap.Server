@@ -55,9 +55,15 @@ public class Api
                 var restControllerType = restController.GetType();
                 if (isRestController(restControllerType, uri))
                 {
-                    var method = GetMethod(restControllerType, parameters.GetValueOrDefault("method", "<unknown>"));
+                    var methodName = parameters.GetValueOrDefault("method", "<unknown>");
+                    var method = GetMethod(restControllerType, methodName);
                     fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
                     context.Response.ContentType = GetContentType(restControllerType);
+
+                    if (fileBytes == null)
+                    {
+                        throw new UnimplementedMethodException(methodName);
+                    }
                 }
             }
             
