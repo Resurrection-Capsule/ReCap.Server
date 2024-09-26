@@ -372,7 +372,18 @@ public class GameRestController
     {
         string authToken = parameters["token"];
 
-        return null;
+        // TODO: Implement getPartOfferList
+
+        var response = new PartListResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1,
+            Parts = new List<CreaturePartContract>()
+        };
+
+        return XmlUtils.Serialize(response);
+
     }
 
     [RequestMapping(Name="api.inventory.updatePartStatus")]

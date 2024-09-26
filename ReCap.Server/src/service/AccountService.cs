@@ -73,11 +73,11 @@ public class AccountService
             account.unlockCatalysts = 1;
             account.unlockDiagonalCatalysts = 1;
             account.unlockFuelTanks = 1;
-            account.unlockInventory = 1;
             account.unlockPveDecks = 2;
             account.unlockPvpDecks = 1;
             account.unlockStats = 1;
-            account.unlockInventoryIdentify = 2500;
+            account.unlockInventoryIdentify = 13;
+            account.unlockInventory = 3000; // 570;
             account.unlockEditorFlairSlots = 1;
             account.upsell = 1;
             account.xp = 10000;
