@@ -311,6 +311,8 @@ public class GameRestController
     [RequestMapping(Name="api.creature.updateCreature")]
     public byte[] updateCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
+        string host = ServerConfig.GetHost();
+
         ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
         int creatureVersion = Convert.ToInt32(parameters["version"]);
 
@@ -343,11 +345,11 @@ public class GameRestController
         // TODO: stats
         // TODO: statsAbilityKeyvalues
 
-        // creature.LargePngUrl
+        creature.LargePngUrl = $"http://{host}/recap/api?method=api.game.getCreatureLargePng&id={creatureId}";
         creature.LargePngBase64 = largePngBase64;
         creature.LargeCrc = largeCrc;
 
-        // creature.ThumbPngUrl { get; set; }
+        creature.ThumbPngUrl = $"http://{host}/recap/api?method=api.game.getCreatureThumbPng&id={creatureId}";
         creature.ThumbPngBase64 = thumbPngBase64;
         creature.ThumbCrc = thumbCrc;
 

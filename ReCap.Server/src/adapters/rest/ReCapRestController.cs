@@ -57,4 +57,22 @@ public class ReCapRestController
 
         return Encoding.ASCII.GetBytes("{\"success\":true}");
     }
+
+    [RequestMapping(Name="api.game.getCreatureLargePng")]
+    public byte[] getCreatureLargePng(HttpListenerContext context, Dictionary<string,string> parameters)
+    {
+        ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
+        var creature = creatureService.getCreatureById(creatureId);
+        var base64 = creature.LargePngBase64;
+        return Convert.FromBase64String(base64);
+    }
+
+    [RequestMapping(Name="api.game.getCreatureThumbPng")]
+    public byte[] getCreatureThumbPng(HttpListenerContext context, Dictionary<string,string> parameters)
+    {
+        ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
+        var creature = creatureService.getCreatureById(creatureId);
+        var base64 = creature.ThumbPngBase64;
+        return Convert.FromBase64String(base64);
+    }
 }
