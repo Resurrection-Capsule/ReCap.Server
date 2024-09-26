@@ -54,12 +54,12 @@ public class GameRestController
             account.newPlayerProgress = newPlayerProgress;
         }
 
-        bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", null));
-        bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", null));
-        bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", null));
-        bool includeSettings = Convert.ToBoolean(parameters.GetValueOrDefault("include_settings", null));
-        bool includeServerTuning = Convert.ToBoolean(parameters.GetValueOrDefault("include_server_tuning", null));
-        bool includeTokenCookie = Convert.ToBoolean(parameters.GetValueOrDefault("cookie", null));
+        bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", "false"));
+        bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", "false"));
+        bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", "false"));
+        bool includeSettings = Convert.ToBoolean(parameters.GetValueOrDefault("include_settings", "false"));
+        bool includeServerTuning = Convert.ToBoolean(parameters.GetValueOrDefault("include_server_tuning", "false"));
+        bool includeTokenCookie = Convert.ToBoolean(parameters.GetValueOrDefault("cookie", "false"));
 
         var creatures = creatureService.getCreaturesByAccount(account);
 
@@ -110,7 +110,6 @@ public class GameRestController
         }
 
         if (includeTokenCookie) {
-            string cookieDate = DateTime.UtcNow.AddMinutes(60).ToString("ddd, dd-MMM-yyyy H:mm:ss");
             context.Response.Headers.Add("Set-Cookie", $"token={authToken}");
         }
 
