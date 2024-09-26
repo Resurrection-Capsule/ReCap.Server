@@ -319,7 +319,7 @@ public class GameRestController
         ulong cost = (ulong)Convert.ToInt32(parameters["cost"]);
         double gearScore = Convert.ToDouble(parameters["gear"]);
         double itemPoints = Convert.ToDouble(parameters["points"]);
-        ulong partsCount = (ulong)Convert.ToInt32(parameters["parts"]);
+        // List<ulong> partsList = parameters["parts"];
 
         string stats = parameters["stats"];
         string statsAbilityKeyvalues = parameters["stats_ability_keyvalues"];
@@ -340,7 +340,7 @@ public class GameRestController
         creature.Cost = cost;
         creature.GearScore = gearScore;
         creature.ItemPoints = itemPoints;
-        creature.PartsCount = partsCount;
+        // TODO: creature.Parts = partsList;
 
         // TODO: stats
         // TODO: statsAbilityKeyvalues

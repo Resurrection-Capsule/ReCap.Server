@@ -12,10 +12,10 @@ public class CreatureModel
 
     public ulong AccountID { get; set; }
 
-    public ulong Cost = 0;
-    public double GearScore = 0; // Shows up as "level" ingame
-    public double ItemPoints = 0;
-    public ulong PartsCount = 0;
+    public ulong Cost;
+    public double GearScore; // Shows up as "level" ingame
+    public double ItemPoints;
+    public List<ulong> Parts;
 
     public string? LargePngUrl { get; set; }
     public string? LargePngBase64 { get; set; }

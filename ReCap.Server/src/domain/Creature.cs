@@ -15,6 +15,7 @@ public class Creature
     public ulong Cost = 0;
     public double GearScore = 0; // Shows up as "level" ingame
     public double ItemPoints = 0;
+    public List<ulong> Parts = new List<ulong>();
 
     public string? LargePngUrl { get; set; }
     public string? ThumbPngUrl { get; set; }
