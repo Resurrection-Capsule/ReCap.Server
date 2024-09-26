@@ -292,7 +292,20 @@ public class GameRestController
     [RequestMapping(Name="api.creature.unlockCreature")]
     public byte[] unlockCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        ulong templateId = (ulong)Convert.ToInt32(parameters["template_id"]);
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
+        var creature = creatureService.addCreature(account, creatureService.getCreatureTemplateById(templateId));
+        accountService.updateAccount(account);
+
+        var response = new UnlockCreatureResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1,
+            CreatureID = (ulong)creature.ID
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.updateCreature")]

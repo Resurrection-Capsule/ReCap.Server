@@ -24,18 +24,16 @@ public class CreatureService
         return creatureRepository.getCreaturesByAccountId(account.Id);
     }
 
-    public List<Creature> addAllCreatures(Account account) {
-        List<Creature> creatures = [];
+    public List<CreatureModel> addAllCreatures(AccountModel account) {
+        List<CreatureModel> creatures = [];
         var allTemplates = creatureTemplateRepository.getAllTemplates();
         foreach (var template in allTemplates) {
             creatures.Add(addCreature(account, template));
         }
-
-        account.creatureRewards = allTemplates.Count;
         return creatures;
     }
 
-    public Creature addCreature(Account account, CreatureTemplateModel creatureTemplate) {
+    public CreatureModel addCreature(AccountModel account, CreatureTemplateModel creatureTemplate) {
         var creature = new Creature{
             Version = 1,
             AccountID = account.Id,
@@ -44,7 +42,8 @@ public class CreatureService
             GearScore = 0,
             ItemPoints = 300
         };
-        creatureRepository.insertCreature(creature);
-        return creature;
+        var creatureModel = creatureRepository.insertCreature(creature);
+        account.creatureRewards++;
+        return creatureModel;
     }
 }

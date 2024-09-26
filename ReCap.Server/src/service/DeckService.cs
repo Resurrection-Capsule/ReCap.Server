@@ -14,7 +14,7 @@ public class DeckService
         return deckRepository.getDecksByAccountId(account.Id);
     }
 
-    public List<Deck> createDecksForAccount(Account account) {
+    public List<Deck> createDecksForAccount(AccountModel account) {
         List<Deck> decks = [];
         for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {
             var deck = new Deck{

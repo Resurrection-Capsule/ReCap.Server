@@ -58,13 +58,15 @@ public class AccountRepositoryAdapter
         return sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
     }
 
-    public void insertAccount(Account account)
+    public AccountModel insertAccount(Account account)
     {
         account.Id = (ulong)sequenceRandomGenerator.Next(ACCOUNT_SEQUENCE_NAME);
 
         var accountModel = accountMapper.toModel(account);
         sqliteConfig.Accounts.Add(accountModel);
         sqliteConfig.SaveChanges();
+
+        return accountModel;
     }
 
     public void updateAccount(AccountModel accountModel) {

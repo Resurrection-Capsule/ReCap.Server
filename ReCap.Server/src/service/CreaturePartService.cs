@@ -22,7 +22,7 @@ public class CreaturePartService
         return creaturePartRepository.getCreaturePartsByAccountId(account.Id);
     }
 
-    public List<CreaturePart> addAllCreatureParts(Account account) {
+    public List<CreaturePart> addAllCreatureParts(AccountModel account) {
         List<CreaturePart> parts = [];
         var allTemplates = creaturePartTemplateRepository.getAllTemplates();
         foreach (var template in allTemplates) {

@@ -31,12 +31,14 @@ public class CreatureRepositoryAdapter
         return sqliteConfig.Creatures.Where(b => b.AccountID == accountId).ToList();
     }
 
-    public void insertCreature(Creature creature)
+    public CreatureModel insertCreature(Creature creature)
     {
         creature.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_SEQUENCE_NAME);
 
         var creatureModel = creatureMapper.toModel(creature);
         sqliteConfig.Creatures.Add(creatureModel);
         sqliteConfig.SaveChanges();
+
+        return creatureModel;
     }
 }

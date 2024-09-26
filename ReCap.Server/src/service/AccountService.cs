@@ -45,7 +45,7 @@ public class AccountService
         return account;
     }
 
-    public Account createAccount(string email, string name, string password, int avatarId, bool isTestAccount) {
+    public AccountModel createAccount(string email, string name, string password, int avatarId, bool isTestAccount) {
         var oldAccount = accountRepository.getAccountByEmail(email);
         if (oldAccount != null) {
             throw new ForbiddenOperationException("This e-mail already belongs to a different account");
@@ -89,8 +89,7 @@ public class AccountService
             account.grantOnlineAccess = true;
         }
 
-        accountRepository.insertAccount(account);
-        return account;
+        return accountRepository.insertAccount(account);
     }
 
     public void updateAccount(AccountModel accountModel) {
