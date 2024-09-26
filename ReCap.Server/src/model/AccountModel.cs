@@ -48,4 +48,6 @@ public class AccountModel
 
     public required int capLevel;
     public required int capProgression;
+
+    public Dictionary<string,string> settings;
 }

@@ -224,7 +224,22 @@ public class GameRestController
     public byte[] setPlayerAccountSettings(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
-        string settings = parameters["settings"]; // Example: Key1,Val1;Key2,Val2;Key3,Val3;
+        string settingsStr = parameters["settings"]; // Example: Key1,Val1;Key2,Val2;Key3,Val3;
+
+        var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
+
+        string[] settings = settingsStr.Split(";");
+        foreach (string setting in settings) {
+            if (setting.Length > 0) {
+                string[] keyAndValue = setting.Split(",");
+                account.settings[keyAndValue[0]] = keyAndValue[1];
+            }
+        }
+
+        accountService.updateAccount(account);
 
         var response = new ResponseContract{
             Stat = "ok",

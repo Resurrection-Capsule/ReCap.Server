@@ -48,4 +48,6 @@ public class Account
 
     public int capLevel = 0;
     public int capProgression = 0;
+
+    public Dictionary<string,string> settings = new Dictionary<string,string>();
 }
