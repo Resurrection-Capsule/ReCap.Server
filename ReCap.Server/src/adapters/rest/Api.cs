@@ -84,7 +84,7 @@ public class Api
     private void ProcessRequest(HttpListenerContext context)
     {
         var parameters = GetParameters(context);
-        string uri = context.Request.Url.LocalPath;
+        string uri = context.Request.Url.LocalPath.Split("?")[0];
         byte[] fileBytes = null;
 
         try
@@ -97,15 +97,17 @@ public class Api
                     var method = GetMethod(restControllerType, parameters["method"]);
                     fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
                     context.Response.ContentType = GetContentType(restControllerType);
+
+                    if (fileBytes == null)
+                    {
+                        throw new UnimplementedMethodException(parameters.GetValueOrDefault("method", "<unknown>"));
+                    }
                 }
             }
             
-            if (fileBytes == null) {
+            if (fileBytes == null)
+            {
                 fileBytes = GetBytesByFilePath(uri);
-            }
-
-            if (fileBytes == null) {
-                throw new UnimplementedMethodException(parameters.GetValueOrDefault("method", "<unknown>"));
             }
 
             context.Response.ContentLength64 = fileBytes.Length;
@@ -122,23 +124,13 @@ public class Api
 
     private byte[] GetBytesByFilePath(string uri)
     {
-        if (uri == "/bootstrap/launcher/")
-        {
-            return StaticStorageAdapter.GetFile("/bootstrap/launcher/wrapper.html");
+        try {
+            return StaticStorageAdapter.GetFile(uri);
         }
-        if (uri == "/bootstrap/launcher/notes")
+        catch (FileNotFoundException ex)
         {
-            return new byte[]{};
+            return StaticStorageAdapter.GetFile((uri + "/index.html").Replace("//", "/"));
         }
-        if (uri.StartsWith("/web/sporelabsgame/"))
-        {
-            if (Regex.IsMatch(uri, @"^/web/sporelabsgame/[a-zA-Z]+$"))
-            {
-                return StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/") + "/index.html");
-            }
-            return StaticStorageAdapter.GetFile(uri.Replace("/web/sporelabsgame/", "/bootstrap/"));
-        }
-        return StaticStorageAdapter.GetFile(uri);
     }
 
     private MethodInfo GetMethod(Type serviceType, string methodName)
@@ -182,8 +174,7 @@ public class Api
         var dnAttribute = restControllerType.GetCustomAttributes(typeof(RestController), true).FirstOrDefault() as RestController;
         if (dnAttribute != null)
         {
-            // return apiPath == dnAttribute.Value;
-            return apiPath.StartsWith(dnAttribute.Value);
+            return apiPath == dnAttribute.Value;
         }
         return false;
     }
