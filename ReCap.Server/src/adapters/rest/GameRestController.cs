@@ -122,6 +122,9 @@ public class GameRestController
     {
         string authToken = parameters["token"];
         var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
 
         string httpMethod = context.Request.HttpMethod;
         if (httpMethod == "GET")
@@ -278,6 +281,9 @@ public class GameRestController
         int creatureId = Convert.ToInt32(parameters["id"]);
 
         var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
 
         var creature = creatureService.getCreatureById((ulong)creatureId);
         if (creature.AccountID != account.Id) {
@@ -342,6 +348,10 @@ public class GameRestController
         int count = Convert.ToInt32(parameters.GetValueOrDefault("count", "100000"));
 
         var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
+
         var creatureParts = creaturePartService.getCreaturePartsByAccount(account)
             .Where(creaturePart => creaturePart.CreatureId is null).ToList();
         // TODO: Should I list used creatureParts as well?
@@ -401,7 +411,11 @@ public class GameRestController
     public byte[] getVendorParts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string authToken = parameters["token"];
+
         var account = accountService.getAccountByAuthToken(authToken);
+        if (account == null) {
+            throw new ForbiddenOperationException("Unindentified account");
+        }
 
         List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1

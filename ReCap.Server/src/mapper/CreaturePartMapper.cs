@@ -33,8 +33,8 @@ public class CreaturePartMapper
         int size = val.Length;
         for (int i = 0; i < size; i++)
         {
-            h ^= val[i];
             h *= 0x01000193u;
+            h ^= val[i];
         }
     
         return h;
@@ -44,21 +44,21 @@ public class CreaturePartMapper
 		if (!(rigblock >= 1 && rigblock <= 1573) && !(rigblock >= 10001 && rigblock <= 10835)) {
 			rigblock = 1;
 		}
-		return fnv1aHashOfString($"_Generated/LootRigblock{rigblock}.LootRigblock");
+		return fnv1aHashOfString($"_Generated/LootRigblock{rigblock}.LootRigblock".ToLower());
 	}
 
     private ulong hashOfPrefix(ulong prefix) {
 		if (!(prefix >= 1 && prefix <= 338)) {
 			prefix = 0;
 		}
-		return fnv1aHashOfString($"_Generated/LootPrefix{prefix}.LootPrefix");
+		return fnv1aHashOfString($"_Generated/LootPrefix{prefix}.LootPrefix".ToLower());
 	}
 
 	private ulong hashOfSuffix(ulong suffix) {
 		if (!(suffix >= 1 && suffix <= 83) && !(suffix >= 10001 && suffix <= 10275)) {
 			suffix = 0;
 		}
-		return fnv1aHashOfString($"_Generated/LootSuffix{suffix}.LootSuffix");
+		return fnv1aHashOfString($"_Generated/LootSuffix{suffix}.LootSuffix".ToLower());
 	}
 
     public CreaturePart toDomain(CreaturePartTemplateModel creaturePartTemplate, bool isDetail) {

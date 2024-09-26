@@ -16,8 +16,7 @@ public class CreaturePartContract
 
 
     [XmlElement(ElementName = "creature_id")]
-    public int? CreatureId { get; set; }
-    public bool ShouldSerializeCreatureId() => CreatureId.HasValue;
+    public int CreatureId { get; set; }
 
     [XmlElement(ElementName = "creation_date")]
     public ulong CreationDate { get; set; }
@@ -44,7 +43,7 @@ public class CreaturePartContract
 
     
     [XmlElement(ElementName = "is_flair")]
-    public bool IsFlair { get; set; }
+    public int IsFlair { get; set; }
 
 
     [XmlElement(ElementName = "rigblock_asset_id")]
