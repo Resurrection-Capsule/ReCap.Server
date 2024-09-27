@@ -40,8 +40,9 @@ public class CreaturePartRepositoryAdapter
 
     public void insertCreatureParts(List<CreaturePartModel> creatureParts)
     {
+        ulong sequence = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME, creatureParts.Count);
         foreach (var creaturePart in creatureParts) {
-            creaturePart.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME);
+            creaturePart.ID = sequence++;
             sqliteConfig.CreatureParts.Add(creaturePart);
         }
         sqliteConfig.SaveChanges();
