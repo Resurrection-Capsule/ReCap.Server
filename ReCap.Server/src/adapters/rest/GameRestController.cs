@@ -253,12 +253,12 @@ public class GameRestController
     [RequestMapping(Name="api.creature.getTemplate")]
     public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        int templateId = Convert.ToInt32(parameters["id"]);
+        ulong templateId = (ulong)Convert.ToInt64(parameters["id"]);
         bool includeAbilities = parameters["include_abilities"] == "true";
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        var template = creatureService.getCreatureTemplateById((ulong)templateId);
+        var template = creatureService.getCreatureTemplateById(templateId);
 
         // TODO: Implement getTemplate returning GetCreatureTemplateResponseContract
 
@@ -268,11 +268,11 @@ public class GameRestController
     [RequestMapping(Name="api.creature.resetCreature")]
     public byte[] resetCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        int creatureId = Convert.ToInt32(parameters["id"]);
+        ulong creatureId = (ulong)Convert.ToInt64(parameters["id"]);
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        var creature = creatureService.getCreatureById((ulong)creatureId);
+        var creature = creatureService.getCreatureById(creatureId);
         if (creature.AccountID != account.Id) {
             throw new ForbiddenOperationException("Creature does not belong to this account");
         }
@@ -292,7 +292,7 @@ public class GameRestController
     [RequestMapping(Name="api.creature.unlockCreature")]
     public byte[] unlockCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        ulong templateId = (ulong)Convert.ToInt32(parameters["template_id"]);
+        ulong templateId = (ulong)Convert.ToInt64(parameters["template_id"]);
         var account = accountService.getAccountByAuthToken(parameters["token"]);
         var creature = creatureService.addCreature(account, creatureService.getCreatureTemplateById(templateId));
         accountService.updateAccount(account);
@@ -313,13 +313,13 @@ public class GameRestController
     {
         string host = ServerConfig.GetHost();
 
-        ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
+        ulong creatureId = (ulong)Convert.ToInt64(parameters["id"]);
         int creatureVersion = Convert.ToInt32(parameters["version"]);
 
-        ulong cost = (ulong)Convert.ToInt32(parameters["cost"]);
+        ulong cost = (ulong)Convert.ToInt64(parameters["cost"]);
         double gearScore = Convert.ToDouble(parameters["gear"]);
         double itemPoints = Convert.ToDouble(parameters["points"]);
-        List<ulong> partsList = parameters["parts"].Split(",").ToList().Select(partId => (ulong)Convert.ToInt32(partId)).ToList();
+        List<ulong> partsList = parameters["parts"].Split(",").ToList().Select(partId => (ulong)Convert.ToInt64(partId)).ToList();
 
          // STR,14,3;DEX,23,5;MIND,13,0;HLTH,200,107;MANA,100,13;PDEF,150,168;EDEF,50,78;CRTR,100,112
         List<CreatureModelStat> stats = parameters["stats"].Split(";").ToList().Select(stat => {
@@ -461,7 +461,7 @@ public class GameRestController
 		List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
 		if (len > 0) {
 			for (int i = 0; i < len; i++) {
-				ulong partId = (ulong)Convert.ToInt32(partIds[i]);
+				ulong partId = (ulong)Convert.ToInt64(partIds[i]);
 				int status = Convert.ToInt32(statuses[i]);
 
 				var part = creaturePartService.getCreaturePartById(partId);
@@ -492,7 +492,7 @@ public class GameRestController
         string[] transactions = parameters["transactions"].Split(";"); // eg. w1
         foreach (string transaction in transactions) {
             char type = transaction[0];
-            ulong partId = (ulong)Convert.ToInt32(transaction[1]);
+            ulong partId = (ulong)Convert.ToInt64(transaction[1]);
             CreaturePartModel part = null;
             
             if (type == 's') { // sell item
