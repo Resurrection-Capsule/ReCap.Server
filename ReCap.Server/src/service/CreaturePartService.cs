@@ -22,15 +22,15 @@ public class CreaturePartService
         return creaturePartRepository.getCreaturePartsByAccountId(account.Id);
     }
 
-    public List<CreaturePart> addAllCreatureParts(AccountModel account) {
-        List<CreaturePart> parts = [];
+    public List<CreaturePartModel> addAllCreatureParts(AccountModel account) {
+        List<CreaturePartModel> parts = [];
         var allTemplates = creaturePartTemplateRepository.getAllTemplates();
         foreach (var template in allTemplates) {
-            var part1 = creaturePartMapper.toDomain(template, false);
+            var part1 = creaturePartMapper.toCreaturePartModel(template, false);
             part1.AccountId = account.Id;
             parts.Add(part1);
 
-            var part2 = creaturePartMapper.toDomain(template, true);
+            var part2 = creaturePartMapper.toCreaturePartModel(template, true);
             part2.AccountId = account.Id;
             parts.Add(part2);
         }
@@ -38,8 +38,8 @@ public class CreaturePartService
         return parts;
     }
 
-    public CreaturePart addCreaturePart(Account account, CreaturePartTemplateModel creaturePartTemplate) {
-        var part = creaturePartMapper.toDomain(creaturePartTemplate, false);
+    public CreaturePartModel addCreaturePart(Account account, CreaturePartTemplateModel creaturePartTemplate) {
+        var part = creaturePartMapper.toCreaturePartModel(creaturePartTemplate, false);
         part.AccountId = account.Id;
         creaturePartRepository.insertCreaturePart(part);
         return part;

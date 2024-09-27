@@ -61,8 +61,8 @@ public class CreaturePartMapper
 		return fnv1aHashOfString($"_Generated/LootSuffix{suffix}.LootSuffix".ToLower());
 	}
 
-    public CreaturePart toDomain(CreaturePartTemplateModel creaturePartTemplate, bool isDetail) {
-        return new CreaturePart{
+    public CreaturePartModel toCreaturePartModel(CreaturePartTemplateModel creaturePartTemplate, bool isDetail) {
+        return new CreaturePartModel{
             CreationDate = 0, // TODO: current timestamp?
 
             Cost = creaturePartTemplate.cost,

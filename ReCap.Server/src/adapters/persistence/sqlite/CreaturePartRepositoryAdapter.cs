@@ -31,22 +31,18 @@ public class CreaturePartRepositoryAdapter
         return sqliteConfig.CreatureParts.Where(b => b.AccountId == accountId).ToList();
     }
 
-    public void insertCreaturePart(CreaturePart creaturePart)
+    public void insertCreaturePart(CreaturePartModel creaturePart)
     {
         creaturePart.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME);
-
-        var creaturePartModel = creaturePartMapper.toModel(creaturePart);
-        sqliteConfig.CreatureParts.Add(creaturePartModel);
+        sqliteConfig.CreatureParts.Add(creaturePart);
         sqliteConfig.SaveChanges();
     }
 
-    public void insertCreatureParts(List<CreaturePart> creatureParts)
+    public void insertCreatureParts(List<CreaturePartModel> creatureParts)
     {
         foreach (var creaturePart in creatureParts) {
             creaturePart.ID = (ulong)sequenceRandomGenerator.Next(CREATURE_PART_SEQUENCE_NAME);
-
-            var creaturePartModel = creaturePartMapper.toModel(creaturePart);
-            sqliteConfig.CreatureParts.Add(creaturePartModel);
+            sqliteConfig.CreatureParts.Add(creaturePart);
         }
         sqliteConfig.SaveChanges();
     }
