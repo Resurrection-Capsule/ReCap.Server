@@ -9,7 +9,7 @@ using LoggerUtil;
 
 namespace HttpServer;
 
-[RestController(Value="/recap/api", ContentType="application/json")]
+[RestController(Value="/recap/api")]
 public class ReCapRestController
 {
     private AccountService accountService;
@@ -24,7 +24,7 @@ public class ReCapRestController
         deckService = new DeckService(newSqliteConfig);
     }
 
-    [RequestMapping(Name="api.game.log")]
+    [RequestMapping(Name="api.game.log", ContentType="application/json")]
     public byte[] log(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string message = HttpUtils.GetBodyFromRequest(context.Request);

@@ -58,7 +58,7 @@ public class Api
                     var methodName = parameters.GetValueOrDefault("method", "<unknown>");
                     var method = GetMethod(restControllerType, methodName);
                     fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
-                    context.Response.ContentType = GetContentType(restControllerType);
+                    context.Response.ContentType = GetContentType(restControllerType, method);
 
                     if (fileBytes == null)
                     {
@@ -137,8 +137,16 @@ public class Api
         return false;
     }
 
-    private string GetContentType(System.Type restControllerType)
+    private string GetContentType(System.Type restControllerType, MethodInfo methodInfo)
     {
+        if (methodInfo.GetCustomAttribute(typeof(RequestMapping)) != null)
+        {
+            var contentType = ((RequestMapping)methodInfo.GetCustomAttribute(typeof(RequestMapping))).ContentType;
+            if (contentType != null)
+            {
+                return contentType;
+            }
+        }
         var dnAttribute = restControllerType.GetCustomAttributes(typeof(RestController), true).FirstOrDefault() as RestController;
         if (dnAttribute != null)
         {

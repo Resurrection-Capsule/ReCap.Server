@@ -319,7 +319,7 @@ public class GameRestController
         ulong cost = (ulong)Convert.ToInt32(parameters["cost"]);
         double gearScore = Convert.ToDouble(parameters["gear"]);
         double itemPoints = Convert.ToDouble(parameters["points"]);
-        // List<ulong> partsList = parameters["parts"];
+        List<ulong> partsList = parameters["parts"].Split(",").ToList().Select(partId => (ulong)Convert.ToInt32(partId)).ToList();
 
          // STR,14,3;DEX,23,5;MIND,13,0;HLTH,200,107;MANA,100,13;PDEF,150,168;EDEF,50,78;CRTR,100,112
         List<CreatureModelStat> stats = parameters["stats"].Split(";").ToList().Select(stat => {
@@ -343,9 +343,9 @@ public class GameRestController
         }).ToList();
 
         string largePngBase64 = parameters["large"];
-        ulong largeCrc = (ulong)Convert.ToInt32(parameters["large_crc"]);
+        string largeCrc = parameters["large_crc"];
         string thumbPngBase64 = parameters["thumb"];
-        ulong thumbCrc = (ulong)Convert.ToInt32(parameters["thumb_crc"]);
+        string thumbCrc = parameters["thumb_crc"];
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
         var creature = creatureService.getCreatureById(creatureId);
@@ -359,7 +359,7 @@ public class GameRestController
         creature.GearScore = gearScore;
         creature.ItemPoints = itemPoints;
 
-        // TODO: creature.Parts = partsList;
+        creature.Parts = partsList;
         creature.Stats = stats;
         creature.AbilityStats = abilityStats;
 
@@ -373,7 +373,14 @@ public class GameRestController
 
         creatureService.updateCreature(creature);
 
-        return null;
+        var response = new ResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GetDarksporeVersion(),
+            Timestamp = 1,
+            ExecTime = 1
+        };
+
+        return XmlUtils.Serialize(response);
     }
 
     [RequestMapping(Name="api.deck.updateDecks")]

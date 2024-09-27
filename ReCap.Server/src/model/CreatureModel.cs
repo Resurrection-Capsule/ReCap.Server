@@ -22,11 +22,11 @@ public class CreatureModel
 
     public string? LargePngUrl { get; set; }
     public string? LargePngBase64 { get; set; }
-    public ulong? LargeCrc { get; set; }
+    public string? LargeCrc { get; set; }
 
     public string? ThumbPngUrl { get; set; }
     public string? ThumbPngBase64 { get; set; }
-    public ulong? ThumbCrc { get; set; }
+    public string? ThumbCrc { get; set; }
 }
 
 public class CreatureModelStat {
