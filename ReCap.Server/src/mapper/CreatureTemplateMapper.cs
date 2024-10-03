@@ -2,8 +2,6 @@ namespace ReCap.Server.Mapper.CreatureTemplate;
 
 using AutoMapper;
 
-using HttpServer;
-
 using ReCap.Server.Adapters.Rest.Contracts.Game.GetCreatureTemplateResponse;
 using ReCap.Server.Model.CreatureTemplate;
 

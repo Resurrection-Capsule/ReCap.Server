@@ -4,8 +4,6 @@ using System.Net;
 using System.Text;
 using System.Collections.Generic;
 
-using HttpServer;
-
 namespace ReCap.Server.Config.Server;
 
 public class ServerConfig

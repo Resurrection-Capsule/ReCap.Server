@@ -7,8 +7,6 @@ using ReCap.Server.Domain.Account;
 using ReCap.Server.Mapper.Account;
 using ReCap.Server.Model.Account;
 
-using HttpServer;
-
 public class AccountMapper
 {
     private IMapper mapper;

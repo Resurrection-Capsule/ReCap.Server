@@ -37,8 +37,6 @@ using ReCap.Server.Utils.Http;
 using ReCap.Server.Utils.Logger;
 using ReCap.Server.Utils.Xml;
 
-using HttpServer;
-
 [RestController(Value="/game/api", ContentType="text/xml")]
 public class GameRestController
 {

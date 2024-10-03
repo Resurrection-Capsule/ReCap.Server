@@ -1,16 +1,17 @@
-﻿using System;
+﻿namespace ReCap.Server.Application;
+
+using System;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-using HttpServer;
 using BlazeServer;
+
 using ReCap.RakNetServer;
 
+using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Config.Sqlite;
-
-namespace HttpServer;
 
 public class Application
 {

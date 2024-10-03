@@ -8,8 +8,6 @@ using Microsoft.Extensions.Logging;
 using SharpRakNet.Network;
 using SharpRakNet.Protocol.Raknet;
 
-using HttpServer;
-
 using ReCap.Domain.Gameplay;
 using ReCap.RakNet;
 using ReCap.RakNet.Packets;
