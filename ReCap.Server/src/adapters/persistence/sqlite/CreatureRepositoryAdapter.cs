@@ -5,8 +5,6 @@ using System.IO;
 using System.Net;
 using System.Text;
 
-using HttpServer;
-
 using ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
 using ReCap.Server.Config.Sqlite;
 using ReCap.Server.Domain.Creature;

@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Adapters.Rest.Api;
 
 using System;
 using System.IO;
@@ -10,14 +10,15 @@ using System.Xml.Schema;
 using System.Xml.Serialization;
 using System.Collections.Specialized;
 
-using HttpServer;
-
+using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.Config;
 using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigResponse;
 using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigSettings;
 using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigSettingsOpen;
 using ReCap.Server.Config.Server;
 using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Service.Config;
+using ReCap.Server.Utils.Xml;
 
 [RestController(Value="/bootstrap/api", ContentType="text/xml")]
 public class BootstrapRestController

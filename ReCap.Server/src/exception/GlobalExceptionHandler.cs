@@ -1,9 +1,8 @@
+namespace ReCap.Server.Adapters.Rest.Api;
+
 using System.Net;
 
-using HttpServer;
 using ReCap.Server.Utils.Logger;
-
-namespace HttpServer;
 
 public class GlobalExceptionHandler
 {

@@ -1,9 +1,7 @@
-namespace HttpServer;
+namespace ReCap.Server.Service.Config;
 
 using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.Config;
 using ReCap.Server.Config.Server;
-
-using HttpServer;
 
 public class ConfigService
 {

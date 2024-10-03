@@ -9,7 +9,7 @@ using HttpServer;
 using ReCap.Server.Adapters.Blaze.Component.UserSessions;
 using ReCap.Server.Adapters.Blaze.Component.Util;
 using ReCap.Server.Config.Sqlite;
-
+using ReCap.Server.Service.Account;
 using ReCap.Server.Utils.Logger;
 
 public class AuthenticationComponent : IComponent

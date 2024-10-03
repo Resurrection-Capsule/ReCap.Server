@@ -1,9 +1,7 @@
+namespace ReCap.Server.Utils.Http;
+
 using System.Net;
 using HttpMultipartParser;
-
-using HttpServer;
-
-namespace HttpServer;
 
 public class HttpUtils
 {

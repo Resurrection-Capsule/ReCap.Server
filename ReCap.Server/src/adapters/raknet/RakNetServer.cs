@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿namespace ReCap.RakNetServer;
+
+using System.Net;
 
 // using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -6,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using SharpRakNet.Network;
 using SharpRakNet.Protocol.Raknet;
 
-namespace ReCap.RakNetServer;
+using HttpServer;
 
 using ReCap.Domain.Gameplay;
 using ReCap.RakNet;
@@ -14,8 +16,8 @@ using ReCap.RakNet.Packets;
 
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Config.Sqlite;
-
-using HttpServer;
+using ReCap.Server.Service.Account;
+using ReCap.Server.Service.Game;
 using ReCap.Server.Utils.Logger;
 
 public record RakNetClient(RaknetSession Session)

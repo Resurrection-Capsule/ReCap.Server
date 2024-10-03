@@ -1,14 +1,12 @@
+namespace ReCap.Server.Adapters.Persistence.SQLite.CreaturePartTemplateRepository;
+
 using System;
 using System.IO;
 using System.Net;
 using System.Text;
 
-using HttpServer;
-
 using ReCap.Server.Config.Sqlite;
 using ReCap.Server.Model.CreaturePartTemplate;
-
-namespace ReCap.Server.Adapters.Persistence.SQLite.CreaturePartTemplateRepository;
 
 public class CreaturePartTemplateRepositoryAdapter
 {

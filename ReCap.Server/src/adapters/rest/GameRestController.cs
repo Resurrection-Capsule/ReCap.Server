@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Adapters.Rest.Api;
 
 using System;
 using System.IO;
@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using System.Collections.Specialized;
 
+using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Adapters.Rest.Contracts.Game.AuthResponse;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.CreaturePart;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Feed;
@@ -26,7 +27,15 @@ using ReCap.Server.Mapper.CreaturePart;
 using ReCap.Server.Mapper.Deck;
 using ReCap.Server.Model.Account;
 using ReCap.Server.Model.CreaturePart;
+using ReCap.Server.Service.Account;
+using ReCap.Server.Service.Broadcast;
+using ReCap.Server.Service.Creature;
+using ReCap.Server.Service.CreaturePart;
+using ReCap.Server.Service.Deck;
+using ReCap.Server.Service.Status;
+using ReCap.Server.Utils.Http;
 using ReCap.Server.Utils.Logger;
+using ReCap.Server.Utils.Xml;
 
 using HttpServer;
 

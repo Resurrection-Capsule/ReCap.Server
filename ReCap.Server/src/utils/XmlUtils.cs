@@ -1,3 +1,5 @@
+namespace ReCap.Server.Utils.Xml;
+
 using System;
 using System.IO;
 using System.Net;
@@ -7,10 +9,6 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using System.Collections.Specialized;
-
-using HttpServer;
-
-namespace HttpServer;
 
 public class XmlUtils
 {

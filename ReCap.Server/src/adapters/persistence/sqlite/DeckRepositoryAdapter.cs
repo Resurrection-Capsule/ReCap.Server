@@ -1,17 +1,15 @@
+namespace ReCap.Server.Adapters.Persistence.SQLite.DeckRepository;
+
 using System;
 using System.IO;
 using System.Net;
 using System.Text;
-
-using HttpServer;
 
 using ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
 using ReCap.Server.Config.Sqlite;
 using ReCap.Server.Domain.Deck;
 using ReCap.Server.Mapper.Deck;
 using ReCap.Server.Model.Deck;
-
-namespace HttpServer;
 
 public class DeckRepositoryAdapter
 {

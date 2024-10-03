@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Service.Survey;
 
 using ReCap.Server.Adapters.Rest.Contracts.Survey.Survey;
 

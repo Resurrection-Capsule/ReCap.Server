@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Service.Broadcast;
 
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Broadcast;
 

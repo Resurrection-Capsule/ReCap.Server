@@ -4,6 +4,7 @@ using HttpServer;
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
 using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Service.Game;
 using ReCap.Server.Utils.Logger;
 
 public class GameManagerComponent : IComponent

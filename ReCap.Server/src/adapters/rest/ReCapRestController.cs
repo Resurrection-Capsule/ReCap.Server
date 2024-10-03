@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Adapters.Rest.Api;
 
 using System;
 using System.IO;
@@ -6,10 +6,14 @@ using System.Net;
 using System.Text;
 using System.Collections.Specialized;
 
+using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Service.Account;
+using ReCap.Server.Service.Creature;
+using ReCap.Server.Service.CreaturePart;
+using ReCap.Server.Service.Deck;
 using ReCap.Server.Utils.Logger;
-
-using HttpServer;
+using ReCap.Server.Utils.Http;
 
 [RestController(Value="/recap/api")]
 public class ReCapRestController

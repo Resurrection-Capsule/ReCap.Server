@@ -1,4 +1,4 @@
-using HttpServer;
+namespace ReCap.Server.Service.Creature;
 
 using ReCap.Server.Adapters.Persistence.SQLite.CreatureRepository;
 using ReCap.Server.Adapters.Persistence.SQLite.CreatureTemplateRepository;
@@ -7,8 +7,6 @@ using ReCap.Server.Domain.Creature;
 using ReCap.Server.Model.Account;
 using ReCap.Server.Model.Creature;
 using ReCap.Server.Model.CreatureTemplate;
-
-namespace HttpServer;
 
 public class CreatureService
 {

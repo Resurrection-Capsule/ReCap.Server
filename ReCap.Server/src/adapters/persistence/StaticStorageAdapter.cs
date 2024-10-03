@@ -1,14 +1,12 @@
+namespace ReCap.Server.Adapters.Persistence.StaticStorage;
+    
 using System;
 using System.IO;
 using System.Net;
 using System.Text;
 
-using HttpServer;
-
 using ReCap.Server.Config.Server;
 
-namespace ReCap.Server.Adapters.Persistence.StaticStorage;
-    
 public class StaticStorageAdapter
 {
     static string STATIC_RESOURCES_FOLDER_PATH = "./resources/static";

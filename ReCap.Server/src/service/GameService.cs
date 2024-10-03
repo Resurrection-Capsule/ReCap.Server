@@ -1,8 +1,6 @@
-namespace HttpServer;
+namespace ReCap.Server.Service.Game;
 
-using HttpServer;
 using ReCap.Domain.Gameplay;
-
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Model.Account;
 

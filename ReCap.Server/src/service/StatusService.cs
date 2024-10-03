@@ -1,6 +1,4 @@
-namespace HttpServer;
-
-using HttpServer;
+namespace ReCap.Server.Service.Status;
 
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Status;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.StatusApi;

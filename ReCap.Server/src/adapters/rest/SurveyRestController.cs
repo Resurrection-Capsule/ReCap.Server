@@ -1,4 +1,4 @@
-namespace HttpServer;
+namespace ReCap.Server.Adapters.Rest.Api;
 
 using System;
 using System.IO;
@@ -6,9 +6,12 @@ using System.Net;
 using System.Text;
 using System.Collections.Specialized;
 
+using ReCap.Server.Adapters.Rest.Api;
+using ReCap.Server.Adapters.Rest.Contracts.Survey.SurveyResponse;
 using ReCap.Server.Config.Server;
 using ReCap.Server.Config.Sqlite;
-using ReCap.Server.Adapters.Rest.Contracts.Survey.SurveyResponse;
+using ReCap.Server.Service.Survey;
+using ReCap.Server.Utils.Xml;
 
 [RestController(Value="/survey/api", ContentType="text/xml")]
 public class SurveyRestController
