@@ -66,7 +66,7 @@ public class Server
             List<IComponent> components = new List<IComponent> {
                 new AssociationListsComponent(),
                 new AuthenticationComponent(newSqliteConfig),
-                new GameManagerComponent(),
+                new GameManagerComponent(newSqliteConfig),
                 new MessagingComponent(),
                 new PlaygroupsComponent(),
                 new RoomsComponent(),

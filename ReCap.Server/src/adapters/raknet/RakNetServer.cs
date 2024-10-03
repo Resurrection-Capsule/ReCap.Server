@@ -11,6 +11,7 @@ namespace ReCap.RakNetServer;
 using ReCap.Gameplay;
 using ReCap.RakNet;
 using ReCap.RakNet.Packets;
+using ReCap.Server.Adapters.Blaze.Component.GameManager;
 
 using HttpServer;
 using LoggerUtil;
@@ -26,6 +27,9 @@ public record RakNetClient(RaknetSession Session)
 
 public class RakNetServer
 {
+    private AccountService accountService;
+    private GameService gameService;
+
     public Dictionary<ulong, RakNetClient> Clients { get; } = new();    // RakNet Guid -> Client
     public Dictionary<ulong, Game> Games { get; } = new();              // GameId -> Game
     public Dictionary<ulong, ulong> GameAssigments { get; } = new();    // UserId -> GameId
@@ -36,6 +40,9 @@ public class RakNetServer
 
     public RakNetServer(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname)
     {
+        accountService = new AccountService(newSqliteConfig);
+        gameService = new GameService();
+
         Listener = new RaknetListener(new IPEndPoint(hostAddress, port))
         {
             SessionConnected = OnSessionConnected,
@@ -108,24 +115,17 @@ public class RakNetServer
                 client.UserId = helloPlayerRequestPacket.UserId;
                 client.PlaygroupId = helloPlayerRequestPacket.PlaygroupId;
                 
-                if (GameAssigments.TryGetValue(client.UserId, out var gameId))
+                var account = accountService.getAccountById(client.UserId);
+                var game = gameService.GetGameByPlayer(account);
+                if (game == null)
                 {
-                    if (Games.TryGetValue(gameId, out var game))
-                    {
-                        if (game.AttachPlayer(client))
-                            return true;
-                        
-                        Logger.error($"RakNet: Peer 0x{session.Guid} was assigned to a game ({gameId}), but could not be attached to the game! Disconnecting...");
-                    }
-                    else
-                        Logger.error($"RakNet: Peer 0x{session.Guid} was assigned to a game ({gameId}), but the game was not found! Disconnecting...");
+                    game = gameService.CreateGame();
+                    gameService.AddPlayerToGame(game.Id, account);
                 }
-                else
-                    Logger.error($"RakNet: Peer 0x{session.Guid} was assigned to a non-existent game! Disconnecting...");
 
-                Clients.Remove(session.Guid);
+                // Clients.Remove(session.Guid);
 
-                session.Disconnect();
+                // session.Disconnect();
 
                 return true;
         }
@@ -154,12 +154,10 @@ public class RakNetServer
             // Definitely the wrong way to do this but I don't have a lot of experience with C# multithreading...
             while (IsRunning)
             {
-                lock (Games)
+                var games = gameService.GetAllGames();
+                foreach (var game in games)
                 {
-                    foreach (var game in Games)
-                    {
-                        game.Value.Update();
-                    }
+                    game.Update();
                 }
                 await Task.Delay(100, stoppingToken);
             }
@@ -193,25 +191,5 @@ public class RakNetServer
         packet.WriteTo(ms);
 
         session.Sendq.Insert(reliability, ms.ToArray());
-    }
-
-    // public IGame? CreateGame()
-    // {
-    //     var game = new Game(GameCounter++, 1);
-
-    //     Games.Add(game.Id, game);
-
-    //     return game;
-    // }
-
-    // public IGame? GetGame(ulong id) => Games.FirstOrDefault(g => g.Key == id).Value;
-
-    public bool AddClientToGame(ulong clientId, ulong gameId)
-    {
-        if (GameAssigments.ContainsKey(clientId))
-            return false;
-
-        GameAssigments.Add(clientId, gameId);
-        return true;
     }
 }

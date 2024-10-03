@@ -1,5 +1,6 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.GameManager;
 
+using HttpServer;
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
 using LoggerUtil;
@@ -11,6 +12,12 @@ public class GameManagerComponent : IComponent
     public ushort Id => 4;
     public Server? Server { get; set; }
     public IGameHandler? GameHandler { get; set; }
+
+    private GameService gameService;
+
+    public GameManagerComponent(SqliteConfig newSqliteConfig) {
+        gameService = new GameService();
+    }
 
     public bool HandlePacket(Client client, Packet packet)
     {
@@ -61,7 +68,8 @@ public class GameManagerComponent : IComponent
         game.SetupBot(8);
         game.SetupBot(9);
 
-        GameHandler?.AddClientToGame(1, game.Id);
+        // TODO: AddPlayerToGame
+        //gameService.AddPlayerToGame(game.Id, 1);
 
         client.RespondTo(packet, new JoinGameResponse() { GameId = game.Id, JoinState = JoinState.JoinedGame });
 

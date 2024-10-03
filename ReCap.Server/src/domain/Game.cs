@@ -1,10 +1,10 @@
 ﻿namespace ReCap.Gameplay;
 
 using ReCap.RakNetServer;
-// using ReCap.Blaze.GameManager;
 using ReCap.RakNet;
 using ReCap.RakNet.Packets;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
+using HttpServer;
 
 public enum GameplayState
 {
@@ -22,8 +22,8 @@ public class Game(ulong id, GameType gameType) : IGame
     public Dictionary<ulong, Player> Players { get; } = new();
     public Dictionary<byte, Bot> Bots { get; } = new();
 
-    public Dictionary<ulong, RakNetClient> Clients { get; } = new();
-    public Dictionary<byte, RakNetClient> ClientsBySlot { get; } = new();
+    public Dictionary<ulong, AccountModel> Clients { get; } = new();
+    public Dictionary<byte, AccountModel> ClientsBySlot { get; } = new();
 
     public DateTime StartTime { get; } = DateTime.UtcNow;
     public ulong Id { get; }
@@ -64,18 +64,16 @@ public class Game(ulong id, GameType gameType) : IGame
         Bots.Add(slot, new(0, slot));
     }
 
-    public bool AttachPlayer(RakNetClient client)
+    public bool AttachPlayer(AccountModel account)
     {
-        if (!ExpectedPlayers.TryGetValue(client.UserId, out var slot))
+        if (!ExpectedPlayers.TryGetValue(account.Id, out var slot))
             return false;
 
-        ExpectedPlayers.Remove(client.UserId);
+        ExpectedPlayers.Remove(account.Id);
 
-        Clients.Add(client.UserId, client);
+        Clients.Add(account.Id, account);
 
-        client.Game = this;
-
-        var player = new Player(client.UserId, slot);
+        var player = new Player(account.Id, slot);
 
         Players.Add(slot, player);
 
