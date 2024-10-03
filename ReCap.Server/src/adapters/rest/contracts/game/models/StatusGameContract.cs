@@ -1,9 +1,9 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.Models.StatusGame;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-
-namespace HttpServer;
 
 [XmlRoot("game")]
 public class StatusGameContract {

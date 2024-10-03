@@ -7,6 +7,11 @@ using System.Text;
 using System.Collections.Specialized;
 
 using ReCap.Server.Adapters.Rest.Contracts.Game.AuthResponse;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.CreaturePart;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Feed;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.ServerTuning;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Settings;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Stat;
 using ReCap.Server.Adapters.Rest.Contracts.Game.UnlockCreatureResponse;
 using ReCap.Server.Adapters.Rest.Contracts.Response;
 using ReCap.Server.Config.Server;

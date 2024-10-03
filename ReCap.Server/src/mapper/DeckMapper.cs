@@ -4,6 +4,7 @@ using AutoMapper;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Deck;
 using ReCap.Server.Domain.Deck;
 using ReCap.Server.Mapper.Creature;
 using ReCap.Server.Model.Creature;

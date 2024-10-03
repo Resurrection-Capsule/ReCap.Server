@@ -1,9 +1,11 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.Models.Deck;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace HttpServer;
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Creature;
 
 [XmlRoot("deck")]
 public class DeckContract {

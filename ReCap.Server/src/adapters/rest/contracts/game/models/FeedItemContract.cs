@@ -1,11 +1,9 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.Models.FeedItem;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-
-using HttpServer;
-
-namespace HttpServer;
 
 [XmlRoot("item")]
 public class FeedItemContract {

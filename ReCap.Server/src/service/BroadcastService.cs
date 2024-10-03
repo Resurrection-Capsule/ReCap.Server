@@ -1,6 +1,6 @@
-using HttpServer;
-
 namespace HttpServer;
+
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Broadcast;
 
 public class BroadcastService
 {

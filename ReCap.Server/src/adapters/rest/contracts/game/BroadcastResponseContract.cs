@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Broadcast;
 using ReCap.Server.Adapters.Rest.Contracts.Response;
 
 namespace HttpServer;

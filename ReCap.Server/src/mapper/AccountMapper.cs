@@ -2,6 +2,7 @@ namespace ReCap.Server.Mapper.Account;
 
 using AutoMapper;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Account;
 using ReCap.Server.Domain.Account;
 using ReCap.Server.Mapper.Account;
 using ReCap.Server.Model.Account;

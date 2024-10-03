@@ -4,6 +4,7 @@ using AutoMapper;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.Models.CreaturePart;
 using ReCap.Server.Domain.CreaturePart;
 using ReCap.Server.Enums.CreaturePartRarity;
 using ReCap.Server.Model.CreaturePart;
