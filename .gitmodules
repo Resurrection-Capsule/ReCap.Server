@@ -1,0 +1,3 @@
+[submodule "lib/SharpRakNet"]
+	path = lib/SharpRakNet
+	url = https://github.com/Resurrection-Capsule/SharpRakNet.git

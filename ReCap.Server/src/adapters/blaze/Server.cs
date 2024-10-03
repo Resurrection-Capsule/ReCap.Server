@@ -147,7 +147,7 @@ public class Server
 
     private async void Run()
     {
-        Log($"Listening on port {Port}!");
+        Log($"Started listening on 127.0.0.1:{Port}!");
 
         Listener.Start();
 
@@ -176,7 +176,7 @@ public class Server
         CancellationTokenSource.Cancel();
     }
 
-    private async void Log(string message) => await Console.Out.WriteLineAsync($"[{Name}: {HostName}]: {message}");
+    private async void Log(string message) => await Console.Out.WriteLineAsync($"[{Name}]: {message}");
 
     // TODO: generate for localhost and override the client's URL to localhost?
     // TODO: disable SSL completely for redirector already?
