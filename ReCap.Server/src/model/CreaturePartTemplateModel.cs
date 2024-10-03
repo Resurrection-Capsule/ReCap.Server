@@ -1,8 +1,8 @@
+namespace ReCap.Server.Model.CreaturePartTemplate;
+
 using System.ComponentModel.DataAnnotations;
 
-using HttpServer;
-
-namespace HttpServer;
+using ReCap.Server.Model.CreaturePart;
 
 public class CreaturePartTemplateModel
 {

@@ -5,7 +5,9 @@ using System.Text;
 
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Config.Server;
+
+namespace ReCap.Server.Adapters.Persistence.StaticStorage;
     
 public class StaticStorageAdapter
 {

@@ -5,7 +5,10 @@ using System.Text;
 
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Model.CreaturePartTemplate;
+
+namespace ReCap.Server.Adapters.Persistence.SQLite.CreaturePartTemplateRepository;
 
 public class CreaturePartTemplateRepositoryAdapter
 {

@@ -1,5 +1,13 @@
 using HttpServer;
 
+using ReCap.Server.Adapters.Persistence.SQLite.AccountRepository;
+
+using ReCap.Server.Config.Sqlite;
+
+using ReCap.Server.Domain.Account;
+
+using ReCap.Server.Model.Account;
+
 namespace HttpServer;
 
 public class AccountService

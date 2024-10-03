@@ -1,6 +1,4 @@
-using HttpServer;
-
-namespace HttpServer;
+namespace ReCap.Server.Enums.CreaturePartRarity;
 
 public enum CreaturePartRarity {
     Basic = 0,

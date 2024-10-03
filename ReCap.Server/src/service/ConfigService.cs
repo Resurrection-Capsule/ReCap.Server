@@ -2,6 +2,8 @@ using HttpServer;
 
 namespace HttpServer;
 
+using ReCap.Server.Config.Server;
+
 public class ConfigService
 {
     public static ConfigContract getGameConfig(string darksporeVersion) {

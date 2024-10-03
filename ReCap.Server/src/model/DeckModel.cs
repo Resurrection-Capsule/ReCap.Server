@@ -1,6 +1,4 @@
-using HttpServer;
-
-namespace HttpServer;
+namespace ReCap.Server.Model.Deck;
 
 public class DeckModel
 {

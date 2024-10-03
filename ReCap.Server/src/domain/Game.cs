@@ -3,8 +3,9 @@
 using ReCap.RakNetServer;
 using ReCap.RakNet;
 using ReCap.RakNet.Packets;
+
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
-using HttpServer;
+using ReCap.Server.Model.Account;
 
 public enum GameplayState
 {
@@ -14,7 +15,6 @@ public enum GameplayState
     Rewards,
     Finished
 }
-
 
 public class Game(ulong id, GameType gameType) : IGame
 {

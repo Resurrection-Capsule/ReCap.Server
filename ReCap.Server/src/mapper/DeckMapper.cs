@@ -2,6 +2,10 @@ using AutoMapper;
 
 using HttpServer;
 
+using ReCap.Server.Domain.Deck;
+using ReCap.Server.Model.Creature;
+using ReCap.Server.Model.Deck;
+
 namespace HttpServer;
 
 public class DeckMapper

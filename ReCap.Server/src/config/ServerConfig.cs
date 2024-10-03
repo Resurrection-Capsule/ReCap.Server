@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using HttpServer;
 
-namespace HttpServer;
+namespace ReCap.Server.Config.Server;
 
 public class ServerConfig
 {

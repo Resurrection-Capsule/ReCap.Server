@@ -1,6 +1,6 @@
-using HttpServer;
+namespace ReCap.Server.Model.CreaturePart;
 
-namespace HttpServer;
+using ReCap.Server.Enums.CreaturePartRarity;
 
 public class CreaturePartModel
 {

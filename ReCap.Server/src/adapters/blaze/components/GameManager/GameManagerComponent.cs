@@ -3,6 +3,7 @@
 using HttpServer;
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using ReCap.Server.Config.Sqlite;
 using LoggerUtil;
 
 public class GameManagerComponent : IComponent

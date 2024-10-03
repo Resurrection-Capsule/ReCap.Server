@@ -4,6 +4,8 @@ using HttpServer;
 
 namespace HttpServer;
 
+using ReCap.Server.Model.CreatureTemplate;
+
 public class CreatureTemplateMapper
 {
     private IMapper mapper;

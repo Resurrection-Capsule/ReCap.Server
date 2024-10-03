@@ -1,3 +1,5 @@
+namespace ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
+
 using System;
 using System.IO;
 using System.Net;
@@ -5,7 +7,8 @@ using System.Text;
 
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Model.DbSequence;
 
 public class DbSequenceAdapter
 {

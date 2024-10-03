@@ -8,6 +8,8 @@ using HttpServer;
 using BlazeServer;
 using ReCap.RakNetServer;
 
+using ReCap.Server.Config.Sqlite;
+
 namespace HttpServer;
 
 public class Application

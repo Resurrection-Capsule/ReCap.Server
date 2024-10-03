@@ -19,6 +19,7 @@ using ReCap.Server.Adapters.Blaze.Component.Redirector;
 using ReCap.Server.Adapters.Blaze.Component.Rooms;
 using ReCap.Server.Adapters.Blaze.Component.UserSessions;
 using ReCap.Server.Adapters.Blaze.Component.Util;
+using ReCap.Server.Config.Sqlite;
 
 public class Server
 {

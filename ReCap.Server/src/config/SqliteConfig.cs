@@ -1,8 +1,18 @@
+namespace ReCap.Server.Config.Sqlite;
+
 using System.Text.Json;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace HttpServer;
+using ReCap.Server.Config.Server;
+
+using ReCap.Server.Model.Account;
+using ReCap.Server.Model.Creature;
+using ReCap.Server.Model.CreaturePart;
+using ReCap.Server.Model.CreaturePartTemplate;
+using ReCap.Server.Model.CreatureTemplate;
+using ReCap.Server.Model.DbSequence;
+using ReCap.Server.Model.Deck;
 
 public class SqliteConfig : DbContext
 {

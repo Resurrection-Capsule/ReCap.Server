@@ -1,3 +1,5 @@
+namespace ReCap.Server.Adapters.Persistence.SQLite.AccountRepository;
+
 using System;
 using System.IO;
 using System.Net;
@@ -6,7 +8,11 @@ using System.Text;
 using HttpServer;
 using LoggerUtil;
 
-namespace HttpServer;
+using ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
+using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Domain.Account;
+using ReCap.Server.Mapper.Account;
+using ReCap.Server.Model.Account;
 
 public class AccountRepositoryAdapter
 {

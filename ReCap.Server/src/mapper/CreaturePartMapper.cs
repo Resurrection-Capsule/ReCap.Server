@@ -4,6 +4,13 @@ using HttpServer;
 
 namespace HttpServer;
 
+using ReCap.Server.Domain.CreaturePart;
+
+using ReCap.Server.Enums.CreaturePartRarity;
+
+using ReCap.Server.Model.CreaturePart;
+using ReCap.Server.Model.CreaturePartTemplate;
+
 public class CreaturePartMapper
 {
     private IMapper mapper;

@@ -5,7 +5,15 @@ using System.Text;
 
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
+
+using ReCap.Server.Config.Sqlite;
+
+using ReCap.Server.Domain.Creature;
+
+using ReCap.Server.Model.Creature;
+
+namespace ReCap.Server.Adapters.Persistence.SQLite.CreatureRepository;
 
 public class CreatureRepositoryAdapter
 {

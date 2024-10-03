@@ -1,8 +1,12 @@
+namespace ReCap.Server.Mapper.Account;
+
 using AutoMapper;
 
-using HttpServer;
+using ReCap.Server.Domain.Account;
+using ReCap.Server.Mapper.Account;
+using ReCap.Server.Model.Account;
 
-namespace HttpServer;
+using HttpServer;
 
 public class AccountMapper
 {

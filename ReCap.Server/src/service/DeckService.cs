@@ -1,6 +1,11 @@
+namespace HttpServer;
+
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Domain.Deck;
+using ReCap.Server.Model.Account;
+using ReCap.Server.Model.Deck;
 
 public class DeckService
 {

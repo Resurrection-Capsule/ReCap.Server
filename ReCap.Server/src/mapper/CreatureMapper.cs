@@ -2,6 +2,11 @@ using AutoMapper;
 
 using HttpServer;
 
+using ReCap.Server.Domain.Creature;
+
+using ReCap.Server.Model.Creature;
+using ReCap.Server.Model.CreatureTemplate;
+
 namespace HttpServer;
 
 public class CreatureMapper
