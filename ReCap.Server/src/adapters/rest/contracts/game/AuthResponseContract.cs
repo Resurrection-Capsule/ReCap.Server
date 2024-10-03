@@ -5,8 +5,6 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-using HttpServer;
-
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Account;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Creature;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Deck;

@@ -1,11 +1,9 @@
-namespace HttpServer;
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.StatusResponse;
 
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-
-using HttpServer;
 
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Broadcast;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models.Status;

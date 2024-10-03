@@ -8,7 +8,7 @@ using SharpRakNet.Protocol.Raknet;
 
 namespace ReCap.RakNetServer;
 
-using ReCap.Gameplay;
+using ReCap.Domain.Gameplay;
 using ReCap.RakNet;
 using ReCap.RakNet.Packets;
 

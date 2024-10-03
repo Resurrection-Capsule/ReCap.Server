@@ -1,7 +1,7 @@
-﻿namespace ReCap.Gameplay;
+﻿namespace ReCap.Domain.Gameplay;
 
 using ReCap.RakNetServer;
-using ReCap.Gameplay;
+using ReCap.Domain.Gameplay;
 using ReCap.RakNet;
 
 public class Player(ulong id, byte slot) : BasePlayer(id, slot)

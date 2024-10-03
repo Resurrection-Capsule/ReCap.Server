@@ -1,4 +1,4 @@
-﻿namespace ReCap.Gameplay;
+﻿namespace ReCap.Domain.Gameplay;
 
 public enum PlayerStatus
 {

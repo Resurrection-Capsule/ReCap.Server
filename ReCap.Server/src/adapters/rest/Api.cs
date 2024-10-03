@@ -1,3 +1,5 @@
+namespace HttpServer;
+
 using System;
 using System.IO;
 using System.Net;
@@ -5,13 +7,11 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using HttpServer;
+
 using ReCap.Server.Adapters.Persistence.StaticStorage;
 using ReCap.Server.Config.Sqlite;
-
-using HttpServer;
 using ReCap.Server.Utils.Logger;
-
-namespace HttpServer;
 
 public class Api
 {

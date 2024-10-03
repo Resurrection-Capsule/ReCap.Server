@@ -1,4 +1,4 @@
-﻿namespace ReCap.Gameplay;
+﻿namespace ReCap.Domain.Gameplay;
 
 public class Bot(ulong id, byte slot) : BasePlayer(id, slot)
 {

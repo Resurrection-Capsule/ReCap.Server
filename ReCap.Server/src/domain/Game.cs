@@ -1,4 +1,4 @@
-﻿namespace ReCap.Gameplay;
+﻿namespace ReCap.Domain.Gameplay;
 
 using ReCap.RakNetServer;
 using ReCap.RakNet;

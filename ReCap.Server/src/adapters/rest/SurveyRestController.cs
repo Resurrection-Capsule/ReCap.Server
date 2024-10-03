@@ -1,15 +1,14 @@
+namespace HttpServer;
+
 using System;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Collections.Specialized;
 
-using HttpServer;
-
 using ReCap.Server.Config.Server;
 using ReCap.Server.Config.Sqlite;
-
-namespace HttpServer;
+using ReCap.Server.Adapters.Rest.Contracts.Survey.SurveyResponse;
 
 [RestController(Value="/survey/api", ContentType="text/xml")]
 public class SurveyRestController

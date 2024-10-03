@@ -1,3 +1,5 @@
+namespace HttpServer;
+
 using System;
 using System.IO;
 using System.Net;
@@ -5,11 +7,9 @@ using System.Text;
 using System.Collections.Specialized;
 
 using ReCap.Server.Config.Sqlite;
-
-using HttpServer;
 using ReCap.Server.Utils.Logger;
 
-namespace HttpServer;
+using HttpServer;
 
 [RestController(Value="/recap/api")]
 public class ReCapRestController
