@@ -25,6 +25,9 @@ jobs:
     steps:
     - name: Check out sources
       uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+        token: ${{ secrets.PAT_TOKEN }}
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4.0.1
