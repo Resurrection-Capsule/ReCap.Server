@@ -1,17 +1,15 @@
-using HttpServer;
+namespace HttpServer;
 
 using ReCap.Server.Adapters.Persistence.SQLite.CreaturePartRepository;
 using ReCap.Server.Adapters.Persistence.SQLite.CreaturePartTemplateRepository;
-
 using ReCap.Server.Config.Sqlite;
-
 using ReCap.Server.Domain.Account;
-
+using ReCap.Server.Mapper.CreaturePart;
 using ReCap.Server.Model.Account;
 using ReCap.Server.Model.CreaturePart;
 using ReCap.Server.Model.CreaturePartTemplate;
 
-namespace HttpServer;
+using HttpServer;
 
 public class CreaturePartService
 {

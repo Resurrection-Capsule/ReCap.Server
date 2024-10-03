@@ -1,11 +1,11 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.GetCreatureResponse;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-using HttpServer;
-
-namespace HttpServer;
+using ReCap.Server.Adapters.Rest.Contracts.Game.GetCreatureTemplateResponse;
 
 [XmlRoot("response")]
 public class GetCreatureResponseContract : GetCreatureTemplateResponseContract {

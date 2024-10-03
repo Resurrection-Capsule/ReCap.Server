@@ -5,6 +5,8 @@ using System.Xml.Serialization;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Response;
+
 namespace HttpServer;
 
 [XmlRoot("response")]

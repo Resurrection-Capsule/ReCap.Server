@@ -1,13 +1,13 @@
+namespace ReCap.Server.Mapper.Creature;
+
 using AutoMapper;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.GetCreatureResponse;
 using ReCap.Server.Domain.Creature;
-
 using ReCap.Server.Model.Creature;
 using ReCap.Server.Model.CreatureTemplate;
-
-namespace HttpServer;
 
 public class CreatureMapper
 {

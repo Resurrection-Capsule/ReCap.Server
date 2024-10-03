@@ -1,7 +1,7 @@
 using System.Net;
 
 using HttpServer;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 namespace HttpServer;
 

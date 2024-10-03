@@ -4,7 +4,7 @@ namespace ReCap.Server.Adapters.Blaze.Component.UserSessions;
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public class UserSessionsComponent : IComponent
 {

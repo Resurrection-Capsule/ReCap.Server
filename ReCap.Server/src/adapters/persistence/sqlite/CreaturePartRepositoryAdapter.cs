@@ -1,3 +1,5 @@
+namespace ReCap.Server.Adapters.Persistence.SQLite.CreaturePartRepository;
+
 using System;
 using System.IO;
 using System.Net;
@@ -7,9 +9,8 @@ using HttpServer;
 
 using ReCap.Server.Adapters.Persistence.SQLite.DbSequence;
 using ReCap.Server.Config.Sqlite;
+using ReCap.Server.Mapper.CreaturePart;
 using ReCap.Server.Model.CreaturePart;
-
-namespace ReCap.Server.Adapters.Persistence.SQLite.CreaturePartRepository;
 
 public class CreaturePartRepositoryAdapter
 {

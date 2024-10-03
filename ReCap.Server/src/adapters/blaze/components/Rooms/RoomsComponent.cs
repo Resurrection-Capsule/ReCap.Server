@@ -1,7 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Rooms;
 
 using BlazeServer;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public class RoomsComponent : IComponent
 {

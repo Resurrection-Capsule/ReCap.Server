@@ -1,19 +1,25 @@
+namespace HttpServer;
+
 using System;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Collections.Specialized;
 
+using ReCap.Server.Adapters.Rest.Contracts.Game.AuthResponse;
+using ReCap.Server.Adapters.Rest.Contracts.Game.UnlockCreatureResponse;
+using ReCap.Server.Adapters.Rest.Contracts.Response;
 using ReCap.Server.Config.Server;
 using ReCap.Server.Config.Sqlite;
 using ReCap.Server.Mapper.Account;
+using ReCap.Server.Mapper.Creature;
+using ReCap.Server.Mapper.CreaturePart;
+using ReCap.Server.Mapper.Deck;
 using ReCap.Server.Model.Account;
 using ReCap.Server.Model.CreaturePart;
+using ReCap.Server.Utils.Logger;
 
 using HttpServer;
-using LoggerUtil;
-
-namespace HttpServer;
 
 [RestController(Value="/game/api", ContentType="text/xml")]
 public class GameRestController

@@ -16,7 +16,7 @@ using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Config.Sqlite;
 
 using HttpServer;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public record RakNetClient(RaknetSession Session)
 {

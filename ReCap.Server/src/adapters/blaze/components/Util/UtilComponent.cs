@@ -1,7 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.Util;
 
 using BlazeServer;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public class UtilComponent : IComponent
 {

@@ -1,3 +1,5 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Game.AuthResponse;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
@@ -5,7 +7,7 @@ using System.Xml.Serialization;
 
 using HttpServer;
 
-namespace HttpServer;
+using ReCap.Server.Adapters.Rest.Contracts.Response;
 
 [XmlRoot("response")]
 public class AuthResponseContract : ResponseContract {

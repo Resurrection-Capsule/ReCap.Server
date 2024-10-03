@@ -1,9 +1,9 @@
+namespace ReCap.Server.Adapters.Rest.Contracts.Bootstrap.Config;
+
 using System;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-
-namespace HttpServer;
 
 [XmlRoot("config")]
 public class ConfigContract {

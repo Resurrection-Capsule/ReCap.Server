@@ -2,7 +2,7 @@ namespace ReCap.Server.Adapters.Blaze.Component.Playgroups;
 
 using BlazeServer;
 using ReCap.Server.Adapters.Blaze.Component.Util;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public class UnknownComponent1 : IComponent
 {

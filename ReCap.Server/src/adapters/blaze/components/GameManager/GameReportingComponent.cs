@@ -1,7 +1,7 @@
 ﻿namespace ReCap.Server.Adapters.Blaze.Component.GameManager;
 
 using BlazeServer;
-using LoggerUtil;
+using ReCap.Server.Utils.Logger;
 
 public class GameReportingComponent : IComponent
 {

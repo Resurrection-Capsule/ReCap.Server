@@ -1,3 +1,5 @@
+namespace HttpServer;
+
 using System;
 using System.IO;
 using System.Net;
@@ -10,10 +12,12 @@ using System.Collections.Specialized;
 
 using HttpServer;
 
+using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.Config;
+using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigResponse;
+using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigSettings;
+using ReCap.Server.Adapters.Rest.Contracts.Bootstrap.ConfigSettingsOpen;
 using ReCap.Server.Config.Server;
 using ReCap.Server.Config.Sqlite;
-
-namespace HttpServer;
 
 [RestController(Value="/bootstrap/api", ContentType="text/xml")]
 public class BootstrapRestController
