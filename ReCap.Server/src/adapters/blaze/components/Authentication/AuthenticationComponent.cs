@@ -60,10 +60,8 @@ public class AuthenticationComponent : IComponent
 
     private bool GetAuthToken(Client client, Packet packet)
     {
-        Guid myuuid = Guid.NewGuid();
-        client.AuthToken = myuuid.ToString();
-
-        accountService.setAccountAuthToken(client.UserId, client.AuthToken);
+        bool generateAuthToken = client.AuthToken == null;
+        client.AuthToken = generateAuthToken ? Guid.NewGuid().ToString() : client.AuthToken;
 
         var response = new GetAuthTokenResponse
         {
@@ -72,11 +70,16 @@ public class AuthenticationComponent : IComponent
 		
         client.RespondTo(packet, response);
 
-        client.Notify(new UserStatus()
+        if (generateAuthToken)
         {
-            BlazeId = client.UserId,
-            StatusFlags = 3
-        }, 0x7802, 5);
+            accountService.setAccountAuthToken(client.UserId, client.AuthToken);
+
+            client.Notify(new UserStatus()
+            {
+                BlazeId = client.UserId,
+                StatusFlags = 3
+            }, 0x7802, 5);
+        }
 
         return true;
     }
