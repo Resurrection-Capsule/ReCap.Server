@@ -6,7 +6,7 @@ using ReCap.Server.Config.Server;
 public class ConfigService
 {
     public static ConfigContract getGameConfig(string darksporeVersion) {
-        string host = ServerConfig.GetHost();
+        string host = ServerConfig.HostName;
 
         return new ConfigContract{
             BlazeServiceName = "darkspore", // Directly linked to BlazeServiceName
