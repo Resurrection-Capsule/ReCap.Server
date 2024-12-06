@@ -51,56 +51,5 @@ namespace ReCap.Server.Config.Server
         public ServerConfigOptions()
         {}
     }
-    public static class ServerConfigOptionsExtensions
-    {
-        public static ServerConfigOptions Clone(this ServerConfigOptions self)
-            => new()
-            {
-                HostName = self.HostName,
-                HostIP = self.HostIP,
-                GameVersion = self.GameVersion,
-                ServerDatabaseDirectory = self.ServerDatabaseDirectory,
-            };
-
-
-
-
-        public static ServerConfigOptions WithHostName(this ServerConfigOptions self, string hostName)
-        {
-            ServerConfigOptions ret = self.Clone();
-            if (!string.IsNullOrWhiteSpace(hostName))
-                ret.HostName = hostName;
-            return ret;
-        }
-
-
-        public static ServerConfigOptions WithHostIP(this ServerConfigOptions self, IPAddress hostIP)
-        {
-            ServerConfigOptions ret = self.Clone();
-            if (hostIP != null)
-                ret.HostIP = hostIP;
-            return ret;
-        }
-
-
-
-
-        public static ServerConfigOptions WithGameVersion(this ServerConfigOptions self, Version gameVersion)
-        {
-            ServerConfigOptions ret = self.Clone();
-            if (gameVersion != null)
-                ret.GameVersion = gameVersion;
-            return ret;
-        }
-
-
-        public static ServerConfigOptions WithDatabaseDirectory(this ServerConfigOptions self, string serverDatabaseDirectory)
-        {
-            ServerConfigOptions ret = self.Clone();
-            if (!string.IsNullOrWhiteSpace(serverDatabaseDirectory))
-                ret.ServerDatabaseDirectory = serverDatabaseDirectory;
-            return ret;
-        }
-    }
 }
 #nullable restore

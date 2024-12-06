@@ -82,11 +82,14 @@ public static class Application
             portDbgLine += "default ";
         Logger.info(portDbgLine + $"port {port}");
         
-        if (!string.IsNullOrWhiteSpace(databasePath))
-            Logger.info($"Using DB path: '{databasePath}'");
-
+        var serverOpts = ServerConfig.CopyCurrentOptions();
 #nullable restore
-        var serverOpts = ServerConfig.CopyCurrentOptions().WithDatabaseDirectory(databasePath);
+        if (!string.IsNullOrWhiteSpace(databasePath))
+        {
+            Logger.info($"Using DB path: '{databasePath}'");
+            serverOpts.ServerDatabaseDirectory = databasePath;
+        }
+
         ServerConfig.Configure(serverOpts);
 
         CancellationTokenSource source = new CancellationTokenSource();

@@ -49,6 +49,12 @@ namespace ReCap.Server.Config.Server
         }
 
         public static ServerConfigOptions CopyCurrentOptions()
-            => _currentOpts.Clone();
+            => new()
+            {
+                HostName = _currentOpts.HostName,
+                HostIP = _currentOpts.HostIP,
+                GameVersion = _currentOpts.GameVersion,
+                ServerDatabaseDirectory = _currentOpts.ServerDatabaseDirectory,
+            };
     }
 }
