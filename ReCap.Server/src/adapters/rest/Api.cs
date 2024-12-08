@@ -15,9 +15,12 @@ using ReCap.Server.Utils.Logger;
 
 public class Api
 {
+    public const int DEFAULT_PORT = 80;
     private List<object> restControllers;
 
-    public Api(SqliteConfig newSqliteConfig) {
+    readonly int _port;
+    public Api(SqliteConfig newSqliteConfig, int port = DEFAULT_PORT) {
+        _port = port;
         restControllers = new List<object>();
         var assembly = Assembly.GetExecutingAssembly();
         foreach(Type type in assembly.GetTypes()) {
@@ -27,19 +30,36 @@ public class Api
             }
         }
     }
-
+#nullable disable
+    HttpListener _listener = null;
+    bool _run = false;
     public void Run()
     {
-        HttpListener listener = new HttpListener();
-        listener.Prefixes.Add("http://*:80/");
-        listener.Start();
+        if (_listener != null)
+            return;
 
-        while (true)
+        _run = true;
+        _listener = new HttpListener();
+        _listener.Prefixes.Add($"http://*:{_port}/");
+        _listener.Start();
+
+        while (_run)
         {
-            HttpListenerContext context = listener.GetContext();
+            HttpListenerContext context = _listener.GetContext();
             ProcessRequest(context);
         }
     }
+
+    public void Stop()
+    {
+        if (_listener == null)
+            return;
+        _listener.Stop();
+        _run = false;
+        _listener = null;
+    }
+#nullable restore
+
 
     private void ProcessRequest(HttpListenerContext context)
     {

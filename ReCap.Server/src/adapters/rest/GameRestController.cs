@@ -84,7 +84,7 @@ public class GameRestController
 
         var response = new AuthResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
             ExecTime = 1,
             Account = accountMapper.toContract(account)
@@ -146,7 +146,7 @@ public class GameRestController
             var creatures = creatureService.getCreaturesByAccount(account);
             var response = new GetAccountResponseContract{
                 Stat = "ok",
-                Version = ServerConfig.GetDarksporeVersion(),
+                Version = ServerConfig.GameVersionStr,
                 Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
                 ExecTime = 1,
                 Account = accountMapper.toContract(account),
@@ -166,7 +166,7 @@ public class GameRestController
 
                 var response = new PostAccountResponseContract{
                     Stat = "ok",
-                    Version = ServerConfig.GetDarksporeVersion(),
+                    Version = ServerConfig.GameVersionStr,
                     Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
                     ExecTime = 1,
                     Account = accountMapper.toContract(account)
@@ -198,7 +198,7 @@ public class GameRestController
             else {
                 var response = new PostAccountResponseContract{
                     Stat = "ok",
-                    Version = ServerConfig.GetDarksporeVersion(),
+                    Version = ServerConfig.GameVersionStr,
                     Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
                     ExecTime = 1,
                     BlazeID = account.Id,
@@ -219,7 +219,7 @@ public class GameRestController
 
         var response = new ResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1
         };
@@ -252,7 +252,7 @@ public class GameRestController
 
         var response = new ResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1
         };
@@ -323,7 +323,7 @@ public class GameRestController
 
         var response = new ResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1
         };
@@ -341,7 +341,7 @@ public class GameRestController
 
         var response = new UnlockCreatureResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             CreatureID = (ulong)creature.ID
@@ -353,7 +353,7 @@ public class GameRestController
     [RequestMapping(Name="api.creature.updateCreature")]
     public byte[] updateCreature(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string host = ServerConfig.GetHost();
+        string host = ServerConfig.HostName;
 
         ulong creatureId = (ulong)Convert.ToInt64(parameters["id"]);
         int creatureVersion = Convert.ToInt32(parameters["version"]);
@@ -399,7 +399,7 @@ public class GameRestController
 
         var response = new ResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1
         };
@@ -447,7 +447,7 @@ public class GameRestController
 
         var response = new PartListResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
@@ -465,7 +465,7 @@ public class GameRestController
 
         var response = new PartListResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             Parts = new List<CreaturePartContract>()
@@ -499,7 +499,7 @@ public class GameRestController
 
         var response = new ResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1
         };
@@ -554,7 +554,7 @@ public class GameRestController
 
         var response = new PartListResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
@@ -576,7 +576,7 @@ public class GameRestController
     {
         var response = new StatusResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             Broadcasts = BroadcastService.getBroadcastList()

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Diagnostics;
 
 namespace ReCap.Server.Utils.Logger;
 
@@ -7,7 +7,7 @@ public class Logger
 {
     public static void debug(string value)
     {
-        Console.WriteLine(value);
+        Debug.WriteLine(value);
     }
 
     public static void info(string value)

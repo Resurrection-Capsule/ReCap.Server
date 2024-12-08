@@ -32,7 +32,7 @@ public class BootstrapRestController
         bool includeSettings = parameters.GetValueOrDefault("include_settings", null) == "true";
         bool includePatches = parameters.GetValueOrDefault("include_patches", null) == "true";
 
-        string host = ServerConfig.GetHost();
+        string host = ServerConfig.HostName;
 
         var config = ConfigService.getGameConfig(darksporeVersion);
 

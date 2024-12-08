@@ -28,7 +28,7 @@ public class SqliteConfig : DbContext
 
     public SqliteConfig()
     {
-        DbPath = ServerConfig.GetServerDatabasePath();
+        DbPath = ServerConfig.ServerDatabasePath;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
@@ -38,14 +38,15 @@ public class SqliteConfig : DbContext
     {
         this.Database.EnsureCreated();
 
+        string resDir = ServerConfig.ResourcesDirectory;
         if (this.CreatureTemplates.SingleOrDefault(b => b.id == 1667741389) == null) {
-            var templatesStr = File.ReadAllText("./resources/creature_templates.json");
+            var templatesStr = File.ReadAllText(Path.Combine(resDir, "creature_templates.json"));
             var templates = JsonSerializer.Deserialize<List<CreatureTemplateModel>>(templatesStr);
             this.CreatureTemplates.AddRange(templates);
             this.SaveChanges();
         }
         if (this.CreaturePartTemplates.SingleOrDefault(b => b.rigblockAssetId == 1) == null) {
-            var partsStr = File.ReadAllText("./resources/part_templates.json");
+            var partsStr = File.ReadAllText(Path.Combine(resDir, "part_templates.json"));
             var parts = JsonSerializer.Deserialize<List<CreaturePartTemplateModel>>(partsStr);
             this.CreaturePartTemplates.AddRange(parts);
             this.SaveChanges();

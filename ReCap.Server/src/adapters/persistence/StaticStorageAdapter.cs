@@ -9,7 +9,7 @@ using ReCap.Server.Config.Server;
 
 public class StaticStorageAdapter
 {
-    static string STATIC_RESOURCES_FOLDER_PATH = "./resources/static";
+    static readonly string STATIC_RESOURCES_FOLDER_PATH = Path.Combine(ServerConfig.ResourcesDirectory, "static");
 
     public static byte[] GetFile(string filePath)
     {
@@ -19,7 +19,7 @@ public class StaticStorageAdapter
             throw new FileNotFoundException(fullPath);
         }
         if (filePath.EndsWith(".html") || filePath.EndsWith(".js")) {
-            string host = ServerConfig.GetHost();
+            string host = ServerConfig.HostName;
             string fileContents = File.ReadAllText(fullPath);
             fileContents = fileContents.Replace("{{host}}", host);
             fileContents = fileContents.Replace("{{recap-version}}", "1.0");

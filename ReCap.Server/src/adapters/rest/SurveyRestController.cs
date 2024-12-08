@@ -23,7 +23,7 @@ public class SurveyRestController
     {
         var response = new SurveyResponseContract{
             Stat = "ok",
-            Version = ServerConfig.GetDarksporeVersion(),
+            Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
             Surveys = SurveyService.getSurveyList()
