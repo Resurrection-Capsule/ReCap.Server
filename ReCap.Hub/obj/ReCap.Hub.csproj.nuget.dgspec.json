@@ -1,0 +1,193 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.Hub/ReCap.Hub.csproj": {}
+  },
+  "projects": {
+    "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/ReCap.CommonUI.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/ReCap.CommonUI.csproj",
+        "projectName": "ReCap.CommonUI",
+        "projectPath": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/ReCap.CommonUI.csproj",
+        "packagesPath": "/home/splitwirez/.nuget/packages/",
+        "outputPath": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/splitwirez/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Desktop": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Diagnostics": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.ReactiveUI": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Themes.Fluent": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/home/splitwirez/--0important/software/dev/dotnet/8.0.404-linux-x64/sdk/8.0.404/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.Hub/ReCap.Hub.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.Hub/ReCap.Hub.csproj",
+        "projectName": "ResurrectionCapsuleHub",
+        "projectPath": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.Hub/ReCap.Hub.csproj",
+        "packagesPath": "/home/splitwirez/.nuget/packages/",
+        "outputPath": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.Hub/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/splitwirez/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/ReCap.CommonUI.csproj": {
+                "projectPath": "/home/splitwirez/--0important/repos/current-projects/darkspore/resurrection-capsule/server/new-server/add-hub-to-repo/ReCap/ReCap.CommonUI/ReCap.CommonUI.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Desktop": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Diagnostics": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Markup.Xaml.Loader": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.ReactiveUI": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Avalonia.Themes.Fluent": {
+              "target": "Package",
+              "version": "[11.0.10, )"
+            },
+            "Microsoft.Win32.Registry": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "PeNet": {
+              "target": "Package",
+              "version": "[4.0.5, )"
+            },
+            "System.IO.FileSystem.AccessControl": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "System.Security.Principal.Windows": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/splitwirez/--0important/software/dev/dotnet/8.0.404-linux-x64/sdk/8.0.404/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

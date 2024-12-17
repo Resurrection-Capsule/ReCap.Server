@@ -1,0 +1,21 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:ReCap.CommonUI"
+        xmlns:rctr="using:ReCap.CommonUI"
+        xmlns:v="using:ReCap.Hub.Views">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="HoloDecorFillBrush">#20FFFFFF</SolidColorBrush>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+
+    <Style Selector=":is(ContentControl).sidePaneFooter">
+        <!--Setter Property="MinHeight" Value="50" /-->
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Padding" Value="20,4,20,-1" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+</Styles>
