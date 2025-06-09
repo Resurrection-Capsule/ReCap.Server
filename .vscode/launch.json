@@ -1,0 +1,67 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        // Use IntelliSense to find out which attributes exist for C# debugging.
+        // Use hover for the description of the existing attributes
+        // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+        {
+            "name": "Server:80",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-server",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0/ReCap.Server.dll",
+            "cwd":     "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0",
+            "args": [],
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Server:80 (alternate DB path)",
+            "type": "coreclr",
+            "request": "launch",
+            /*
+            "preLaunchTask": "publish-server-linux",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/ReCap.Server/bin/Release/net8.0/linux-x64/publish/ReCap.Server.dll",
+            "cwd":     "${workspaceFolder}/ReCap.Server/bin/Release/net8.0/linux-x64/publish",
+            */
+            "preLaunchTask": "build-server",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0/ReCap.Server.dll",
+            "cwd":     "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0",
+            "args": [
+                "--database-path=/home/splitwirez/.local/share/ResurrectionCapsule/server/db/",
+            ],
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "externalTerminal",
+            "stopAtEntry": false
+        },
+        {
+            // https://stackoverflow.com/questions/3363892/what-non-standard-ports-are-safe-to-use#comment91403123_3363928
+            "name": "Server:9001",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-server",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0/ReCap.Server.dll",
+            "cwd":     "${workspaceFolder}/ReCap.Server/bin/Debug/net8.0",
+            "args": [
+				"--port=9001",
+                "--database-path=/home/splitwirez/.local/share/ResurrectionCapsule/server/db/",
+            ],
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        },
+    ]
+}
