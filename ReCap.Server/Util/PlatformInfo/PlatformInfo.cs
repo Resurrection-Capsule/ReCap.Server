@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 public static class PlatformInfo
 {
@@ -10,7 +10,7 @@ public static class PlatformInfo
 
 
     // MUST BE DEFINED AFTER THE THREE ABOVE
-    static readonly IPlatformVersionImpl _impl = PlatformUtils.GetForPlatform<IPlatformVersionImpl>();
+    static readonly IPlatformVersionImpl _impl = PlatformHelper.GetForPlatform<IPlatformVersionImpl>();
 
 
 

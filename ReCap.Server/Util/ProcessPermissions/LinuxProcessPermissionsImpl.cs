@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
 [SupportedOSPlatform(nameof(OSPlatform.Linux))]
@@ -14,7 +14,7 @@ internal class LinuxProcessPermissionsImpl
         Debug.WriteLine($"{nameof(LinuxProcessPermissionsImpl)}.{nameof(TryRerunElevated)}('{args}', out...)");
         try
         {
-            string sudoArgs = $"{CommandLineUtils.WrapArg(Environment.ProcessPath)} {args}";
+            string sudoArgs = $"{CommandLineHelper.WrapArg(Environment.ProcessPath)} {args}";
             Debug.WriteLine($"{nameof(sudoArgs)}: '{sudoArgs}'");
             ProcessStartInfo startInfo = new("sudo", sudoArgs);
             elevatedProcess = Process.Start(startInfo);

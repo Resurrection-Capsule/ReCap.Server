@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
 [SupportedOSPlatform(nameof(OSPlatform.Linux))]

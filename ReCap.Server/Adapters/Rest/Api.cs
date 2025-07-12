@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 using ReCap.Server.Adapters.Persistence;
 using ReCap.Server.Config;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Rest.Api;
 
@@ -61,7 +61,7 @@ public class Api
 
     private void ProcessRequest(HttpListenerContext context)
     {
-        var parameters = HttpUtils.GetParametersFromRequest(context.Request);
+        var parameters = HTTPHelper.GetParametersFromRequest(context.Request);
         if (parameters.Count > 0) {
             Logger.debug($"Parameters: {string.Join(", ", parameters)}");
         }

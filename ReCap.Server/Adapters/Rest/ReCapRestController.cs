@@ -7,7 +7,7 @@ using System.Collections.Specialized;
 
 using ReCap.Server.Config;
 using ReCap.Server.Services;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Rest.Api;
 
@@ -29,7 +29,7 @@ public class ReCapRestController
     [RequestMapping(Name="api.game.log", ContentType="application/json")]
     public byte[] log(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string message = HttpUtils.GetBodyFromRequest(context.Request);
+        string message = HTTPHelper.GetBodyFromRequest(context.Request);
         Logger.info(message);
         return new byte[]{};
     }
@@ -37,7 +37,7 @@ public class ReCapRestController
     [RequestMapping(Name="api.game.registration")]
     public byte[] registerUser(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        // string jsonStr = HttpUtils.GetBodyFromRequest(context.Request);
+        // string jsonStr = HTTPHelper.GetBodyFromRequest(context.Request);
         // dynamic request = JsonConvert.DeserializeObject(jsonStr);
         
         var request = context.Request;

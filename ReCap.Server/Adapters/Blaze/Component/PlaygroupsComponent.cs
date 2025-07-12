@@ -1,5 +1,5 @@
 ﻿using ReCap.Server.Adapters.Blaze.Component.GameManager;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Blaze.Component;
 

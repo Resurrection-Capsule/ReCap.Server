@@ -2,10 +2,10 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
-public static class PlatformUtils
+public static class PlatformHelper
 {
     public static T GetForPlatform<T>()
     {

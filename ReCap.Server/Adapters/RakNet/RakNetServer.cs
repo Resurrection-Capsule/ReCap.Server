@@ -8,7 +8,7 @@ using ReCap.Server.Adapters.RakNet.Packets;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Config;
 using ReCap.Server.Services;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet;
 

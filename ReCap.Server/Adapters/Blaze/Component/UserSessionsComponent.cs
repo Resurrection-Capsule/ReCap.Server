@@ -1,5 +1,5 @@
 ﻿using System.Buffers.Binary;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Blaze.Component;
 

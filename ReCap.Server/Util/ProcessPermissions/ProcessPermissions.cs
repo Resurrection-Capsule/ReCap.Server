@@ -1,11 +1,11 @@
 using System.Diagnostics;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
 public static class ProcessPermissions
 {
-    static readonly IProcessPermissionsImpl _permissions = PlatformUtils.GetForPlatform<IProcessPermissionsImpl>();
+    static readonly IProcessPermissionsImpl _permissions = PlatformHelper.GetForPlatform<IProcessPermissionsImpl>();
 
 
     /// <summary>
@@ -46,7 +46,7 @@ public static class ProcessPermissions
         => _permissions.TryRerunElevated(
             args != null
                 ? args
-                : CommandLineUtils.GetCurrentProcessCommandLineArgs()
+                : CommandLineHelper.GetCurrentProcessCommandLineArgs()
             , out elevatedProcess
         );
 }

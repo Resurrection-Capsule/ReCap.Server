@@ -8,7 +8,7 @@ using ReCap.Server.Adapters.Blaze;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Config;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server;
 
@@ -32,7 +32,7 @@ public static class Program
         int argCount = args.Length;
         for (int i = 0; i < argCount; i++)
         {
-            string arg = CommandLineUtils.UnwrapArg(args[i]);
+            string arg = CommandLineHelper.UnwrapArg(args[i]);
             if (arg == _HELP_ARG)
             {
                 PrintHelp();
@@ -47,7 +47,7 @@ public static class Program
             else if (arg.StartsWith(_DB_PATH_ARG))
             {
                 string dbPath = arg.Substring(_DB_PATH_ARG.Length);
-                dbPath = CommandLineUtils.UnwrapArg(dbPath);
+                dbPath = CommandLineHelper.UnwrapArg(dbPath);
 
                 if (!Directory.Exists(dbPath))
                     Directory.CreateDirectory(dbPath);

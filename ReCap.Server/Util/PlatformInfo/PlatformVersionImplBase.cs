@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 internal class PlatformVersionImplBase
     : IPlatformVersionImpl

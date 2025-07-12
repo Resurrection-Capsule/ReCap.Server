@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 public class Logger
 {

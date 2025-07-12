@@ -1,9 +1,9 @@
 using System.Diagnostics;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
-public static class CommandLineUtils
+public static class CommandLineHelper
 {
     public static string GetCurrentProcessCommandLineArgs()
     {

@@ -4,7 +4,7 @@ using System.Runtime.Versioning;
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]

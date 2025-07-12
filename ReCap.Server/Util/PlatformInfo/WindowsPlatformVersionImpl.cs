@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]
 internal class WindowsPlatformVersionImpl

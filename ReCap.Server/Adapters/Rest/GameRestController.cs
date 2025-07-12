@@ -11,7 +11,7 @@ using ReCap.Server.Config;
 using ReCap.Server.Mappers;
 using ReCap.Server.Models;
 using ReCap.Server.Services;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Rest.Api;
 
@@ -110,7 +110,7 @@ public class GameRestController
             context.Response.Headers.Add("Set-Cookie", $"token={authToken}");
         }
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.account.getAccount")]
@@ -130,7 +130,7 @@ public class GameRestController
                 Account = accountMapper.toContract(account),
                 Decks = deckService.getDecksByAccount(account).Select(deck => deckMapper.toContract(deck, creatures)).ToList()
             };
-            return XmlUtils.Serialize(response);
+            return XmlHelper.Serialize(response);
         }
         if (httpMethod == "POST")
         {
@@ -171,7 +171,7 @@ public class GameRestController
                     }];
                 }
 
-                return XmlUtils.Serialize(response);
+                return XmlHelper.Serialize(response);
             }
             else {
                 var response = new PostAccountResponseContract{
@@ -184,7 +184,7 @@ public class GameRestController
                     GrantOnlineAccess = (account.grantOnlineAccess ?? false) ? 1 : 0,
                     CashoutBonusTime = account.cashoutBonusTime
                 };
-                return XmlUtils.Serialize(response);
+                return XmlHelper.Serialize(response);
             }
         }
         return null;
@@ -202,7 +202,7 @@ public class GameRestController
             ExecTime = 1
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.account.searchAccounts")]
@@ -235,7 +235,7 @@ public class GameRestController
             ExecTime = 1
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.account.unlock")]
@@ -267,7 +267,7 @@ public class GameRestController
         var template = creatureService.getCreatureTemplateById(creature.TemplateID);
 
         var response = creatureMapper.toGetCreatureContract(template, creature, includeAbilities, includeParts);
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.getTemplate")]
@@ -306,7 +306,7 @@ public class GameRestController
             ExecTime = 1
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.unlockCreature")]
@@ -325,7 +325,7 @@ public class GameRestController
             CreatureID = (ulong)creature.ID
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.updateCreature")]
@@ -382,7 +382,7 @@ public class GameRestController
             ExecTime = 1
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.deck.updateDecks")]
@@ -431,7 +431,7 @@ public class GameRestController
             Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.inventory.getPartOfferList")]
@@ -449,7 +449,7 @@ public class GameRestController
             Parts = new List<CreaturePartContract>()
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
 
     }
 
@@ -482,7 +482,7 @@ public class GameRestController
             ExecTime = 1
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.inventory.vendorParts")]
@@ -540,7 +540,7 @@ public class GameRestController
 
         // utils::xml_add_text_node(docResponse, "dna", user->get_account().dna);
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.leaderboard.getLeaderboard")]
@@ -560,7 +560,7 @@ public class GameRestController
             Broadcasts = BroadcastService.getBroadcastList()
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.status.getStatus")]
@@ -582,6 +582,6 @@ public class GameRestController
             response.Broadcasts = BroadcastService.getBroadcastList();
         }
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 }

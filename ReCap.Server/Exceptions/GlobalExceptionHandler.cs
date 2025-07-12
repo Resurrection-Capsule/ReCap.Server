@@ -1,5 +1,5 @@
 using System.Net;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server;
 

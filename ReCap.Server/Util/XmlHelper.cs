@@ -8,9 +8,9 @@ using System.Xml.Schema;
 using System.Xml.Serialization;
 using System.Collections.Specialized;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
-public class XmlUtils
+public class XmlHelper
 {
     public static byte[] Serialize<T>(T value)
     {

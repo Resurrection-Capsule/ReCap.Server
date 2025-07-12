@@ -7,7 +7,7 @@ using System.Collections.Specialized;
 using ReCap.Server.Adapters.Rest.Contracts.Survey;
 using ReCap.Server.Config;
 using ReCap.Server.Services;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Rest.Api;
 
@@ -27,6 +27,6 @@ public class SurveyRestController
             Surveys = SurveyService.getSurveyList()
         };
 
-        return XmlUtils.Serialize(response);
+        return XmlHelper.Serialize(response);
     }
 }

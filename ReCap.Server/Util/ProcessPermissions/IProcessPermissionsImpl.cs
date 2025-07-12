@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
 #nullable disable
 internal interface IProcessPermissionsImpl

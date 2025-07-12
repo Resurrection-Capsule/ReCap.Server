@@ -1,9 +1,9 @@
 using System.Net;
 using HttpMultipartParser;
 
-namespace ReCap.Server.Utils;
+namespace ReCap.Server.Util;
 
-public class HttpUtils
+public class HTTPHelper
 {
     public static string GetBodyFromRequest(HttpListenerRequest request)
     {

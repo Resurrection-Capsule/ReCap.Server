@@ -6,7 +6,7 @@ using ReCap.Server.Config;
 using ReCap.Server.Domain;
 using ReCap.Server.Mappers;
 using ReCap.Server.Models;
-using ReCap.Server.Utils;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Persistence.SQLite;
 
