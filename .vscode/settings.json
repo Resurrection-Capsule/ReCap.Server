@@ -1,0 +1,13 @@
+{
+    "files.watcherExclude": {
+        "**/bin/": true,
+        "**/obj/": true,
+        "lib/SharpRakNet/**/*.csproj": true,
+    },
+    "files.exclude": {
+        "**/bin/": true,
+        "**/obj/": true,
+        "lib/SharpRakNet/**/*.csproj": true,
+    },
+    "dotnet.preferCSharpExtension": true
+}
