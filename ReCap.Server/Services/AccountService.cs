@@ -91,13 +91,15 @@ public class AccountService
             account.unlockPveDecks = 2;
             account.unlockPvpDecks = 1;
             account.unlockStats = 1;
-            account.unlockInventoryIdentify = 13;
-            account.unlockInventory = 3000; // 570;
+            account.unlockInventoryIdentify = 2500;
+            account.unlockInventory = 2500;
             account.unlockEditorFlairSlots = 1;
             account.upsell = 1;
             account.xp = 10000;
             account.grantAllAccess = true;
             account.grantOnlineAccess = true;
+            account.capLevel = 0;
+            account.capProgression = 0;
         }
 
         return accountRepository.insertAccount(account);

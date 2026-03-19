@@ -44,6 +44,14 @@ public sealed class ServerConfigOptions
         set => _serverDatabaseDirectory = value;
     }
 
+    public static readonly string DEFAULT_GAME_PATH = string.Empty;
+    string _gamePath = DEFAULT_GAME_PATH;
+    public string GamePath
+    {
+        get => _gamePath;
+        set => _gamePath = value;
+    }
+
 
 
 
