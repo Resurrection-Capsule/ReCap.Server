@@ -188,6 +188,7 @@ public class GameManagerComponent : IComponent
 
         Log($"UpdateMeshConnection: {request}");
 
+        client.RespondTo(packet);
         return true;
     }
 

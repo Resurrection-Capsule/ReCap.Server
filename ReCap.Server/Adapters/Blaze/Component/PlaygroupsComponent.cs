@@ -24,6 +24,11 @@ public class PlaygroupsComponent : IComponent
     private bool HandleCreatePlaygroupPacket(Client client, Packet packet)
     {
         var request = packet.ReadContent<CreatePlaygroupRequest>();
+        if (request is null)
+        {
+            client.RespondTo(packet, null, error: 0x5E0001);
+            return true;
+        }
 
         client.RespondTo(packet, new JoinPlaygroupResponse() { Info = request.Info });
         return true;

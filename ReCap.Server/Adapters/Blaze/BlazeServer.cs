@@ -60,7 +60,7 @@ public class BlazeServer
                 new MessagingComponent(),
                 new PlaygroupsComponent(),
                 new RoomsComponent(),
-                new UserSessionsComponent(),
+                new UserSessionsComponent(newSqliteConfig),
                 new UtilComponent(),
                 new GameReportingComponent(),
                 new UnknownComponent1()
@@ -128,6 +128,11 @@ public class BlazeServer
         }
         else
             Log($"Unknown component: 0x{packet.Component:X}");
+    }
+
+    public Client? FindClientByUserId(ulong userId)
+    {
+        return Clients.FirstOrDefault(c => c.UserId == userId);
     }
 
     public void Disconnect(Client client)

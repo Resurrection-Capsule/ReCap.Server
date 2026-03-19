@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using Org.BouncyCastle.Tls;
+using ReCap.Server.Adapters.Blaze.Component;
 using ReCap.Server.Adapters.Blaze.Ssl;
 
 namespace ReCap.Server.Adapters.Blaze;
@@ -23,6 +24,7 @@ public class Client
 
     public ulong UserId { get; set; }
     public string AuthToken { get; set; }
+    public UserSessionExtendedData ExtendedData { get; } = new();
 
     public Client(BlazeServer server, TcpClient tcpClient)
     {

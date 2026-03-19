@@ -1,6 +1,7 @@
 ﻿using System.Buffers.Binary;
 using System.Text;
 using ReCap.Server.Config;
+using ReCap.Server.Models;
 using ReCap.Server.Services;
 using ReCap.Server.Util;
 
@@ -29,8 +30,23 @@ public class AuthenticationComponent : IComponent
             case 0x28:
                 return HandleLogin(client, packet);
 
+            case 0x29:
+                return HandleAcceptTOS(client, packet);
+
+            case 0x2A:
+                return HandleGetTOSInfo(client, packet);
+
+            case 0x2E:
+                return HandleGetTermsAndConditions(client, packet);
+
             case 0x2F:
                 return HandleGetPrivacyPolicyContent(client, packet);
+
+            case 0x32:
+                return HandleSilentLogin(client, packet);
+
+            case 0x3C:
+                return HandleExpressLogin(client, packet);
 
             case 0x46:
                 return HandleLogout(client, packet);
@@ -39,7 +55,7 @@ public class AuthenticationComponent : IComponent
                 return HandleLoginPersona(client, packet);
 
             case 0xF1:
-                return HandleAcceptLegalDocs(client, packet);
+                return HandleAcceptTOS(client, packet);
 
             case 0xF2:
                 return HandleGetEmailOptInSettings(client, packet);
@@ -55,26 +71,17 @@ public class AuthenticationComponent : IComponent
 
     private bool GetAuthToken(Client client, Packet packet)
     {
-        bool generateAuthToken = client.AuthToken == null;
-        client.AuthToken = generateAuthToken ? Guid.NewGuid().ToString() : client.AuthToken;
+        client.AuthToken ??= client.UserId.ToString();
 
-        var response = new GetAuthTokenResponse
+        accountService.setAccountAuthToken(client.UserId, client.AuthToken);
+
+        client.RespondTo(packet, new GetAuthTokenResponse { AuthToken = client.AuthToken });
+
+        client.Notify(new UserStatus
         {
-            AuthToken = client.AuthToken
-        };
-		
-        client.RespondTo(packet, response);
-
-        if (generateAuthToken)
-        {
-            accountService.setAccountAuthToken(client.UserId, client.AuthToken);
-
-            client.Notify(new UserStatus()
-            {
-                BlazeId = client.UserId,
-                StatusFlags = 3
-            }, 0x7802, 5);
-        }
+            BlazeId = client.UserId,
+            StatusFlags = (uint)SessionState.Authenticated
+        }, 0x7802, 5);
 
         return true;
     }
@@ -88,12 +95,26 @@ public class AuthenticationComponent : IComponent
         var request = packet.ReadContent<LoginRequest>();
         if (request is null)
         {
-            client.RespondTo(packet, null, error: 0x5E0001); // AUTH_ERR_NO_SUCH_AUTH_DATA
+            client.RespondTo(packet, null, error: 0x5E0001);
             return true;
         }
 
-        var account = accountService.getAccountByEmailAndPassword(request.Email, request.Password);
+        Logger.info($"[Auth] Login attempt: Email='{request.Email}', Pass='{request.Password}'");
+
+        AccountModel account;
+        try
+        {
+            account = accountService.getAccountByEmailAndPassword(request.Email, request.Password);
+        }
+        catch (ForbiddenOperationException ex)
+        {
+            Logger.error($"[Auth] Login failed: {ex.Message}");
+            client.RespondTo(packet, null, error: 0xB0001);
+            return true;
+        }
+
         client.UserId = account.Id;
+        InitializeClientExtendedData(client);
 
         var response = new LoginResponse
         {
@@ -127,35 +148,28 @@ public class AuthenticationComponent : IComponent
         var request = packet.ReadContent<LoginPersonaRequest>();
         if (request is null)
         {
-            client.RespondTo(packet, null, error: 0x5E0001); // AUTH_ERR_NO_SUCH_AUTH_DATA
+            client.RespondTo(packet, null, error: 0x5E0001);
             return true;
         }
 
-        var account = accountService.getAccountById(client.UserId);
-
-        var response = new SessionInfo
+        AccountModel account;
+        try
         {
-            LastLoginDateTime = CurrentUnixTime,
-            Email = account.Email,
-            UserId = account.Id,
-            BlazeUserId = account.Id
-        };
+            account = accountService.getAccountById(client.UserId);
+        }
+        catch
+        {
+            client.RespondTo(packet, null, error: 0xB0001);
+            return true;
+        }
 
-        response.PersonaDetails.DisplayName = account.Username;
-        response.PersonaDetails.LastLoginTime = CurrentUnixTime;
-        response.PersonaDetails.PersonaId = client.UserId;
-        response.PersonaDetails.Status = PersonaStatus.Active;
-
-        client.RespondTo(packet, response);
+        client.RespondTo(packet, BuildSessionInfo(account, client));
 
         var addrBytes = client.EndPoint.Address.GetAddressBytes();
-        
         var addr = addrBytes.Length == 4 ? BinaryPrimitives.ReadUInt32BigEndian(addrBytes) : 0;
 
         var userAdded = new NotifyUserAdded();
-        userAdded.ExtendedData.Address.ActiveMember = NetworkAddressMember.IpPairAddress;
-        userAdded.ExtendedData.Address.IpPairAddress.ExternalAddress.Ip = addr;
-        userAdded.ExtendedData.Address.IpPairAddress.ExternalAddress.Port = (ushort)client.EndPoint.Port;
+        CopyExtendedDataToNotification(client, userAdded.ExtendedData, addr);
         userAdded.UserInfo.AccountId = client.UserId;
         userAdded.UserInfo.AccountLocale = 0x656E5553;
         userAdded.UserInfo.BlazeId = client.UserId;
@@ -163,32 +177,12 @@ public class AuthenticationComponent : IComponent
 
         client.Notify(userAdded, 0x7802, 2);
 
-        client.Notify(new UserStatus()
+        client.Notify(new UserStatus
         {
             BlazeId = account.Id,
-            StatusFlags = 2
+            StatusFlags = (uint)SessionState.Connected
         }, 0x7802, 5);
 
-        var update = new UserSessionExtendedDataUpdate();
-        update.ExtendedData.Address.ActiveMember = NetworkAddressMember.IpPairAddress;
-        update.ExtendedData.Address.IpPairAddress.ExternalAddress.Ip = addr;
-        update.ExtendedData.Address.IpPairAddress.ExternalAddress.Port = (ushort)client.EndPoint.Port;
-        update.ExtendedData.UserInfoAttribute = 0x4000000000000000; // disable popup about multiple locations
-
-        client.Notify(update, 0x7802, 1);
-
-        client.Notify(new UserSessionLoginInfo
-        {
-            AccountLocale = 0x656E5553,
-            BlazeUserId = client.UserId,
-            DisplayName = account.Username,
-            LastLoginTime = CurrentUnixTime,
-            LastLoginDateTime = CurrentUnixTime,
-            Email = account.Email,
-            PersonaId = client.UserId,
-            Platform = ConnectionProfileType.PC,
-            UserId = client.UserId
-        }, 0x7802, 8);
         return true;
     }
 
@@ -220,12 +214,141 @@ public class AuthenticationComponent : IComponent
 
     private static bool HandleGetPrivacyPolicyContent(Client client, Packet packet)
     {
-        return false;
+        client.RespondTo(packet, new GetLegalDocContentResponse());
+        return true;
     }
 
-    private static bool HandleAcceptLegalDocs(Client client, Packet packet)
+    private static bool HandleAcceptTOS(Client client, Packet packet)
     {
-        return false;
+        client.RespondTo(packet);
+        return true;
+    }
+
+    private static bool HandleGetTOSInfo(Client client, Packet packet)
+    {
+        client.RespondTo(packet, new GetEmailOptInSettingsResponse());
+        return true;
+    }
+
+    private static bool HandleGetTermsAndConditions(Client client, Packet packet)
+    {
+        client.RespondTo(packet, new GetLegalDocContentResponse
+        {
+            LDVC = "Something",
+            Length = 23,
+            Text = "Hello this is something"
+        });
+        return true;
+    }
+
+    private static void CopyExtendedDataToNotification(Client client, UserSessionExtendedData target, uint addr)
+    {
+        target.Address.ActiveMember = NetworkAddressMember.IpPairAddress;
+        target.Address.IpPairAddress.ExternalAddress.Ip = addr;
+        target.Address.IpPairAddress.ExternalAddress.Port = (ushort)client.EndPoint.Port;
+        target.Country = client.ExtendedData.Country;
+        target.HardwareFlags = client.ExtendedData.HardwareFlags;
+        target.UserInfoAttribute = client.ExtendedData.UserInfoAttribute;
+        foreach (var obj in client.ExtendedData.BlazeObjectIdList)
+            target.BlazeObjectIdList.Add(obj);
+        foreach (var latency in client.ExtendedData.LatencyList)
+            target.LatencyList.Add(latency);
+        target.QosData.DownstreamBitsPerSecond = client.ExtendedData.QosData.DownstreamBitsPerSecond;
+        target.QosData.NatType = client.ExtendedData.QosData.NatType;
+        target.QosData.UpstreamBitsPerSecond = client.ExtendedData.QosData.UpstreamBitsPerSecond;
+    }
+
+    private bool HandleSilentLogin(Client client, Packet packet)
+    {
+        var request = packet.ReadContent<SilentLoginRequest>();
+        if (request is null)
+        {
+            client.RespondTo(packet, null, error: 0x5E0001);
+            return true;
+        }
+
+        AccountModel account;
+        try
+        {
+            account = accountService.getAccountByAuthToken(request.AuthToken);
+        }
+        catch
+        {
+            client.RespondTo(packet, null, error: 0xB0001);
+            return true;
+        }
+
+        client.UserId = account.Id;
+        client.AuthToken = request.AuthToken;
+        InitializeClientExtendedData(client);
+
+        client.RespondTo(packet, BuildSessionInfo(account, client));
+        return true;
+    }
+
+    private bool HandleExpressLogin(Client client, Packet packet)
+    {
+        var request = packet.ReadContent<ExpressLoginRequest>();
+        if (request is null)
+        {
+            client.RespondTo(packet, null, error: 0x5E0001);
+            return true;
+        }
+
+        AccountModel account;
+        try
+        {
+            account = accountService.getAccountByEmailAndPassword(request.Email, request.Password);
+        }
+        catch
+        {
+            client.RespondTo(packet, null, error: 0xB0001);
+            return true;
+        }
+
+        client.UserId = account.Id;
+        InitializeClientExtendedData(client);
+
+        client.RespondTo(packet, BuildSessionInfo(account, client));
+        return true;
+    }
+
+    private static void InitializeClientExtendedData(Client client)
+    {
+        if (client.ExtendedData.BlazeObjectIdList.Count > 0)
+            return;
+
+        client.ExtendedData.Country = "US";
+        client.ExtendedData.HardwareFlags = 1;
+        client.ExtendedData.UserInfoAttribute = 3;
+
+        client.ExtendedData.BlazeObjectIdList.Add(new BlazeObjectId(0, new BlazeObjectType(4, 1)));
+        client.ExtendedData.BlazeObjectIdList.Add(new BlazeObjectId(0, new BlazeObjectType(5, 1)));
+
+        for (int i = 0; i < 5; i++)
+            client.ExtendedData.LatencyList.Add(1161889797);
+
+        client.ExtendedData.QosData.DownstreamBitsPerSecond = 128000;
+        client.ExtendedData.QosData.NatType = NatType.Open;
+        client.ExtendedData.QosData.UpstreamBitsPerSecond = 2;
+    }
+
+    private static SessionInfo BuildSessionInfo(AccountModel account, Client client)
+    {
+        var info = new SessionInfo
+        {
+            LastLoginDateTime = CurrentUnixTime,
+            Email = account.Email,
+            UserId = account.Id,
+            BlazeUserId = account.Id
+        };
+
+        info.PersonaDetails.DisplayName = account.Username;
+        info.PersonaDetails.LastLoginTime = CurrentUnixTime;
+        info.PersonaDetails.PersonaId = client.UserId;
+        info.PersonaDetails.Status = PersonaStatus.Active;
+
+        return info;
     }
 
     public string GetCommandName(ushort id)
@@ -489,4 +612,28 @@ public class SessionInfo : Tdf
 
     [TdfField("UID", 0)]
     public ulong UserId { get; set; }
+}
+
+public class SilentLoginRequest : Tdf
+{
+    [TdfField("AUTH", "")]
+    public string AuthToken { get; set; } = string.Empty;
+
+    [TdfField("PID", 0)]
+    public long PersonaId { get; set; }
+
+    [TdfField("TYPE", AuthenticationTokenType.Unknown)]
+    public AuthenticationTokenType TokenType { get; set; } = AuthenticationTokenType.Unknown;
+}
+
+public class ExpressLoginRequest : Tdf
+{
+    [TdfField("MAIL", "")]
+    public string Email { get; set; } = string.Empty;
+
+    [TdfField("PASS", "")]
+    public string Password { get; set; } = string.Empty;
+
+    [TdfField("PNAM", "")]
+    public string PersonaName { get; set; } = string.Empty;
 }

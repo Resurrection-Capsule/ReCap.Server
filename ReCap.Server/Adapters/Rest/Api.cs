@@ -13,7 +13,7 @@ namespace ReCap.Server.Adapters.Rest.Api;
 
 public class Api
 {
-    public const int DEFAULT_PORT = 80;
+    public const int DEFAULT_PORT = 8033;
     private List<object> restControllers;
 
     readonly int _port;

@@ -125,7 +125,7 @@ public static class Program
 
             Task afterRelaunch = new(() =>
             {
-                raknet.Listener.StopListener();
+                raknet.Listener.Stop();
                 lobby.Stop();
                 redirector.Stop();
                 restClientAdapter.Stop();

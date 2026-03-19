@@ -32,6 +32,14 @@ public class AccountService
         return account;
     }
 
+    public AccountModel getAccountByEmail(string email) {
+        var account = accountRepository.getAccountByEmail(email);
+        if (account == null) {
+            throw new ForbiddenOperationException("This e-mail does not belong to any account");
+        }
+        return account;
+    }
+
     public void deleteAuthToken(string authToken) {
         accountRepository.deleteAuthToken(authToken);
     }
