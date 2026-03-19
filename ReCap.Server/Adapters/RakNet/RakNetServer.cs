@@ -1,8 +1,6 @@
-﻿using System.Net;
-// using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using SharpRakNet.Network;
-using SharpRakNet.Protocol.Raknet;
+using System.Net;
+using RakNexus.Network;
+using RakNexus.Protocol;
 using ReCap.Server.Domain.Gameplay;
 using ReCap.Server.Adapters.RakNet.Packets;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
@@ -17,11 +15,11 @@ public class RakNetServer
     private AccountService accountService;
     private GameService gameService;
 
-    public Dictionary<ulong, RakNetClient> Clients { get; } = new();    // RakNet Guid -> Client
-    public Dictionary<ulong, Game> Games { get; } = new();              // GameId -> Game
-    public Dictionary<ulong, ulong> GameAssigments { get; } = new();    // UserId -> GameId
+    public Dictionary<ulong, RakNetClient> Clients { get; } = new();
+    public Dictionary<ulong, Game> Games { get; } = new();
+    public Dictionary<ulong, ulong> GameAssigments { get; } = new();
 
-    public RaknetListener Listener { get; }
+    public RakNetListener Listener { get; }
     public bool IsRunning { get; private set; }
     public ulong GameCounter { get; private set; } = 0x0080000000000001;
 
@@ -30,70 +28,55 @@ public class RakNetServer
         accountService = new AccountService(newSqliteConfig);
         gameService = new GameService();
 
-        Listener = new RaknetListener(new IPEndPoint(hostAddress, port))
-        {
-            SessionConnected = OnSessionConnected,
-            SessionDisconnected = OnSessionDisconnected
-        };
+        Listener = new RakNetListener(port);
+        Listener.SessionConnected += OnSessionConnected;
     }
 
-    private void OnSessionConnected(RaknetSession session)
+    private void OnSessionConnected(RakNetSession session)
     {
-        Logger.info($"RakNet: Peer 0x{session.Guid} connected {session.PeerEndPoint}!");
+        Logger.info($"RakNet: Peer 0x{session.Guid.G:X16} connected {session.Address}!");
 
-        if (Clients.ContainsKey(session.Guid))
+        if (Clients.ContainsKey(session.Guid.G))
         {
-            Logger.error($"RakNet: Peer 0x{session.Guid} already has an assigned client!");
+            Logger.error($"RakNet: Peer 0x{session.Guid.G:X16} already has an assigned client!");
             return;
         }
 
-        session.SessionReceiveRaw += OnSessionReceiveRaw;
-        session.SessionOnNewIncomingConnection += OnSessionOnNewIncomingConnection;
+        session.PacketReceived += packet => OnSessionReceiveRaw(session, packet);
+        session.OnNewIncomingConnection += () => OnSessionOnNewIncomingConnection(session);
+        session.Disconnected += reason => OnSessionDisconnected(session);
 
-        Clients.Add(session.Guid, new RakNetClient(session));
+        Clients.Add(session.Guid.G, new RakNetClient(session));
     }
 
-    private void OnSessionDisconnected(RaknetSession session)
+    private void OnSessionDisconnected(RakNetSession session)
     {
-        Logger.info($"RakNet: Peer 0x{session.Guid} disconnected {session.PeerEndPoint}!");
+        Logger.info($"RakNet: Peer 0x{session.Guid.G:X16} disconnected {session.Address}!");
 
-        if (Clients.TryGetValue(session.Guid, out var client))
-        {
-            // TODO: signal it to the game?
-
-            session.SessionReceiveRaw -= OnSessionReceiveRaw;
-            session.SessionOnNewIncomingConnection -= OnSessionOnNewIncomingConnection;
-
-            Clients.Remove(session.Guid);
-        }
-        else
-            Logger.error($"RakNet: Peer 0x{session.Guid} had no assigned client!");
+        if (!Clients.Remove(session.Guid.G))
+            Logger.error($"RakNet: Peer 0x{session.Guid.G:X16} had no assigned client!");
     }
 
-    private void OnSessionOnNewIncomingConnection(RaknetSession session) => SendPacket(session, new ConnectedPacket());
+    private void OnSessionOnNewIncomingConnection(RakNetSession session) => SendPacket(session, new ConnectedPacket());
 
-    private bool OnSessionReceiveRaw(RaknetSession session, byte[] data)
+    private void OnSessionReceiveRaw(RakNetSession session, Packet rakPacket)
     {
+        var data = rakPacket.Data;
         var packetType = (PacketType)data[0];
 
-        if (true) // packetType != PacketType.ClockSync
-        {
-            Logger.info($"RakNet: Receiving {packetType} packet from {session.PeerEndPoint}! Data: {BitConverter.ToString(data)}!");
-        }
+        Logger.info($"RakNet: Receiving {packetType} packet from {session.Address}! Data: {BitConverter.ToString(data)}!");
 
         var packet = PacketActivator.CreateInstance(data);
         if (packet is null)
         {
-            Logger.error($"RakNet: Peer 0x{session.Guid} has sent an unhandled packet ({packetType})! Skipping...");
-
-            return false;
+            Logger.error($"RakNet: Peer 0x{session.Guid.G:X16} has sent an unhandled packet ({packetType})! Skipping...");
+            return;
         }
 
-        if (!Clients.TryGetValue(session.Guid, out var client))
+        if (!Clients.TryGetValue(session.Guid.G, out var client))
         {
-            Logger.error($"RakNet: No client was found for peer 0x{session.Guid}, but received a packet ({packetType})!");
-
-            return false;
+            Logger.error($"RakNet: No client was found for peer 0x{session.Guid.G:X16}, but received a packet ({packetType})!");
+            return;
         }
 
         switch (packet)
@@ -101,7 +84,7 @@ public class RakNetServer
             case HelloPlayerRequestPacket helloPlayerRequestPacket:
                 client.UserId = helloPlayerRequestPacket.UserId;
                 client.PlaygroupId = helloPlayerRequestPacket.PlaygroupId;
-                
+
                 var account = accountService.getAccountById(client.UserId);
                 var game = gameService.GetGameByPlayer(account);
                 if (game == null)
@@ -110,35 +93,28 @@ public class RakNetServer
                     gameService.AddPlayerToGame(game.Id, account);
                 }
 
-                // Clients.Remove(session.Guid);
-
-                // session.Disconnect();
-
-                return true;
+                return;
         }
 
         if (client.Game is not null)
         {
             client.Game.HandlePacket(client, packet);
-            return true;
+            return;
         }
 
-        Logger.error($"RakNet: Peer 0x{session.Guid} has no game, but received a packet ({packetType}) intended for a game!");
-
-        return false;
+        Logger.error($"RakNet: Peer 0x{session.Guid.G:X16} has no game, but received a packet ({packetType}) intended for a game!");
     }
 
     public async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Listener.BeginListener();
+        _ = Task.Run(() => Listener.StartAsync(), stoppingToken);
 
         IsRunning = true;
 
-        Logger.info($"[RakNet]: Started listening on {Listener.Socket.Socket.Client.LocalEndPoint}!");
+        Logger.info($"[RakNet]: Started listening!");
 
         try
         {
-            // Definitely the wrong way to do this but I don't have a lot of experience with C# multithreading...
             while (IsRunning)
             {
                 var games = gameService.GetAllGames();
@@ -153,12 +129,12 @@ public class RakNetServer
         {
         }
 
-        Listener.StopListener();
+        Listener.Stop();
 
         Logger.info("RakNet: Stopped listening!");
     }
 
-    public void SendPacket(ulong guid, IRakNetPacket packet, Reliability reliability = Reliability.ReliableOrdered)
+    public void SendPacket(ulong guid, IRakNetPacket packet, PacketReliability reliability = PacketReliability.RELIABLE_ORDERED)
     {
         if (Clients.TryGetValue(guid, out var client))
             SendPacket(client.Session, packet, reliability);
@@ -166,10 +142,10 @@ public class RakNetServer
             Logger.error($"No session found for session id: {guid}, unable to send packet {packet.Type} to it!");
     }
 
-    public static void SendPacket(RakNetClient client, IRakNetPacket packet, Reliability reliability = Reliability.ReliableOrdered)
+    public static void SendPacket(RakNetClient client, IRakNetPacket packet, PacketReliability reliability = PacketReliability.RELIABLE_ORDERED)
         => SendPacket(client.Session, packet, reliability);
-    
-    public static void SendPacket(RaknetSession session, IRakNetPacket packet, Reliability reliability = Reliability.ReliableOrdered)
+
+    public static void SendPacket(RakNetSession session, IRakNetPacket packet, PacketReliability reliability = PacketReliability.RELIABLE_ORDERED)
     {
         using var ms = new MemoryStream();
 
@@ -177,6 +153,6 @@ public class RakNetServer
 
         packet.WriteTo(ms);
 
-        session.Sendq.Insert(reliability, ms.ToArray());
+        session.Send(ms.ToArray(), PacketPriority.MEDIUM_PRIORITY, reliability, 0, 0);
     }
 }
