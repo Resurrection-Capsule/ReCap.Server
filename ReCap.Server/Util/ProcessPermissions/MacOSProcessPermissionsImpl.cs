@@ -11,8 +11,18 @@ internal class MacOSProcessPermissionsImpl
 {
     public override bool TryRerunElevated(string args, out Process elevatedProcess)
     {
-        // [TODO: Implement]
-        throw new NotImplementedException();
+        try
+        {
+            string sudoArgs = $"{CommandLineHelper.WrapArg(Environment.ProcessPath)} {args}";
+            ProcessStartInfo startInfo = new("sudo", sudoArgs);
+            elevatedProcess = Process.Start(startInfo);
+            return true;
+        }
+        catch
+        {
+            elevatedProcess = default;
+            return false;
+        }
     }
 }
 #nullable restore
