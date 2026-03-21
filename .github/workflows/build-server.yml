@@ -36,7 +36,7 @@ jobs:
     - name: Build server
       run: |
         cd ReCap.Server
-        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
+        dotnet build ReCap.Server.csproj --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
