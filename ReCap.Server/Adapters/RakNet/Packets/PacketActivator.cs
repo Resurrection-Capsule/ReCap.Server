@@ -1,4 +1,4 @@
-﻿namespace ReCap.Server.Adapters.RakNet.Packets;
+namespace ReCap.Server.Adapters.RakNet.Packets;
 
 public static class PacketActivator
 {
@@ -35,6 +35,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.PartyMergeComplete:
+                packet = new PartyMergeCompletePacket();
                 break;
 
             case PacketType.PlayerDeparted:
@@ -53,8 +54,7 @@ public static class PacketActivator
             case PacketType.GameState:
                 break;
 
-            case PacketType.DirectorState:
-                break;
+
 
             case PacketType.ObjectCreate:
                 packet = new ObjectCreatePacket();
@@ -74,6 +74,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.ObjectPlayerMove:
+                packet = new ObjectPlayerMovePacket();
                 break;
 
             case PacketType.ForcePhysicsUpdate:
@@ -83,6 +84,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.LocomotionDataUpdate:
+                packet = new LocomotionDataUpdatePacket();
                 break;
 
             case PacketType.LocomotionDataUnreliableUpdate:
@@ -107,6 +109,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.ActionCommandMsgs:
+                packet = new ActionCommandMsgsPacket();
                 break;
 
             case PacketType.PlayerDamage:
@@ -119,7 +122,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.LabsPlayerUpdate:
-                break;
+                return new LabsPlayerUpdatePacket();
 
             case PacketType.ModifierCreated:
                 break;
@@ -136,13 +139,18 @@ public static class PacketActivator
             case PacketType.SetObjectGfxState:
                 break;
 
+            case PacketType.DirectorState:
+                return new DirectorStatePacket();
+
             case PacketType.PlayerCharacterDeploy:
                 break;
 
             case PacketType.ActionCommandResponse:
+                packet = new ActionCommandResponsePacket();
                 break;
 
             case PacketType.ChainVoteMsgs:
+                packet = new ChainVoteMsgsPacket();
                 break;
 
             case PacketType.ChainLevelResultsMsgs:
@@ -152,6 +160,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.ChainPlayerMsgs:
+                packet = new ChainPlayerMsgsPacket();
                 break;
 
             case PacketType.ChainGameMsgs:
@@ -161,7 +170,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.QuickGameMsgs:
-                break;
+                return new QuickGameMsgsPacket();
 
             case PacketType.GamePrepareForStart:
                 packet = new GamePrepareForStartPacket();
@@ -187,12 +196,15 @@ public static class PacketActivator
                 break;
 
             case PacketType.ObjectivesInitForLevel:
+                packet = new ObjectivesInitForLevelPacket();
                 break;
 
             case PacketType.ObjectiveUpdated:
+                packet = new ObjectiveUpdatedPacket();
                 break;
 
             case PacketType.ObjectivesComplete:
+                packet = new ObjectivesCompletePacket();
                 break;
 
             case PacketType.CombatEvent:
@@ -250,6 +262,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.DebugPing:
+                packet = new DebugPingPacket();
                 break;
 
             default:

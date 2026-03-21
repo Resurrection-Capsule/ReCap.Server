@@ -14,6 +14,7 @@ public class RakNetServer
 {
     private AccountService accountService;
     private GameService gameService;
+    private AssetDatabase? assetDatabase;
 
     public Dictionary<ulong, RakNetClient> Clients { get; } = new();
     public Dictionary<ulong, Game> Games { get; } = new();
@@ -23,10 +24,11 @@ public class RakNetServer
     public bool IsRunning { get; private set; }
     public ulong GameCounter { get; private set; } = 0x0080000000000001;
 
-    public RakNetServer(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname)
+    public RakNetServer(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname, AssetDatabase? assetDatabase = null, GameService? sharedGameService = null)
     {
         accountService = new AccountService(newSqliteConfig);
-        gameService = new GameService();
+        gameService = sharedGameService ?? new GameService();
+        this.assetDatabase = assetDatabase;
 
         Listener = new RakNetListener(port);
         Listener.SessionConnected += OnSessionConnected;
@@ -93,6 +95,8 @@ public class RakNetServer
                     gameService.AddPlayerToGame(game.Id, account);
                 }
 
+                client.Game = game;
+                game.AttachPlayer(account, client);
                 return;
         }
 

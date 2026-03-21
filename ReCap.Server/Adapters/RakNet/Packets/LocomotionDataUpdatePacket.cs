@@ -6,22 +6,21 @@ using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
-public class ObjectUpdatePacket : IRakNetPacket
+public class LocomotionDataUpdatePacket : IRakNetPacket
 {
-    public PacketType Type => PacketType.ObjectUpdate;
+    public PacketType Type => PacketType.LocomotionDataUpdate;
     public uint ObjectId { get; set; }
-    public SporelabsObject ObjectData { get; set; }
+    public LocomotionData Locomotion { get; set; }
 
     public void ReadFrom(Stream stream)
     {
-        // Server typically does not read ObjectUpdate from Client
     }
-    
+
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
+
         writer.WriteBE(ObjectId);
-        
-        ObjectData?.WriteReflection(stream);
+        Locomotion?.WriteTo(stream);
     }
 }
