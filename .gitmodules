@@ -1,4 +1,6 @@
-[submodule "lib/SharpRakNet"]
-	path = lib/SharpRakNet
-	url = https://github.com/Resurrection-Capsule/SharpRakNet.git
-	branch = net8.0
+[submodule "lib/RakNexus"]
+	path = lib/RakNexus
+	url = https://github.com/JeanxPereira/RakNexus.git
+[submodule "lib/AssetData.Parser"]
+	path = lib/AssetData.Parser
+	url = https://github.com/JeanxPereira/AssetData.Parser.git

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using Org.BouncyCastle.Crypto;
@@ -7,6 +7,7 @@ using ReCap.Server.Adapters.Blaze.Ssl;
 using ReCap.Server.Adapters.Blaze.Component;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Config;
+using ReCap.Server.Services;
 
 namespace ReCap.Server.Adapters.Blaze;
 
@@ -28,7 +29,7 @@ public class BlazeServer
     public int Port { get; }
     public bool Running { get; private set; }
 
-    public BlazeServer(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname)
+    public BlazeServer(SqliteConfig newSqliteConfig, string name, IPAddress hostAddress, int port, bool isSecure, string hostname, GameService? sharedGameService = null)
     {
         Name = name;
         IsSecure = isSecure;
@@ -53,19 +54,22 @@ public class BlazeServer
             });
         }
         else {
+            var gameService = sharedGameService ?? new GameService();
+            var gameManagerComponent = new GameManagerComponent(newSqliteConfig);
+            gameManagerComponent.GameHandler = gameService;
+
             List<IComponent> components = new List<IComponent> {
                 new AssociationListsComponent(),
                 new AuthenticationComponent(newSqliteConfig),
-                new GameManagerComponent(newSqliteConfig),
+                gameManagerComponent,
                 new MessagingComponent(),
                 new PlaygroupsComponent(),
                 new RoomsComponent(),
-                new UserSessionsComponent(),
+                new UserSessionsComponent(newSqliteConfig),
                 new UtilComponent(),
                 new GameReportingComponent(),
                 new UnknownComponent1()
             };
-            Dictionary<ushort, IComponent> Components = [];
             foreach (var component in components) {
                 AttachComponent(component);
             }
@@ -128,6 +132,11 @@ public class BlazeServer
         }
         else
             Log($"Unknown component: 0x{packet.Component:X}");
+    }
+
+    public Client? FindClientByUserId(ulong userId)
+    {
+        return Clients.FirstOrDefault(c => c.UserId == userId);
     }
 
     public void Disconnect(Client client)

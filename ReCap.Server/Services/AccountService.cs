@@ -32,6 +32,14 @@ public class AccountService
         return account;
     }
 
+    public AccountModel getAccountByEmail(string email) {
+        var account = accountRepository.getAccountByEmail(email);
+        if (account == null) {
+            throw new ForbiddenOperationException("This e-mail does not belong to any account");
+        }
+        return account;
+    }
+
     public void deleteAuthToken(string authToken) {
         accountRepository.deleteAuthToken(authToken);
     }
@@ -83,13 +91,15 @@ public class AccountService
             account.unlockPveDecks = 2;
             account.unlockPvpDecks = 1;
             account.unlockStats = 1;
-            account.unlockInventoryIdentify = 13;
-            account.unlockInventory = 3000; // 570;
+            account.unlockInventoryIdentify = 2500;
+            account.unlockInventory = 2500;
             account.unlockEditorFlairSlots = 1;
             account.upsell = 1;
             account.xp = 10000;
             account.grantAllAccess = true;
             account.grantOnlineAccess = true;
+            account.capLevel = 0;
+            account.capProgression = 0;
         }
 
         return accountRepository.insertAccount(account);

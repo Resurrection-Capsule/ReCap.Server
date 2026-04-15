@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,6 +8,7 @@ using ReCap.Server.Adapters.Blaze;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Config;
+using ReCap.Server.Services;
 using ReCap.Server.Util;
 
 namespace ReCap.Server;
@@ -22,10 +23,12 @@ public static class Program
     const string _HELP_ARG = "--help";
     const string _PORT_ARG = "--port=";
     const string _DB_PATH_ARG = "--database-path=";
+    const string _GAME_PATH_ARG = "--game-path=";
     static async Task Main(string[] args)
     {
 #nullable disable
         string databasePath = null;
+        string gamePath = null;
         int port = Api.DEFAULT_PORT;
 
 
@@ -57,6 +60,16 @@ public static class Program
                     databasePath = dbPath;
                 }
             }
+            else if (arg.StartsWith(_GAME_PATH_ARG))
+            {
+                string gPath = arg.Substring(_GAME_PATH_ARG.Length);
+                gPath = CommandLineHelper.UnwrapArg(gPath);
+
+                if (File.Exists(gPath))
+                    gamePath = gPath;
+                else
+                    Logger.error($"Game path not found: '{gPath}'");
+            }
         }
 
 
@@ -85,7 +98,19 @@ public static class Program
             serverOpts.ServerDatabaseDirectory = databasePath;
         }
 
+        if (!string.IsNullOrWhiteSpace(gamePath))
+        {
+            Logger.info($"Using game path: '{gamePath}'");
+            serverOpts.GamePath = gamePath;
+        }
+
         ServerConfig.Configure(serverOpts);
+
+        var assetDatabase = string.IsNullOrWhiteSpace(ServerConfig.GamePath)
+            ? null
+            : new AssetDatabase(ServerConfig.GamePath);
+
+        var gameService = new GameService { Assets = assetDatabase };
 
         CancellationTokenSource source = new CancellationTokenSource();
         CancellationToken token = source.Token;
@@ -102,11 +127,11 @@ public static class Program
         Task.Run(redirector.Start);
 
 
-        BlazeServer lobby = new(dbConfig, "Lobby", localhostIP, 42125, false, hostname);
+        BlazeServer lobby = new(dbConfig, "Lobby", localhostIP, 42125, false, hostname, gameService);
         Task.Run(lobby.Start);
 
 
-        RakNetServer raknet = new(dbConfig, "RakNet", localhostIP, 42000, false, hostname);
+        RakNetServer raknet = new(dbConfig, "RakNet", localhostIP, 42000, false, hostname, assetDatabase, gameService);
         Task.Run(() => raknet.ExecuteAsync(token));
 #pragma warning restore CS4014
 
@@ -125,7 +150,7 @@ public static class Program
 
             Task afterRelaunch = new(() =>
             {
-                raknet.Listener.StopListener();
+                raknet.Listener.Stop();
                 lobby.Stop();
                 redirector.Stop();
                 restClientAdapter.Stop();
@@ -171,6 +196,7 @@ public static class Program
         string.Empty,
         $"{_BEFORE_ARG}{_PORT_ARG}<int>         {_AFTER_ARG}Port number",
         $"{_BEFORE_ARG}{_DB_PATH_ARG}<str>{_AFTER_ARG}Path to a directory in which to create/store/access the 'server.db'",
+        $"{_BEFORE_ARG}{_GAME_PATH_ARG}<str>{_AFTER_ARG}Path to the Darkspore AssetData_Binary.package file",
     }.AsReadOnly();
     static void PrintHelp()
     {

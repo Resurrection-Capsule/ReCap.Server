@@ -57,7 +57,7 @@ public class AccountRepositoryAdapter
 
     public AccountModel getAccountByEmail(string email)
     {
-        return sqliteConfig.Accounts.SingleOrDefault(b => b.Email == email);
+        return sqliteConfig.Accounts.SingleOrDefault(b => b.Email.ToLower() == email.ToLower());
     }
 
     public AccountModel insertAccount(Account account)

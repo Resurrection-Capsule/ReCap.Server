@@ -1,14 +1,22 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using Org.BouncyCastle.Tls;
+using ReCap.Server.Adapters.Blaze.Component;
 using ReCap.Server.Adapters.Blaze.Ssl;
 
 namespace ReCap.Server.Adapters.Blaze;
 
 public class Client
 {
+    private static readonly Dictionary<(ushort, ushort), DateTime> _lastLogTime = new();
+    private static readonly TimeSpan _logThrottle = TimeSpan.FromSeconds(30);
+    private static readonly HashSet<(ushort component, ushort command)> _throttledPackets = new()
+    {
+        (0x7802, 0x19), // UserSessions -> updateUserSessionClientData
+    };
+
     private byte[] ReceiveBuffer { get; }
 
     private TcpClient TcpClient { get; }
@@ -23,6 +31,7 @@ public class Client
 
     public ulong UserId { get; set; }
     public string AuthToken { get; set; }
+    public UserSessionExtendedData ExtendedData { get; } = new();
 
     public Client(BlazeServer server, TcpClient tcpClient)
     {
@@ -72,7 +81,8 @@ public class Client
 
     private void SendPacket(Packet packet)
     {
-        Log($"Sending {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}...");
+        if (!IsThrottled(packet.Component, packet.Command))
+            Log($"Sending {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}...");
 
         packet.WriteTo(CommStream);
 
@@ -144,42 +154,62 @@ public class Client
             if (writeOffset <= 0)
                 continue;
 
-            if (writeOffset < Packet.SmallestValidHeaderSize)
-                continue;
-
             try
             {
-                using var ms = new MemoryStream(ReceiveBuffer, 0, writeOffset, false);
-
-                var packet = Packet.Parse(ms);
-                if (packet is null)
-                    continue;
-
-                var totalPacketLength = (int)ms.Position;
-
-                if (packet.Component != 0x2678) // If I don't ignore that specific component, the log gets spammed
+                while (writeOffset >= Packet.SmallestValidHeaderSize)
                 {
-                    Log($"Incoming packet: {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}");
+                    using var ms = new MemoryStream(ReceiveBuffer, 0, writeOffset, false);
+
+                    var packet = Packet.Parse(ms);
+                    if (packet is null)
+                        break; // Need more data for a complete packet
+
+                    var totalPacketLength = (int)ms.Position;
+
+                    if (!IsThrottled(packet.Component, packet.Command))
+                    {
+                        Log($"Incoming packet: {packet.ToString(Server.GetComponentAndCommandName(packet.Component, packet.Command, packet.Type == PacketType.Notification))}");
+                    }
+
+                    Server.HandlePacket(this, packet);
+
+                    // Shift extra read bytes to the beginning of the buffer, if any
+                    if (writeOffset > totalPacketLength)
+                        Array.Copy(ReceiveBuffer, totalPacketLength, ReceiveBuffer, 0, writeOffset - totalPacketLength);
+
+                    writeOffset -= totalPacketLength;
                 }
-
-                Server.HandlePacket(this, packet);
-
-                // Shift extra read bytes to the beginning of the buffer, if any
-                if (writeOffset > totalPacketLength)
-                    Array.Copy(ReceiveBuffer, 0, ReceiveBuffer, totalPacketLength, writeOffset - totalPacketLength);
-
-                writeOffset -= totalPacketLength;
             }
             catch (Exception e)
             {
                 Log($"Exception while handling incoming packet! Exception: {e}");
-                continue;
+                Disconnect();
+                return;
             }
 
             CommStream.Flush();
         }
 
         Disconnect();
+    }
+
+    private static bool IsThrottled(ushort component, ushort command)
+    {
+        if (!_throttledPackets.Contains((component, command)))
+            return false;
+
+        var key = (component, command);
+        var now = DateTime.UtcNow;
+
+        lock (_lastLogTime)
+        {
+            if (_lastLogTime.TryGetValue(key, out var last) && now - last < _logThrottle)
+                return true;
+
+            _lastLogTime[key] = now;
+        }
+
+        return false;
     }
 
     private async void Log(string message) => await Console.Out.WriteLineAsync($"[{Server.Name} Client: {EndPoint}]: {message}");

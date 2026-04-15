@@ -34,7 +34,7 @@ jobs:
     - name: Build launcher
       run: |
         cd ReCap.Launcher
-        dotnet build --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
+        dotnet build ReCap.Launcher.csproj --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

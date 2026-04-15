@@ -1,12 +1,22 @@
 ﻿using System.Buffers.Binary;
+using ReCap.Server.Config;
+using ReCap.Server.Models;
+using ReCap.Server.Services;
 using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Blaze.Component;
 
 public class UserSessionsComponent : IComponent
 {
+    private AccountService accountService;
+
     public ushort Id { get; } = 0x7802;
     public BlazeServer? Server { get; set; }
+
+    public UserSessionsComponent(SqliteConfig sqliteConfig)
+    {
+        accountService = new AccountService(sqliteConfig);
+    }
 
     public bool HandlePacket(Client client, Packet packet)
     {
@@ -14,6 +24,9 @@ public class UserSessionsComponent : IComponent
         {
             case 0x05:
                 return HandleUpdateExtendedDataAttribute(client, packet);
+
+            case 0x0C:
+                return HandleLookupUser(client, packet);
 
             case 0x14:
                 return HandleUpdateNetworkInfo(client, packet);
@@ -80,7 +93,9 @@ public class UserSessionsComponent : IComponent
 
     private static bool HandleUpdateUserSessionClientData(Client client, Packet packet)
     {
-        client.RespondTo(packet);
+        var response = new UpdateUserSessionClientDataResponse();
+        response.ClientVariables.Add(1);
+        client.RespondTo(packet, response);
         return true;
     }
 
@@ -95,7 +110,54 @@ public class UserSessionsComponent : IComponent
 
         Log($"SetUserInfoAttribute: {request} (0x{request.AttributeBits:X}, 0x{request.MaskBits:X})");
 
-        //client.RespondTo(packet);
+        client.RespondTo(packet);
+        return true;
+    }
+
+    private bool HandleLookupUser(Client client, Packet packet)
+    {
+        var request = packet.ReadContent<LookupUserRequest>();
+        if (request is null)
+        {
+            Log("Unable to read content of lookupUser request!");
+            return false;
+        }
+
+        var target = Server?.FindClientByUserId(request.UserId);
+        if (target is null)
+        {
+            client.RespondTo(packet, null, error: 0x5E0001);
+            return true;
+        }
+
+        AccountModel account;
+        try
+        {
+            account = accountService.getAccountById(target.UserId);
+        }
+        catch
+        {
+            client.RespondTo(packet, null, error: 0xB0001);
+            return true;
+        }
+
+        var response = new LookupUserResponse();
+        response.ExtendedData.Country = target.ExtendedData.Country;
+        response.ExtendedData.HardwareFlags = target.ExtendedData.HardwareFlags;
+        response.ExtendedData.UserInfoAttribute = target.ExtendedData.UserInfoAttribute;
+        foreach (var obj in target.ExtendedData.BlazeObjectIdList)
+            response.ExtendedData.BlazeObjectIdList.Add(obj);
+        foreach (var latency in target.ExtendedData.LatencyList)
+            response.ExtendedData.LatencyList.Add(latency);
+        response.ExtendedData.QosData.DownstreamBitsPerSecond = target.ExtendedData.QosData.DownstreamBitsPerSecond;
+        response.ExtendedData.QosData.NatType = target.ExtendedData.QosData.NatType;
+        response.ExtendedData.QosData.UpstreamBitsPerSecond = target.ExtendedData.QosData.UpstreamBitsPerSecond;
+        response.StatusFlags = (uint)SessionState.Authenticated;
+        response.UserInfo.AccountId = account.Id;
+        response.UserInfo.BlazeId = account.Id;
+        response.UserInfo.Name = account.Username;
+
+        client.RespondTo(packet, response);
         return true;
     }
 
@@ -319,4 +381,37 @@ public class SetUserInfoAttributeRequest : Tdf
 
     [TdfField("ULST")]
     public TdfPrimitiveVector<BlazeObjectId> BlazeObjectIdList { get; } = [];
+}
+
+public enum SessionState
+{
+    Idle = 0,
+    Connecting = 1,
+    Connected = 2,
+    Authenticated = 3,
+    Invalid = 4
+}
+
+public class LookupUserRequest : Tdf
+{
+    [TdfField("UID", 0)]
+    public ulong UserId { get; set; }
+}
+
+public class LookupUserResponse : Tdf
+{
+    [TdfField("DATA")]
+    public UserSessionExtendedData ExtendedData { get; } = new();
+
+    [TdfField("FLGS", 0)]
+    public uint StatusFlags { get; set; }
+
+    [TdfField("USER")]
+    public UserIdentification UserInfo { get; } = new();
+}
+
+public class UpdateUserSessionClientDataResponse : Tdf
+{
+    [TdfField("CVAR")]
+    public TdfPrimitiveVector<int> ClientVariables { get; } = [];
 }

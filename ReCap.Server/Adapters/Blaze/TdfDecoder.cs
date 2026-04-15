@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Blaze;
 
@@ -494,7 +495,9 @@ public class TdfDecoder
                 break;
 
             default:
-                throw new Exception($"Unable to skip unknown type: {type}");
+                Logger.info($"TdfDecoder: Skipping unknown type {type}, consuming remaining struct");
+                ConsumeStructTerminator();
+                break;
         }
     }
 
@@ -506,7 +509,10 @@ public class TdfDecoder
 
         var b3 = (TdfType)Reader.ReadByte();
         if (b3 > TdfType.TimeValue)
-            throw new Exception($"Invalid type ({b3}) found in GetHeader!");
+        {
+            Logger.info($"TdfDecoder: Invalid type ({b3}) in header, skipping");
+            return false;
+        }
 
         var foundTag = b0 | b1 | b2;
         if (foundTag != tag)

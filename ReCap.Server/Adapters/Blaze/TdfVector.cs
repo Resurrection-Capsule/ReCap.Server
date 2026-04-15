@@ -164,6 +164,14 @@ public class TdfPrimitiveVector<T> : TdfVectorBase, IList<T>
                     encoder.EncodeBinary("", (TdfBlob)objElem);
                     break;
 
+                case "BlazeObjectId":
+                    encoder.EncodeBlazeObjectId("", (BlazeObjectId)objElem);
+                    break;
+
+                case "BlazeObjectType":
+                    encoder.EncodeBlazeObjectType("", (BlazeObjectType)objElem);
+                    break;
+
                 default:
                     throw new Exception($"Unknown type ({typeof(T).FullName}) in PrimitiveVector!");
             }

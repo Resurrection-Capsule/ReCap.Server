@@ -32,6 +32,10 @@ public static class ServerConfig
     {
         get => _currentOpts.ServerDatabaseDirectory;
     }
+    public static string GamePath
+    {
+        get => _currentOpts.GamePath;
+    }
 
 
     public static readonly string ResourcesDirectory = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "resources");
@@ -55,5 +59,6 @@ public static class ServerConfig
             HostIP = _currentOpts.HostIP,
             GameVersion = _currentOpts.GameVersion,
             ServerDatabaseDirectory = _currentOpts.ServerDatabaseDirectory,
+            GamePath = _currentOpts.GamePath,
         };
 }

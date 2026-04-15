@@ -1,4 +1,4 @@
-﻿using ReCap.Server.Config;
+using ReCap.Server.Config;
 using ReCap.Server.Services;
 using ReCap.Server.Util;
 
@@ -42,6 +42,29 @@ public class GameManagerComponent : IComponent
         var request = packet.ReadContent<UpdateGameSessionRequest>();
 
         client.RespondTo(packet);
+
+        // From C++ FinalizeGameCreation
+        // NotifyGameStateChange(request, gameId, GameState::InGame);
+        // NotifyGamePlayerStateChange(request, gameId, user->get_id(), PlayerState::Connected);
+        // NotifyPlayerJoinCompleted(request, gameId, user->get_id());
+
+        uint gameId = 1; // It's hardcoded to 1 for now
+
+        client.Notify(new NotifyGameStateChange() { GameId = gameId, GameState = GameState.InGame }, 4, 0x64);
+        
+        client.Notify(new NotifyGamePlayerStateChange()
+        {
+            GameId = gameId,
+            PlayerId = client.UserId,
+            PlayerState = PlayerState.ActiveConnected
+        }, 4, 0x74);
+
+        client.Notify(new NotifyPlayerJoinCompleted()
+        {
+            GameId = gameId,
+            PlayerId = client.UserId
+        }, 4, 0x1E);
+
         return true;
     }
 
@@ -56,7 +79,8 @@ public class GameManagerComponent : IComponent
             return true;
         }
 
-        game.SetupPlayer(1, 0);
+        GameHandler?.AddClientToGame(client.UserId, game.Id);
+        game.SetupPlayer(client.UserId, 0);
         game.SetupBot(1);
         game.SetupBot(2);
         game.SetupBot(3);
@@ -67,10 +91,17 @@ public class GameManagerComponent : IComponent
         game.SetupBot(8);
         game.SetupBot(9);
 
-        // TODO: AddPlayerToGame
-        //gameService.AddPlayerToGame(game.Id, 1);
-
         client.RespondTo(packet, new JoinGameResponse() { GameId = game.Id, JoinState = JoinState.JoinedGame });
+
+        var hostAddr = new NetworkAddress()
+        {
+            ActiveMember = NetworkAddressMember.IpPairAddress,
+        };
+
+        hostAddr.IpPairAddress.InternalAddress.Ip = 0x7F000001;
+        hostAddr.IpPairAddress.InternalAddress.Port = 42000;
+        hostAddr.IpPairAddress.ExternalAddress.Ip = 0x7F000001;
+        hostAddr.IpPairAddress.ExternalAddress.Port = 42000;
 
         var notify = new NotifyGameSetup();
 
@@ -79,13 +110,12 @@ public class GameManagerComponent : IComponent
         notify.GameData.GameAttribs = request.GameAttribs;
         notify.GameData.GameId = game.Id;
         notify.GameData.GameName = request.GameName;
-        notify.GameData.GameProtocolVersionHash = 1;
-        notify.GameData.GameReportingId = game.Id;
+        notify.GameData.GameProtocolVersionHash = 0xABABABAB;
+        notify.GameData.GameReportingId = 0xCDCDCDCD;
         notify.GameData.GameSettings = request.GameSettings;
-        notify.GameData.GameState = GameState.NewState;
+        notify.GameData.GameState = GameState.Initializing;
         notify.GameData.GameStatusURL = request.GameStatusURL;
         notify.GameData.GameTypeName = request.GameTypeName;
-        //notify.GameData.HostNetworkAddressList = request.HostNetworkAddressList;
         notify.GameData.IgnoreEntryCriteriaWithInvite = request.IgnoreEntryCriteriaWithInvite;
         notify.GameData.MeshAttribs = request.MeshAttribs;
         notify.GameData.ServerNotResetable = request.ServerNotResetable;
@@ -100,20 +130,22 @@ public class GameManagerComponent : IComponent
         notify.GameData.TeamIds = request.TeamIds;
         notify.GameData.VoipNetwork = request.VoipNetwork;
         notify.GameData.VersionString = request.VersionString;
-        notify.GameData.PlatformHostInfo.PlayerId = 1;
-        notify.GameData.PlatformHostInfo.SlotId = 1;
-        notify.GameData.TopologyHostInfo.PlayerId = 1;
+        notify.GameData.PlatformHostInfo.PlayerId = client.UserId;
+        notify.GameData.PlatformHostInfo.SlotId = 0;
+        notify.GameData.TopologyHostInfo.PlayerId = client.UserId;
         notify.GameData.TopologyHostInfo.SlotId = 0;
         notify.GameData.TopologyHostSessionId = 13666;
+        notify.GameData.PingSiteAlias = "ams";
+        notify.GameData.SharedSeed = 0xFAFAFAFA;
         notify.GameData.UUID = "71bc4bdb-82ec-494d-8d75-ca5123b827ac";
+        notify.GameData.NetworkQosData.DownstreamBitsPerSecond = 128000;
+        notify.GameData.NetworkQosData.NatType = NatType.Open;
+        notify.GameData.NetworkQosData.UpstreamBitsPerSecond = 2;
 
         notify.GameData.GameAttribs.Add("ServerBuildVersion", "1.0.903.854");
 
         if (!notify.GameData.GameAttribs.ContainsKey("GameOwnerId"))
-            notify.GameData.GameAttribs.Add("GameOwnerId", "1");
-
-        //if (!notify.GameData.GameAttribs.ContainsKey("GameType"))
-        //    notify.GameData.GameAttribs.Add("GameType", "");
+            notify.GameData.GameAttribs.Add("GameOwnerId", client.UserId.ToString());
 
         if (!notify.GameData.GameAttribs.ContainsKey("GameOwnerName"))
             notify.GameData.GameAttribs.Add("GameOwnerName", "HelloDarkspore");
@@ -127,35 +159,10 @@ public class GameManagerComponent : IComponent
         if (!notify.GameData.GameAttribs.ContainsKey("PrivateMatch"))
             notify.GameData.GameAttribs.Add("PrivateMatch", "0");
 
-        //if (!notify.GameData.GameAttribs.ContainsKey("LevelId"))
-        //    notify.GameData.GameAttribs.Add("LevelId", "0");
+        notify.GameData.HostNetworkAddressList.Add(hostAddr);
 
-        //if (!notify.GameData.GameAttribs.ContainsKey("TeamRostersKey"))
-        //    notify.GameData.GameAttribs.Add("TeamRostersKey", "");
-
-        //if (!notify.GameData.GameAttribs.ContainsKey("planet"))
-        //    notify.GameData.GameAttribs.Add("planet", "");
-
-        //if (!notify.GameData.GameAttribs.ContainsKey("planetDifficulty"))
-        //    notify.GameData.GameAttribs.Add("planetDifficulty", "");
-
-        //if (!notify.GameData.GameAttribs.ContainsKey("RosterLockedKey"))
-        //    notify.GameData.GameAttribs.Add("RosterLockedKey", "");
-
-        var addr = new NetworkAddress()
-        {
-            ActiveMember = NetworkAddressMember.IpPairAddress,
-        };
-
-        addr.IpPairAddress.InternalAddress.Ip = 0x7F000001;
-        addr.IpPairAddress.InternalAddress.Port = 42000;
-        addr.IpPairAddress.ExternalAddress.Ip = 0x7F000001;
-        addr.IpPairAddress.ExternalAddress.Port = 42000;
-
-        notify.GameData.HostNetworkAddressList.Add(addr);
-
-        if (!notify.GameData.AdminPlayerList.Contains(1))
-            notify.GameData.AdminPlayerList.Add(1);
+        if (!notify.GameData.AdminPlayerList.Contains(client.UserId))
+            notify.GameData.AdminPlayerList.Add(client.UserId);
 
         var player = new ReplicatedGamePlayer
         {
@@ -164,21 +171,32 @@ public class GameManagerComponent : IComponent
             GameId = game.Id,
             AccountLocale = 0x656E5553,
             PlayerName = "HelloDarkspore",
-            PlayerId = 1,
+            PlayerId = client.UserId,
             JoinedGameTimestamp = CurrentUnixTime,
-            PlayerState = PlayerState.ActiveConnected,
+            PlayerState = PlayerState.ActiveConnecting,
             TeamIndex = 0xFFFF,
-            PlayerSessionId = 1,
+            PlayerSessionId = client.UserId,
         };
+        player.NetworkAddress.ActiveMember = NetworkAddressMember.IpPairAddress;
+        player.NetworkAddress.IpPairAddress.InternalAddress.Ip = 0x7F000001;
+        player.NetworkAddress.IpPairAddress.InternalAddress.Port = 42000;
+        player.NetworkAddress.IpPairAddress.ExternalAddress.Ip = 0x7F000001;
+        player.NetworkAddress.IpPairAddress.ExternalAddress.Port = 42000;
 
         notify.GameRoster.Add(player);
 
         notify.GameSetupReason.ActiveMember = GameSetupReasonMember.DatalessSetupContext;
         notify.GameSetupReason.DatalessSetupContext.SetupContext = DatalessContext.CreateGameSetupContext;
 
+        client.Notify(new NotifyGameCreated() { GameId = game.Id }, Id, 0x0F);
         client.Notify(notify, Id, 0x14);
 
-        client.Notify(new NotifyGameStateChange() { GameId = game.Id, GameState = GameState.Initializing }, Id, 0x64);
+        client.Notify(new NotifyPlayerJoining()
+        {
+            GameId = game.Id,
+            JoiningPlayer = player
+        }, Id, 0x15);
+
         return true;
     }
 
@@ -188,6 +206,7 @@ public class GameManagerComponent : IComponent
 
         Log($"UpdateMeshConnection: {request}");
 
+        client.RespondTo(packet);
         return true;
     }
 

@@ -1,10 +1,12 @@
 namespace ReCap.Server.Domain.Gameplay;
 
-public enum GameplayState
+public enum GameState
 {
-    Initialization,
-    ShaperSelection,
-    InGame,
-    Rewards,
+    Initializing,
+    Spaceship,
+    ChainVoting,
+    PreDungeon,
+    Dungeon,
+    ChainCashOut,
     Finished
 }

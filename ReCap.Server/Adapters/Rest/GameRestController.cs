@@ -182,7 +182,8 @@ public class GameRestController
                     BlazeID = account.Id,
                     Name = account.Username,
                     GrantOnlineAccess = (account.grantOnlineAccess ?? false) ? 1 : 0,
-                    CashoutBonusTime = account.cashoutBonusTime
+                    CashoutBonusTime = account.cashoutBonusTime,
+                    Account = accountMapper.toContract(account)
                 };
                 return XmlHelper.Serialize(response);
             }
@@ -247,7 +248,11 @@ public class GameRestController
     [RequestMapping(Name="api.account.setNewPlayerStats")]
     public byte[] setNewPlayerStats(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        // Darkspore sends this on new accounts expecting an auth response. Redirect it to auth handler.
+        if (parameters.TryGetValue("token", out string token)) {
+            parameters["key"] = $"{token}::0";
+        }
+        return loginPlayerAccount(context, parameters);
     }
 
     [RequestMapping(Name="api.creature.getCreature")]
