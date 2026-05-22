@@ -13,7 +13,7 @@ namespace ReCap.Server.Domain.Gameplay;
 public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = null) : IGame
 {
     public Dictionary<ulong, byte> ExpectedPlayers { get; } = new();
-    public Dictionary<ulong, Player> Players { get; } = new();
+    public Dictionary<byte, Player> Players { get; } = new();
     public Dictionary<byte, Bot> Bots { get; } = new();
 
     public Dictionary<ulong, AccountModel> Clients { get; } = new();
@@ -36,14 +36,20 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     public void Update()
     {
-        switch (State)
+        foreach (var player in Players.Values)
         {
-            case GameState.Initializing:
-                break;
-            case GameState.PreDungeon:
-                break;
-            case GameState.Dungeon:
-                break;
+            if (player.Client == null) continue;
+
+            var gameState = new GameStatePacket
+            {
+                GameTime = (ulong)(DateTime.UtcNow - StartTime).TotalMilliseconds,
+                TimeElapsed = (ulong)(DateTime.UtcNow - StartTime).TotalMilliseconds,
+                State = State,
+                GameType = 0
+            };
+            player.Client.SendPacket(gameState);
+
+            SendLabsPlayerUpdate(player.Client);
         }
     }
 
@@ -77,9 +83,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         Players.Add(slot, player);
 
+        ushort crystalBits8 = 0;
+        for (int i = 0; i < 8; i++) crystalBits8 |= (ushort)(LabsPlayerUpdatePacket.CrystalBits << i);
+        player.SetUpdateBits((ushort)(LabsPlayerUpdatePacket.PlayerBits | crystalBits8));
+
         OnHelloPlayer(player);
         OnPartyMergeComplete(player);
-        OnPlayerJoined(player);
         SendLabsPlayerUpdate(player.Client);
 
         return true;
@@ -108,77 +117,76 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         foreach (var player in Players)
         {
-            // Notify others of the new player joining
             if (player.Value.Slot != joiningPlayer.Slot)
                 player.Value.Client.SendPacket(playerJoinedPacket);
 
-            // Notify the joining player about others, who already joined
             otherPlayerJoinedPacket.Slot = player.Value.Slot;
-
             joiningPlayer.Client.SendPacket(otherPlayerJoinedPacket);
         }
 
         foreach (var bot in Bots)
         {
             otherPlayerJoinedPacket.Slot = bot.Value.Slot;
-
             joiningPlayer.Client.SendPacket(otherPlayerJoinedPacket);
-        }    
+        }
+    }
+
+    private Player? GetPlayerByClient(RakNetClient client)
+    {
+        foreach (var p in Players.Values)
+            if (p.Client == client) return p;
+        return null;
     }
 
     private void SendLabsPlayerUpdate(RakNetClient client)
     {
-        Player? player = null;
-        foreach (var p in Players.Values)
+        var player = GetPlayerByClient(client);
+        if (player == null) return;
+
+        if (player.PlayerData == null)
         {
-            if (p.Client == client)
-            {
-                player = p;
-                break;
-            }
+            player.PlayerData = CreatePlayerData(player);
+            player.PlayerData.SetInitialDataBits();
         }
 
-        if (player == null) return;
+        var pd = player.PlayerData;
+        pd.Status = player.GameStatus;
+        pd.StatusProgress = player.GameStatusProgress;
+
+        if (pd._needsStatusUpdate)
+        {
+            pd.SetDataBit(7);
+            pd.SetDataBit(8);
+            pd._needsStatusUpdate = false;
+        }
+
+        var updateBits = player.UpdateBits;
+        if (updateBits == 0) return;
 
         var updatePacket = new LabsPlayerUpdatePacket
         {
             PlayerId = player.Slot,
-            UpdateBits = LabsPlayerUpdatePacket.PlayerBits | LabsPlayerUpdatePacket.CharacterMask | LabsPlayerUpdatePacket.CrystalMask,
-            PlayerData = new LabsPlayerData
-            {
-                DataSetup = true,
-                CurrentDeckIndex = 0,
-                QueuedDeckIndex = 0,
-                PlayerIndex = player.Slot,
-                Team = 1,
-                PlayerOnlineId = player.Id,
-                Status = 0,
-                StatusProgress = 0,
-                CurrentCreatureId = 0,
-                EnergyPoints = 0,
-                IsCharged = true,
-                DNA = 0,
-                LockCamera = false,
-                LockedOverdrive = false,
-                LockedCrystals = false,
-                LockedAbilityMin = 0xFF,
-                LockedDeckIndexMin = 0xFF,
-                DeckScore = 500,
-                AvatarLevel = 30,
-                AvatarXP = 0f,
-                ChainProgression = 10
-            }
+            UpdateBits = updateBits,
+            PlayerData = pd
         };
 
-        // Add 3 fake characters
+        client.SendPacket(updatePacket);
+        pd.ResetDataBits();
+        player.ResetUpdateBits();
+    }
+
+    private static void FillSquadCharacters(LabsPlayerData playerData)
+    {
+        uint[] creatureNouns = { 1667741389u, 749013658u, 3591937345u };
+        uint[] creatureTypes = { 2u, 0u, 3u };
         for (int i = 0; i < 3; i++)
         {
-            updatePacket.Characters[i] = new LabsCharacterData
+            playerData.Characters[i] = new LabsCharacterData
             {
                 Version = 1,
-                NounId = 0x3039C538, // SageBasic
+                NounId = creatureNouns[i],
                 AssetId = 0,
-                CreatureType = 1,
+                CreatureType = creatureTypes[i],
                 DeployCooldown = 0,
                 AbilityPoints = 10,
                 AbilityRanks = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -190,19 +198,45 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 GearScoreFlattened = 300f
             };
         }
+    }
 
-        // Add 9 fake catalysts
-        for (int i = 0; i < 9; i++)
+    private LabsPlayerData CreatePlayerData(Player player)
+    {
+        var playerData = new LabsPlayerData
         {
-            updatePacket.Catalysts[i] = new LabsCatalystData
+            DataSetup = false,
+            CurrentDeckIndex = 0,
+            QueuedDeckIndex = 0,
+            PlayerIndex = player.Slot,
+            Team = 1,
+            PlayerOnlineId = player.Id,
+            Status = player.GameStatus,
+            StatusProgress = player.GameStatusProgress,
+            CurrentCreatureId = 0,
+            EnergyPoints = 0,
+            IsCharged = true,
+            DNA = 0,
+            LockCamera = false,
+            LockedOverdrive = false,
+            LockedCrystals = false,
+            LockedAbilityMin = 0xFF,
+            LockedDeckIndexMin = 0xFF,
+            DeckScore = 500,
+            AvatarLevel = 30,
+            AvatarXP = 0f,
+            ChainProgression = 10
+        };
+
+        for (int i = 0; i < 8; i++)
+        {
+            playerData.Catalysts[i] = new LabsCatalystData
             {
-                NounId = i < 8 ? 0x02FB89EB : 0u, // Catalyst_Health
+                NounId = 0x02FB89EB,
                 Rarity = 2
             };
         }
 
-        client.SendPacket(updatePacket);
-        Console.WriteLine("[Game] Sent LabsPlayerUpdate");
+        return playerData;
     }
 
     public void HandlePacket(RakNetClient sender, IRakNetPacket packet)
@@ -239,7 +273,6 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
             case GameState.ChainVoting:
                 sender.SendPacket(new ChainVoteMsgsPacket { Value = 0, ChainData = Chain });
-                sender.SendPacket(new ChainVoteMsgsPacket { Value = 1, SecondsUntilDeployment = 30f });
                 break;
 
             case GameState.PreDungeon:
@@ -275,14 +308,26 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         {
             State = GameState.PreDungeon;
 
-            // Apply the actual user level vote index
-            Chain.SetLevelByIndex((int)packet.LevelIndex);
             if (Assets != null) Chain.PopulateFromLevel(Assets);
 
             var prepareStart = new GamePrepareForStartPacket(Chain.Level, Chain.MarkerSet, 1, Chain.LevelIndex);
             sender.SendPacket(prepareStart);
+            Console.WriteLine($"[Game] Sent GamePrepareForStart (Level=0x{Chain.Level:X8}, LevelIndex={Chain.LevelIndex}, SquadId={packet.SquadId})");
 
-            SendLabsPlayerUpdate(sender);
+            var player = GetPlayerByClient(sender);
+            if (player != null)
+            {
+                if (player.PlayerData != null)
+                {
+                    FillSquadCharacters(player.PlayerData);
+                    player.PlayerData.SetDataBit(1);
+                    player.PlayerData.SetDataBit(2);
+                    player.PlayerData.SetDataBit(3);
+                    player.PlayerData.SetDataBit(23);
+                }
+                player.SetUpdateBits((ushort)(LabsPlayerUpdatePacket.PlayerBits | LabsPlayerUpdatePacket.CharacterMask));
+                SendLabsPlayerUpdate(sender);
+            }
         }
     }
 
@@ -290,32 +335,29 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     {
         Console.WriteLine($"[Game] OnPlayerStatusUpdate: {packet.Status} (State={State})");
 
+        var player = GetPlayerByClient(sender);
+        if (player != null)
+        {
+            player.GameStatus = packet.Status;
+            player.GameStatusProgress = packet.Progress;
+            player.SetUpdateBits(LabsPlayerUpdatePacket.PlayerBits);
+            if (player.PlayerData != null)
+                player.PlayerData._needsStatusUpdate = true;
+        }
+
         if (packet.Status == 0x08)
         {
             State = GameState.Dungeon;
             sender.SendPacket(new GameStartPacket(0));
             sender.SendPacket(new DebugPingPacket());
+        }
 
-            SendLabsPlayerUpdate(sender);
-        }
-        else
-        {
-            SendLabsPlayerUpdate(sender);
-        }
+        SendLabsPlayerUpdate(sender);
     }
 
     private void OnPlayerStart(RakNetClient client)
     {
-        Player? player = null;
-        foreach (var p in Players.Values)
-        {
-            if (p.Client == client)
-            {
-                player = p;
-                break;
-            }
-        }
-
+        var player = GetPlayerByClient(client);
         if (player == null) return;
 
         if (Assets != null)
@@ -358,7 +400,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         }
 
         var spawnPos = new Vector3(44.0f, 0.47f, 17.5f);
-        uint creatureNoun = 0x3039C538;
+        uint creatureNoun = 1667741389u;
 
         var objectId = _nextObjectId++;
         _playerCharacterObjectIds[player.Slot] = objectId;

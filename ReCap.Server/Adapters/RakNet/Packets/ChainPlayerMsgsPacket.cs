@@ -11,8 +11,8 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
 
     public byte Value { get; set; }
     public byte Ready { get; set; }
-    public byte Difficulty { get; set; }
-    public uint LevelIndex { get; set; }
+    public byte Unknown { get; set; }
+    public uint SquadId { get; set; }
 
     public int ByteCount { get; set; }
 
@@ -31,9 +31,9 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
                 Ready = reader.ReadByte();
                 break;
             case 6:
-                Ready = reader.ReadByte();
-                Difficulty = reader.ReadByte();
-                LevelIndex = reader.ReadUInt32(); // read 4 bytes LittleEndian
+                Value = reader.ReadByte();
+                Unknown = reader.ReadByte();
+                SquadId = reader.ReadUInt32BE();
                 break;
         }
     }
@@ -41,7 +41,7 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
-        
+
         if (ByteCount == 1)
         {
             writer.Write(Value);
@@ -53,9 +53,9 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
         }
         else if (ByteCount == 6)
         {
-            writer.Write(Ready);
-            writer.Write(Difficulty);
-            writer.Write(LevelIndex); // default BinaryWriter is LittleEndian
+            writer.Write(Value);
+            writer.Write(Unknown);
+            writer.WriteBE(SquadId);
         }
     }
 }

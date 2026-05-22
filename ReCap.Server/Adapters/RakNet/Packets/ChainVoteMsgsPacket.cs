@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 using ReCap.Server.Domain.Gameplay;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
@@ -40,7 +41,7 @@ public class ChainVoteMsgsPacket : IRakNetPacket
                 }
                 break;
             case 1:
-                writer.Write(SecondsUntilDeployment);
+                writer.WriteBE(SecondsUntilDeployment);
                 break;
             case 2:
                 writer.Write(StayInParty);

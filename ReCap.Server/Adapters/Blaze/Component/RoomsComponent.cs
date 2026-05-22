@@ -1,4 +1,4 @@
-﻿using ReCap.Server.Util;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Blaze.Component;
 
@@ -13,6 +13,9 @@ public class RoomsComponent : IComponent
         {
             case 0xA:
                 return HandleSelectViewUpdates(client, packet);
+
+            case 0xB:
+                return HandleSelectCategoryUpdates(client, packet);
 
             default:
                 Log($"Unknown command: {packet.Command}");
@@ -29,18 +32,51 @@ public class RoomsComponent : IComponent
             return false;
         }
 
-        if (request.Updates == 1)
+        client.Notify(new RoomViewNotification
         {
-            // client.Notify(new RoomViewData
-            // {
-            //     DisplayName = "",
-            //     MaxUserRooms = 255,
-            //     Name = "HelloDarkspore's Room",
-            //     NumUserRooms = 1,
-            //     ViewId = 1
-            // }, Id, 0xA);
+            ViewId = 0,
+            Name = "default"
+        }, 0x15, 0x0B); // NotifyRoomViewAdded
+
+        client.Notify(new RoomViewNotification
+        {
+            ViewId = 0,
+            Name = "default"
+        }, 0x15, 0x0A); // NotifyRoomViewUpdated
+
+        client.RespondTo(packet);
+        return true;
+    }
+
+    private static bool HandleSelectCategoryUpdates(Client client, Packet packet)
+    {
+        var request = packet.ReadContent<SelectCategoryUpdatesRequest>();
+        if (request is null)
+        {
+            Log("Unable to read content of selectCategoryUpdates request!");
+            return false;
         }
 
+        string[] categoryNames = { "General", "Help", "Trading", "LFG" };
+
+        for (uint i = 0; i < categoryNames.Length; i++)
+        {
+            client.Notify(new RoomCategoryNotification
+            {
+                CategoryId = i,
+                Name = categoryNames[i],
+                ViewId = request.ViewId
+            }, 0x15, 0x15); // NotifyRoomCategoryAdded
+
+            client.Notify(new RoomCategoryNotification
+            {
+                CategoryId = i,
+                Name = categoryNames[i],
+                ViewId = request.ViewId
+            }, 0x15, 0x14); // NotifyRoomCategoryUpdated
+        }
+
+        client.RespondTo(packet);
         return true;
     }
 
@@ -49,6 +85,7 @@ public class RoomsComponent : IComponent
         return id switch
         {
             0xA => "selectViewUpdates",
+            0xB => "selectCategoryUpdates",
             _ => "<unknown>"
         };
     }
@@ -57,19 +94,19 @@ public class RoomsComponent : IComponent
     {
         return id switch
         {
-            0x0A => "RoomViewUpdatedNotification",
-            0x0B => "RoomViewAddedNotification",
-            0x0C => "RoomViewRemovedNotification",
-            0x14 => "RoomCategoryUpdatedNotification",
-            0x15 => "RoomCategoryAddedNotification",
-            0x16 => "RoomCategoryRemovedNotification",
-            0x1E => "RoomUpdatedNotification",
-            0x1F => "RoomAddedNotification",
-            0x20 => "RoomRemovedNotification",
+            0x0A => "NotifyRoomViewUpdated",
+            0x0B => "NotifyRoomViewAdded",
+            0x0C => "NotifyRoomViewRemoved",
+            0x14 => "NotifyRoomCategoryUpdated",
+            0x15 => "NotifyRoomCategoryAdded",
+            0x16 => "NotifyRoomCategoryRemoved",
+            0x1E => "NotifyRoomUpdated",
+            0x1F => "NotifyRoomAdded",
+            0x20 => "NotifyRoomRemoved",
             0x28 => "RoomPopulationUpdated",
-            0x32 => "RoomMemberJoined",
-            0x33 => "RoomMemberLeft",
-            0x34 => "RoomMemberUpdated",
+            0x32 => "NotifyRoomMemberJoined",
+            0x33 => "NotifyRoomMemberLeft",
+            0x34 => "NotifyRoomMemberUpdated",
             0x3C => "RoomKick",
             0x46 => "RoomHostTransfer",
             0x50 => "RoomAttributesSet",
@@ -87,7 +124,13 @@ public class SelectViewUpdatesRequest : Tdf
     public uint Updates { get; set; }
 }
 
-public class RoomViewData : Tdf
+public class SelectCategoryUpdatesRequest : Tdf
+{
+    [TdfField("VWID", 0)]
+    public uint ViewId { get; set; }
+}
+
+public class RoomViewNotification : Tdf
 {
     [TdfField("DISP", "")]
     public string DisplayName { get; set; } = string.Empty;
@@ -109,4 +152,16 @@ public class RoomViewData : Tdf
 
     [TdfField("VWID", 0)]
     public ulong ViewId { get; set; }
+}
+
+public class RoomCategoryNotification : Tdf
+{
+    [TdfField("CTID", 0)]
+    public uint CategoryId { get; set; }
+
+    [TdfField("NAME", "")]
+    public string Name { get; set; } = string.Empty;
+
+    [TdfField("VWID", 0)]
+    public uint ViewId { get; set; }
 }

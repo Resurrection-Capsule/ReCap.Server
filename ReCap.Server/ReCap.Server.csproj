@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="ReCap.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\lib\RakNexus\RakNexus.csproj" />
     <ProjectReference Include="..\lib\AssetData.Parser\src\Core\AssetData.Parser.csproj" />
 

@@ -207,6 +207,26 @@ public class GameManagerComponent : IComponent
         Log($"UpdateMeshConnection: {request}");
 
         client.RespondTo(packet);
+
+        foreach (var target in request.Target)
+        {
+            if (target.PlayerConnectionState == PlayerConnectionState.Connected)
+            {
+                client.Notify(new NotifyGamePlayerStateChange()
+                {
+                    GameId = request.GameId,
+                    PlayerId = target.PlayerId,
+                    PlayerState = PlayerState.ActiveConnected
+                }, Id, 0x74);
+
+                client.Notify(new NotifyPlayerJoinCompleted()
+                {
+                    GameId = request.GameId,
+                    PlayerId = target.PlayerId
+                }, Id, 0x1E);
+            }
+        }
+
         return true;
     }
 

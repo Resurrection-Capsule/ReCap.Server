@@ -126,7 +126,7 @@ public class RakNetServer
                 {
                     game.Update();
                 }
-                await Task.Delay(100, stoppingToken);
+                await Task.Delay(50, stoppingToken);
             }
         }
         catch (TaskCanceledException)
@@ -156,6 +156,24 @@ public class RakNetServer
         ms.WriteByte((byte)packet.Type);
 
         packet.WriteTo(ms);
+
+        {
+            var bytes = ms.ToArray();
+            string hex;
+            if (bytes.Length <= 32)
+            {
+                hex = BitConverter.ToString(bytes);
+            }
+            else if (packet.Type == PacketType.LabsPlayerUpdate || packet.Type == PacketType.GamePrepareForStart || packet.Type == PacketType.ChainVoteMsgs)
+            {
+                hex = BitConverter.ToString(bytes) + $" ({bytes.Length}B)";
+            }
+            else
+            {
+                hex = BitConverter.ToString(bytes, 0, 32) + $"...({bytes.Length}B)";
+            }
+            Logger.info($"RakNet: Sent {packet.Type} [{hex}]");
+        }
 
         session.Send(ms.ToArray(), PacketPriority.MEDIUM_PRIORITY, reliability, 0, 0);
     }
