@@ -1,0 +1,27 @@
+# Build artifacts
+bin/
+obj/
+
+# Logs
+*.log
+
+# Local tooling
+.claude/
+
+# Reverse-engineering artifacts
+dll_strings.txt
+exe_rtti.txt
+
+# Caveman backups
+*.original.md
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
