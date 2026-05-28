@@ -175,7 +175,7 @@ public class BlazeServer
         CancellationTokenSource.Cancel();
     }
 
-    private async void Log(string message) => await Console.Out.WriteLineAsync($"[{Name}]: {message}");
+    private void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Info($"[{Name}] {message}");
 
     // TODO: generate for localhost and override the client's URL to localhost?
     // TODO: disable SSL completely for redirector already?

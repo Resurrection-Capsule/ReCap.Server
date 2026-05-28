@@ -85,7 +85,7 @@ public class CertGenerator
 
         var certDomain = subject.Split("CN=")[1].Split(",")[0];
 
-        Console.WriteLine($"Certificate generated for: {certDomain}");
+        ReCap.Server.Util.Logging.Log.Blaze.Debug($"Certificate generated for: {certDomain}");
 
         store.SetCertificateEntry(certDomain, certEntry);
         store.SetKeyEntry(certDomain, new AsymmetricKeyEntry(cKeyPair.Private), new[] { certEntry });

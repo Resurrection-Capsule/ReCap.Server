@@ -115,7 +115,7 @@ public class RoomsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Rooms component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Rooms component]: {message}");
 }
 
 public class SelectViewUpdatesRequest : Tdf

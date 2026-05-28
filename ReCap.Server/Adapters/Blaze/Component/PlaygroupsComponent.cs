@@ -72,7 +72,7 @@ public class PlaygroupsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Playgroups component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Playgroups component]: {message}");
 }
 
 public class CreatePlaygroupRequest : Tdf

@@ -203,7 +203,7 @@ public class UserSessionsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[UserSessions component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[UserSessions component]: {message}");
 }
 
 public class NotifyUserAdded : Tdf

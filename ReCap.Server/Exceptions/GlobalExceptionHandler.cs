@@ -11,7 +11,7 @@ public class GlobalExceptionHandler
         context.Response.StatusCode = 400;
         context.Response.StatusDescription = ex.Message;
         context.Response.Close();
-        Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
+        ReCap.Server.Util.Logging.Log.Rest.Error($"[RestClientAdapter] {context.Request.RawUrl} Error 400: {context.Response.StatusDescription}");
     }
 
     [ExceptionHandler(Type=typeof(ForbiddenOperationException))]
@@ -20,7 +20,7 @@ public class GlobalExceptionHandler
         context.Response.StatusCode = 403;
         context.Response.StatusDescription = ex.Message;
         context.Response.Close();
-        Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
+        ReCap.Server.Util.Logging.Log.Rest.Error($"[RestClientAdapter] {context.Request.RawUrl} Error 403: {context.Response.StatusDescription}");
     }
 
     [ExceptionHandler(Type=typeof(FileNotFoundException))]
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler
         context.Response.StatusCode = 404;
         context.Response.StatusDescription = "File not found: " + ex.Message;
         context.Response.Close();
-        Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
+        ReCap.Server.Util.Logging.Log.Rest.Error($"[RestClientAdapter] {context.Request.RawUrl} Error 404: {context.Response.StatusDescription}");
     }
 
     [ExceptionHandler(Type=typeof(UnimplementedMethodException))]
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler
     {
         context.Response.StatusCode = 501;
         context.Response.StatusDescription = "Method not implemented";
-        Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {ex.Message}");
+        ReCap.Server.Util.Logging.Log.Rest.Error($"[RestClientAdapter] {context.Request.RawUrl} Error 501: {ex.Message}");
         context.Response.Close();
     }
 
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler
     {
         context.Response.StatusCode = 500;
         context.Response.StatusDescription = "Error serving file: " + ex.Message;
-        Logger.error($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
+        ReCap.Server.Util.Logging.Log.Rest.Error($"[RestClientAdapter] {context.Request.RawUrl} Error 500: {ex.ToString()}");
         context.Response.Close();
     }
 }

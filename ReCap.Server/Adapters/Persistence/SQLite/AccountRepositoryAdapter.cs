@@ -28,13 +28,13 @@ public class AccountRepositoryAdapter
 
     public void deleteAuthToken(string authToken)
     {
-        Logger.info($"Removing auth token {authToken}");
+        ReCap.Server.Util.Logging.Log.Db.Info($"Removing auth token {authToken}");
         idByAuthToken.Remove(authToken);
     }
 
     public void setAccountAuthToken(ulong accountId, string authToken)
     {
-        Logger.info($"Setting auth token for account {accountId}: {authToken}");
+        ReCap.Server.Util.Logging.Log.Db.Info($"Setting auth token for account {accountId}: {authToken}");
         idByAuthToken[authToken] = accountId;
     }
 
@@ -43,7 +43,7 @@ public class AccountRepositoryAdapter
         ulong accountId = 0;
         if (idByAuthToken.TryGetValue(authToken, out accountId))
         {
-            Logger.info($"Getting auth token for account {accountId}: {authToken}");
+            ReCap.Server.Util.Logging.Log.Db.Info($"Getting auth token for account {accountId}: {authToken}");
             return getAccountById(accountId);
         }
 

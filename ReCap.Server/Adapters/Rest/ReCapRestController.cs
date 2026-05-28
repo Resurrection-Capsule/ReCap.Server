@@ -30,7 +30,7 @@ public class ReCapRestController
     public byte[] log(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         string message = HTTPHelper.GetBodyFromRequest(context.Request);
-        Logger.info(message);
+        ReCap.Server.Util.Logging.Log.Rest.Info(message);
         return new byte[]{};
     }
 

@@ -107,7 +107,7 @@ public class AssociationListsComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Association Lists component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Association Lists component]: {message}");
 }
 
 public class ListIdentification : Tdf

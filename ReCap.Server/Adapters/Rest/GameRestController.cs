@@ -523,7 +523,7 @@ public class GameRestController
                 // TODO: Implement buyback
             }
             else {
-                Logger.info($"Unknown transaction: {transaction}");
+                ReCap.Server.Util.Logging.Log.Rest.Info($"Unknown transaction: {transaction}");
                 // TODO: check for more later
             }
 

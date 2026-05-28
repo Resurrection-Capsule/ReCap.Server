@@ -83,7 +83,7 @@ public class MessagingComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Messaging component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Messaging component]: {message}");
 }
 
 public enum MessageOrder

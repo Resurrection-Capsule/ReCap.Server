@@ -106,6 +106,16 @@ ReCap.Server/
 - Don't redefine types from AssetData.Parser; use generic `AssetValue` navigation (`node.FindByName("field")`, `.AsUInt32()`, etc. — extensions in `Services/Assets/AssetValueExtensions.cs`). Pattern-match types from `AssetData.Parser.Model`: `StringValue`, `NumberValue`, `StructValue`, `ArrayValue`, `VectorValue`. **No DTOs.** AssetDatabase exposes `Dictionary<uint, AssetValue>` per category and `GetX(id)` returns raw `AssetValue?` for consumers to navigate.
 - Asset system called `AssetDatabase`, not "NounDatabase"
 
+## Logging (Serilog)
+
+- Use facade `ReCap.Server.Util.Logging.Log`. NEVER reintroduce old `Logger` class (deleted).
+- Per-category loggers: `Log.Server/RakNet/Blaze/Rest/Db/Assets/Game`. Methods: `Verbose/Debug/Info/Warn/Error/Fatal`. Messages logged literally (braces-safe) — dynamic data with `{}` is fine.
+- Files with a local `Log(string)` helper (Blaze components, BlazeServer) must fully-qualify: `ReCap.Server.Util.Logging.Log.Blaze.X(...)` (name clash with facade).
+- Levels via CLI: `--log-level=debug` (global), `--log-level=RakNet:verbose` (per-category), `--verbose` (=debug), `--raknet-verbose` (=RakNet:verbose). Default Information. Bootstrap in `LoggingConfig`.
+- Packet hex → `Log.RakNet.Verbose(PacketTrace.Sent/Received(...))`, gated by category level (NOT a bool). GameState throttled via `LogThrottle`. `RakNexus.RakLog.Verbose` no longer used.
+- Helpers: `PacketTrace` (hexdump), `BitField` (symbolic dataBits, e.g. `{0,4,5}`), `LogScope` (correlation: `using LogScope.Player(name)` / `Phase(state)`).
+- Console themed + rolling file `logs/recap-DATE.log` (gitignored).
+
 ## Important Game Constants
 
 - `GameStatePacket.GameType = 0` in update loop (C++ `mStateData` zero-initialized)

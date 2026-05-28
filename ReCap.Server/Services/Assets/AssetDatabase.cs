@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using ReCap.Server.Util.Logging;
 using AssetData.Parser;
 using AssetData.Parser.Model;
 using ReCap.Server.Config;
@@ -122,26 +123,25 @@ public sealed class AssetDatabase : IDisposable
         }
         catch (Exception ex)
         {
-            Logger.error($"[AssetDatabase] warm-up FAILED: {ex.GetType().Name}: {ex.Message}");
-            Logger.error(ex.StackTrace ?? "(no stack)");
+            Log.Assets.Error(ex, "Warm-up failed");
         }
     }, ct);
 
     private void WarmUp(CancellationToken ct)
     {
-        Logger.info($"[AssetDatabase] warm-up starting: {_packagePath}");
+        Log.Assets.Info($"Warm-up starting: {_packagePath}");
         var sw = Stopwatch.StartNew();
 
         if (!File.Exists(_packagePath))
         {
-            Logger.error($"[AssetDatabase] package not found: {_packagePath}");
+            Log.Assets.Error($"Package not found: {_packagePath}");
             return;
         }
 
         _reader = new DbpfReader(_packagePath);
         _parser = new AssetParser();
         _entryIndex = new Assets.EntryIndex(_reader);
-        Logger.info($"[AssetDatabase] DBPF opened: {_reader.Entries.Count} entries, parser registered {_parser.SupportedTypes.Count()} struct types");
+        Log.Assets.Info($"DBPF opened: {_reader.Entries.Count} entries, parser registered {_parser.SupportedTypes.Count()} struct types");
 
 
         ct.ThrowIfCancellationRequested();
@@ -177,12 +177,12 @@ public sealed class AssetDatabase : IDisposable
 
         var width = categories.Max(c => c.Count.ToString().Length);
         var sb = new StringBuilder();
-        sb.AppendLine("[AssetDatabase] ✓ Ready");
+        sb.AppendLine("✓ Ready");
         foreach (var (label, count) in categories)
             sb.AppendLine($"    [{count.ToString().PadLeft(width)}] {label}");
         sb.AppendLine("    ─────────────────────");
         sb.Append($"    → {_entryIndex.Count} Entries in {sw.ElapsedMilliseconds}ms");
-        Logger.info(sb.ToString());
+        Log.Assets.Info(sb.ToString());
     }
 
     private static void LoadStep(string label, Action action)
@@ -190,7 +190,7 @@ public sealed class AssetDatabase : IDisposable
         try { action(); }
         catch (Exception ex)
         {
-            Logger.error($"[AssetDatabase] step '{label}' failed: {ex.GetType().Name}: {ex.Message}");
+            Log.Assets.Error($"Step '{label}' failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -199,7 +199,7 @@ public sealed class AssetDatabase : IDisposable
         try { CategoryLoader.Load(ctx, typeExtension, rootStruct, sink); }
         catch (Exception ex)
         {
-            Logger.error($"[AssetDatabase] category '{typeExtension}' failed: {ex.GetType().Name}: {ex.Message}");
+            Log.Assets.Error($"Category '{typeExtension}' failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 

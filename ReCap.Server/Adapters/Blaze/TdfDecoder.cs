@@ -495,7 +495,7 @@ public class TdfDecoder
                 break;
 
             default:
-                Logger.info($"TdfDecoder: Skipping unknown type {type}, consuming remaining struct");
+                ReCap.Server.Util.Logging.Log.Blaze.Info($"TdfDecoder: Skipping unknown type {type}, consuming remaining struct");
                 ConsumeStructTerminator();
                 break;
         }
@@ -510,7 +510,7 @@ public class TdfDecoder
         var b3 = (TdfType)Reader.ReadByte();
         if (b3 > TdfType.TimeValue)
         {
-            Logger.info($"TdfDecoder: Invalid type ({b3}) in header, skipping");
+            ReCap.Server.Util.Logging.Log.Blaze.Info($"TdfDecoder: Invalid type ({b3}) in header, skipping");
             return false;
         }
 

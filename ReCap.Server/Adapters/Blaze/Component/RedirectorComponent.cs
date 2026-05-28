@@ -81,7 +81,7 @@ public class RedirectorComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Redirector component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Redirector component]: {message}");
 
 
     public class AddressRemapEntry : Tdf

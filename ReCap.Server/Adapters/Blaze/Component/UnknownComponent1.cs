@@ -35,6 +35,6 @@ public class UnknownComponent1 : IComponent
         return "<unknown>";
     }
 
-    private static void Log(string message) => Logger.debug($"[Unknown component 1]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Unknown component 1]: {message}");
 }
 

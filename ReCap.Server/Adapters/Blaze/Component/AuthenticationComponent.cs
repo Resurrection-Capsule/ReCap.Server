@@ -99,7 +99,7 @@ public class AuthenticationComponent : IComponent
             return true;
         }
 
-        Logger.info($"[Auth] Login attempt: Email='{request.Email}', Pass='{request.Password}'");
+        ReCap.Server.Util.Logging.Log.Blaze.Info($"[Auth] Login attempt: Email='{request.Email}', Pass='{request.Password}'");
 
         AccountModel account;
         try
@@ -108,7 +108,7 @@ public class AuthenticationComponent : IComponent
         }
         catch (ForbiddenOperationException ex)
         {
-            Logger.error($"[Auth] Login failed: {ex.Message}");
+            ReCap.Server.Util.Logging.Log.Blaze.Error($"[Auth] Login failed: {ex.Message}");
             client.RespondTo(packet, null, error: 0xB0001);
             return true;
         }
@@ -419,7 +419,7 @@ public class AuthenticationComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Authentication component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Authentication component]: {message}");
 }
 
 public class CreateAccountResponse : Tdf

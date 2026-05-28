@@ -330,7 +330,7 @@ public class GameManagerComponent : IComponent
         };
     }
 
-    private static void Log(string message) => Logger.debug($"[Game Manager component]: {message}");
+    private static void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[Game Manager component]: {message}");
 }
 
 public enum GameEntryType

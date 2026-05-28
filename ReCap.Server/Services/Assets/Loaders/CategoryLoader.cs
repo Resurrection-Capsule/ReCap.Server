@@ -31,9 +31,9 @@ internal static class CategoryLoader
         }
 
         if (loaded == 0 && failed == 0)
-            Logger.info($"[AssetDatabase] {typeExtension}: 0 entries found in DBPF");
+            ReCap.Server.Util.Logging.Log.Assets.Info($"{typeExtension}: 0 entries found in DBPF");
         else if (failed > 0)
-            Logger.info($"[AssetDatabase] {typeExtension}: {loaded} ok / {failed} failed (first: {firstError ?? "null parse"})");
+            ReCap.Server.Util.Logging.Log.Assets.Info($"{typeExtension}: {loaded} ok / {failed} failed (first: {firstError ?? "null parse"})");
         return loaded;
     }
 }

@@ -10,6 +10,8 @@ using ReCap.Server.Adapters.Rest.Api;
 using ReCap.Server.Config;
 using ReCap.Server.Services;
 using ReCap.Server.Util;
+using ReCap.Server.Util.Logging;
+using Serilog.Events;
 
 namespace ReCap.Server;
 
@@ -25,8 +27,14 @@ public static class Program
     const string _DB_PATH_ARG = "--database-path=";
     const string _ASSETDATA_PATH_ARG = "--assetdata-path=";
     const string _RAKNET_VERBOSE_ARG = "--raknet-verbose";
+    const string _VERBOSE_ARG = "--verbose";
+    const string _LOG_LEVEL_ARG = "--log-level=";
     static async Task Main(string[] args)
     {
+        var (logLevel, logOverrides) = ParseLogConfig(args);
+        LoggingConfig.Bootstrap(logLevel, logOverrides);
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggingConfig.CloseAndFlush();
+        PrintBanner();
 #nullable disable
         string databasePath = null;
         string assetDataPath = null;
@@ -69,43 +77,34 @@ public static class Program
                 if (File.Exists(gPath))
                     assetDataPath = gPath;
                 else
-                    Logger.error($"Game path not found: '{gPath}'");
-            }
-            else if (arg == _RAKNET_VERBOSE_ARG)
-            {
-                RakNexus.RakLog.Verbose = true;
+                    Log.Server.Error($"Game path not found: '{gPath}'");
             }
         }
 
 
         if (ProcessPermissions.IsCurrentProcessElevated)
         {
-            Logger.info($"Running {GetRelaunchAsWhat()}!");
+            Log.Server.Info($"Running {GetRelaunchAsWhat()}!");
         }
         else if (port == Api.DEFAULT_PORT)
         {
-            Logger.info($"Must relaunch {GetRelaunchAsWhat()} to proceed...");
+            Log.Server.Warn($"Must relaunch {GetRelaunchAsWhat()} to proceed...");
             if (await TryRelaunchElevatedAsync())
                 return;
         }
 
 
-        string portDbgLine = "Running on ";
-        if (port == Api.DEFAULT_PORT)
-            portDbgLine += "default ";
-        Logger.info(portDbgLine + $"port {port}");
-        
         var serverOpts = ServerConfig.CopyCurrentOptions();
 #nullable restore
         if (!string.IsNullOrWhiteSpace(databasePath))
         {
-            Logger.info($"Using DB path: '{databasePath}'");
+            Log.Server.Info($"Using DB path: '{databasePath}'");
             serverOpts.ServerDatabaseDirectory = databasePath;
         }
 
         if (!string.IsNullOrWhiteSpace(assetDataPath))
         {
-            Logger.info($"Using AssetData path: '{assetDataPath}'");
+            Log.Server.Info($"Using AssetData path: '{assetDataPath}'");
             serverOpts.GamePath = assetDataPath;
         }
 
@@ -143,7 +142,12 @@ public static class Program
         Task.Run(() => raknet.ExecuteAsync(token));
 #pragma warning restore CS4014
 
-
+        Log.Server.Info(
+            "Listening:\n" +
+            $"    Redirector  {localhostIP}:42127  TLS\n" +
+            $"    Lobby       {localhostIP}:42125\n" +
+            $"    RakNet      {localhostIP}:42000  UDP\n" +
+            $"    REST        {localhostIP}:{port}");
 
         Api restClientAdapter = new(dbConfig, port);
         try
@@ -205,12 +209,66 @@ public static class Program
         $"{_BEFORE_ARG}{_PORT_ARG}<int>         {_AFTER_ARG}Port number",
         $"{_BEFORE_ARG}{_DB_PATH_ARG}<str>{_AFTER_ARG}Path to a directory in which to create/store/access the 'server.db'",
         $"{_BEFORE_ARG}{_ASSETDATA_PATH_ARG}<str>{_AFTER_ARG}Path to the Darkspore AssetData_Binary.package file",
+        $"{_BEFORE_ARG}{_LOG_LEVEL_ARG}<lvl>     {_AFTER_ARG}Global log level, or <Category>:<lvl> (e.g. RakNet:verbose)",
+        $"{_BEFORE_ARG}{_VERBOSE_ARG}            {_AFTER_ARG}Shortcut for --log-level=debug",
+        $"{_BEFORE_ARG}{_RAKNET_VERBOSE_ARG}    {_AFTER_ARG}Shortcut for --log-level=RakNet:verbose",
     }.AsReadOnly();
     static void PrintHelp()
     {
         foreach (string line in _HELP)
+            Console.WriteLine(line);
+    }
+
+    static (LogEventLevel, Dictionary<string, LogEventLevel>) ParseLogConfig(string[] args)
+    {
+        var global = LogEventLevel.Information;
+        var overrides = new Dictionary<string, LogEventLevel>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var raw in args)
         {
-            Logger.info(line);
+            var arg = CommandLineHelper.UnwrapArg(raw);
+            if (arg == _RAKNET_VERBOSE_ARG)
+            {
+                overrides[LogCategories.RakNet] = LogEventLevel.Verbose;
+            }
+            else if (arg == _VERBOSE_ARG)
+            {
+                global = LogEventLevel.Debug;
+            }
+            else if (arg.StartsWith(_LOG_LEVEL_ARG))
+            {
+                var value = arg.Substring(_LOG_LEVEL_ARG.Length);
+                var sep = value.IndexOf(':');
+                if (sep < 0)
+                {
+                    if (LoggingConfig.TryParseLevel(value, out var lvl))
+                        global = lvl;
+                }
+                else if (LoggingConfig.TryParseLevel(value[(sep + 1)..], out var lvl))
+                {
+                    var category = value[..sep];
+                    overrides[NormalizeCategory(category)] = lvl;
+                }
+            }
         }
+
+        return (global, overrides);
+    }
+
+    static string NormalizeCategory(string category)
+        => Array.Find(LogCategories.All, c => string.Equals(c, category, StringComparison.OrdinalIgnoreCase)) ?? category;
+
+    static void PrintBanner()
+    {
+        var v = ServerConfigOptions.DEFAULT_GAME_VERSION;
+        Console.WriteLine();
+        Console.WriteLine(@"   ____      ____            ");
+        Console.WriteLine(@"  |  _ \ ___/ ___|__ _ _ __  ");
+        Console.WriteLine(@"  | |_) / _ \ |  / _` | '_ \ ");
+        Console.WriteLine(@"  |  _ <  __/ |_| (_| | |_) |");
+        Console.WriteLine(@"  |_| \_\___|\____\__,_| .__/ ");
+        Console.WriteLine(@"                       |_|    ");
+        Console.WriteLine($"  Darkspore private server · v{v}");
+        Console.WriteLine();
     }
 }

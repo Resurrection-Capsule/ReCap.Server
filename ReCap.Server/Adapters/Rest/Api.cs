@@ -63,7 +63,7 @@ public class Api
     {
         var parameters = HTTPHelper.GetParametersFromRequest(context.Request);
         if (parameters.Count > 0) {
-            Logger.debug($"Parameters: {string.Join(", ", parameters)}");
+            ReCap.Server.Util.Logging.Log.Rest.Debug($"Parameters: {string.Join(", ", parameters)}");
         }
 
         string uri = context.Request.Url.LocalPath.Split("?")[0];
@@ -95,7 +95,7 @@ public class Api
 
             context.Response.ContentLength64 = fileBytes.Length;
             context.Response.OutputStream.Write(fileBytes, 0, fileBytes.Length);
-            Logger.debug($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
+            ReCap.Server.Util.Logging.Log.Rest.Debug($"[RestClientAdapter] {context.Request.RawUrl} Success 200");
             context.Response.Close();
         }
         catch (Exception ex)

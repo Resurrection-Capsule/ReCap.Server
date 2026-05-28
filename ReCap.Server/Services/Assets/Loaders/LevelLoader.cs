@@ -32,7 +32,7 @@ internal static class LevelLoader
             }
         }
         if (msFail > 0)
-            Logger.info($"[AssetDatabase] Markerset: {msOk} ok / {msFail} failed. First 5: \n  " + string.Join("\n  ", failedNames));
+            ReCap.Server.Util.Logging.Log.Assets.Info($"Markerset: {msOk} ok / {msFail} failed. First 5: \n  " + string.Join("\n  ", failedNames));
 
         int lvlOk = 0, lvlFail = 0;
         string? firstLvlErr = null;
@@ -68,7 +68,7 @@ internal static class LevelLoader
             }
         }
         if (lvlFail > 0)
-            Logger.info($"[AssetDatabase] Level: {lvlOk} ok / {lvlFail} failed (first: {firstLvlErr})");
+            ReCap.Server.Util.Logging.Log.Assets.Info($"Level: {lvlOk} ok / {lvlFail} failed (first: {firstLvlErr})");
     }
 
     private static string StripExtension(string fullName)
