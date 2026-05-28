@@ -304,7 +304,7 @@ public abstract class Tdf
 
             if (!handled)
             {
-                Console.WriteLine($"Unhandled label {label} in {GetType().Namespace}.{GetType().Name}! Skipping...");
+                ReCap.Server.Util.Logging.Log.Blaze.Warn($"Unhandled label {label} in {GetType().Namespace}.{GetType().Name}! Skipping...");
 
                 decoder.SkipNextElement();
             }
@@ -476,7 +476,7 @@ public abstract class Tdf
             case 0xFFEB3C01: // Blaze::GameReporting::ArsonMultiKeyscopes::PlayerReport
             case 0xFFF38E69: // Blaze::GameReporting::Shooter::EntityReport
             default:
-                Console.WriteLine($"Unhandled id (0x{id:X8}) in Tdf.Create!");
+                ReCap.Server.Util.Logging.Log.Blaze.Warn($"Unhandled id (0x{id:X8}) in Tdf.Create!");
                 return null;
         }
     }

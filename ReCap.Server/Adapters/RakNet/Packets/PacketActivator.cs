@@ -266,12 +266,12 @@ public static class PacketActivator
                 break;
 
             default:
-                Console.WriteLine($"PacketActivator: Unhandled packet type: {type}!");
+                ReCap.Server.Util.Logging.Log.RakNet.Warn($"PacketActivator: Unhandled packet type: {type}!");
                 break;
         }
 
         if (packet is null)
-            Console.WriteLine($"PacketActivator: Packet class has not been setup for type: {type}!");
+            ReCap.Server.Util.Logging.Log.RakNet.Warn($"PacketActivator: Packet class has not been setup for type: {type}!");
 
         packet?.ReadFrom(stream);
 

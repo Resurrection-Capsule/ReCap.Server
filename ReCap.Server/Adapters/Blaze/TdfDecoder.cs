@@ -414,7 +414,7 @@ public class TdfDecoder
         if (!GetNextElement(out var label, out var type))
             throw new Exception("Unable to skip next element!");
 
-        Console.WriteLine($"TdfDecoder: Skipping ({label}, {type})...");
+        ReCap.Server.Util.Logging.Log.Blaze.Debug($"TdfDecoder: Skipping ({label}, {type})...");
 
         SkipElement(type);
     }

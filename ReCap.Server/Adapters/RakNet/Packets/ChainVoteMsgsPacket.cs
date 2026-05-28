@@ -65,7 +65,7 @@ public class ChainVoteMsgsPacket : IRakNetPacket
         }
         else
         {
-            Console.WriteLine($"[ChainVoteMsgsPacket] Writing Level: {data.Level:X8}, LevelIndex: {data.LevelIndex:X8}");
+            ReCap.Server.Util.Logging.Log.RakNet.Debug($"[ChainVoteMsgsPacket] Writing Level: {data.Level:X8}, LevelIndex: {data.LevelIndex:X8}");
             writeUInt32(0x00, data.Level);
             writeUInt32(0x04, data.LevelIndex);
             writeUInt32(0x08, data.StarLevel);

@@ -115,9 +115,8 @@ public class Client
         }
         catch (Exception ex)
         {
-            await Console.Out.WriteLineAsync($"Failed to accept connection: {ex.Message}");
-            Console.WriteLine(ex.ToString());
-            
+            ReCap.Server.Util.Logging.Log.Blaze.Error(ex, "Failed to accept connection");
+
             SslStream.Flush();
             SslStream.Close();
 
@@ -212,6 +211,6 @@ public class Client
         return false;
     }
 
-    private async void Log(string message) => await Console.Out.WriteLineAsync($"[{Server.Name} Client: {EndPoint}]: {message}");
+    private void Log(string message) => ReCap.Server.Util.Logging.Log.Blaze.Debug($"[{Server.Name} {EndPoint}] {message}");
 }
 

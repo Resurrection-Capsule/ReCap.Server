@@ -31,6 +31,7 @@ public static class Program
     const string _LOG_LEVEL_ARG = "--log-level=";
     static async Task Main(string[] args)
     {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
         var (logLevel, logOverrides) = ParseLogConfig(args);
         LoggingConfig.Bootstrap(logLevel, logOverrides);
         AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggingConfig.CloseAndFlush();

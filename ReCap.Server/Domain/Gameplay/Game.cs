@@ -9,6 +9,7 @@ using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Models;
 using ReCap.Server.Services;
 using ReCap.Server.Services.Assets;
+using ReCap.Server.Util.Logging;
 
 namespace ReCap.Server.Domain.Gameplay;
 
@@ -285,7 +286,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private void HandleDebugPing(RakNetClient sender)
     {
-        Console.WriteLine($"[Game] OnDebugPing (State={State})");
+        Log.Game.Info($"OnDebugPing (State={State})");
 
         switch (State)
         {
@@ -310,7 +311,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private void HandleChainPlayerMsgs(RakNetClient sender, ChainPlayerMsgsPacket packet)
     {
-        Console.WriteLine($"[Game] OnChainPlayerMsgs({packet.ByteCount}): {packet.Value}");
+        Log.Game.Info($"OnChainPlayerMsgs({packet.ByteCount}): {packet.Value}");
 
         if (packet.ByteCount == 1)
         {
@@ -319,7 +320,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 if (Assets != null) Chain.PopulateFromLevel(Assets);
                 sender.SendPacket(new ChainVoteMsgsPacket { Value = 0, ChainData = Chain });
                 sender.SendPacket(new ChainVoteMsgsPacket { Value = 1, SecondsUntilDeployment = 30f });
-                Console.WriteLine("[Game] Sent ChainVoteMessages");
+                Log.Game.Info("Sent ChainVoteMessages");
             }
             else if (packet.Value == 2)
             {
@@ -338,7 +339,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
             var prepareStart = new GamePrepareForStartPacket(Chain.Level, Chain.MarkerSet, 1, Chain.LevelIndex);
             sender.SendPacket(prepareStart);
-            Console.WriteLine($"[Game] Sent GamePrepareForStart (Level=0x{Chain.Level:X8}, LevelIndex={Chain.LevelIndex}, SquadId={packet.SquadId})");
+            Log.Game.Info($"Sent GamePrepareForStart (Level=0x{Chain.Level:X8}, LevelIndex={Chain.LevelIndex}, SquadId={packet.SquadId})");
 
             var player = GetPlayerByClient(sender);
             if (player != null)
@@ -359,7 +360,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private void HandlePlayerStatusUpdate(RakNetClient sender, PlayerStatusUpdatePacket packet)
     {
-        Console.WriteLine($"[Game] OnPlayerStatusUpdate: {packet.Status} (State={State})");
+        Log.Game.Info($"OnPlayerStatusUpdate: {packet.Status} (State={State})");
 
         var player = GetPlayerByClient(sender);
         if (player != null)
@@ -459,14 +460,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             }
         };
         client.SendPacket(createPacket);
-        Console.WriteLine($"[Game] Spawned hero objectId={objectId} noun=0x{creatureNoun:X} at ({spawnPos.X},{spawnPos.Y},{spawnPos.Z})");
+        Log.Game.Info($"Spawned hero objectId={objectId} noun=0x{creatureNoun:X} at ({spawnPos.X},{spawnPos.Y},{spawnPos.Z})");
 
         client.SendPacket(new PlayerCharacterDeployPacket(player.Slot, objectId));
     }
 
     private void HandleActionCommand(RakNetClient sender, ActionCommandMsgsPacket packet)
     {
-        Console.WriteLine($"[Game] ActionCommand: type={packet.CommandType} obj=0x{packet.ObjectId:X} pos=({packet.PosX:F1},{packet.PosY:F1},{packet.PosZ:F1})");
+        Log.Game.Debug($"ActionCommand: type={packet.CommandType} obj=0x{packet.ObjectId:X} pos=({packet.PosX:F1},{packet.PosY:F1},{packet.PosZ:F1})");
 
         if (packet.CommandType == 3)
         {
@@ -497,7 +498,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         }
         else if (packet.CommandType == 5)
         {
-            Console.WriteLine($"[Game] Switch character requested");
+            Log.Game.Debug("Switch character requested");
         }
     }
 }
