@@ -581,18 +581,21 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType == 3)
         {
+            // ActionCommandMovementData: goalPosition + goalFlags. C++ broadcasts 0x91 to move.
+            var (goalFlags, gx, gy, gz) = packet.ReadMovementData();
             var movePacket = new ObjectPlayerMovePacket
             {
                 ObjectId = packet.ObjectId,
                 Locomotion = new LocomotionData
                 {
-                    GoalFlags = 0x001,
-                    GoalPosition = new Vector3(packet.PosX, packet.PosY, packet.PosZ),
+                    GoalFlags = goalFlags,
+                    GoalPosition = new Vector3(gx, gy, gz),
                     AllowedStopDistance = 0,
                     DesiredStopDistance = 0
                 }
             };
             sender.SendPacket(movePacket);
+            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{goalFlags:X}");
         }
         else if (packet.CommandType == 4)
         {

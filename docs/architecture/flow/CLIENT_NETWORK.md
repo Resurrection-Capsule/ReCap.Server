@@ -69,11 +69,40 @@ Mirrors the Lua/AssetData/Simulation approach:
 3. **The registrar** (`ConnectAndRegisterMessages` + the in-game equivalent) maps index→handler.
 4. Rename `FUN_*` → `nSporeNet::cClientSession::OnGms<Name>`; plate-comment the registrar.
 
+## ActionCommandMsgs (0x9C) — client→server input (RESOLVED)
+
+Verified vs C++ `OnActionCommandMsgs` (Server.cpp:688) and a live client packet.
+Ghidra Data Types created: `ActionCommandCommonData` (40B), `ActionCommandMovementData` (24B).
+
+`ActionCommandCommonData` (40 bytes, raw LE, `#pragma pack(1)`):
+
+| off | field | type |
+|----:|-------|------|
+| 0x00 | type | u8 (ActionCommand enum) |
+| 0x01 | unk | u8×3 |
+| 0x04 | inputSyncStamp | u32 |
+| 0x08 | objectId | u32 |
+| 0x0C | position | vec3 (f32×3) |
+| 0x18 | orientation | quat (f32×4) |
+
+Command-specific follows. `ActionCommandMovementData` (24B, Movement=3 / Stop=4):
+`u32 unk, vec3 goalPosition, u32 goalFlags, u32 unk2`. SwitchCharacter=5: `u32 slotIndex`.
+
+ActionCommand enum: Movement=3, StopMovement=4, SwitchCharacter=5, UseCharacterAbility=7,
+UseSquadAbility=8, CatalystPickup=9, Cancel=10, UseInteractableObject=11, Dance=12, Taunt=13.
+
+Server reply to Movement: broadcast `ObjectPlayerMove (0x91)` (LE wire per our convention).
+goalFlags bit 0x020 = teleport → `ObjectTeleport (0x90)` instead.
+
+> Our previous `ReadFrom` read objectId first (misaligned, objectId came out as 0x3F000003).
+> Fixed in `ActionCommandMsgsPacket` + `Game.HandleActionCommand` now replies with the move.
+
 ## Next targets
 
 - Locate the **in-game session** that registers gameplay message handlers (ObjectCreate,
-  LabsPlayerUpdate, ActionCommandResponse, ModifierCreated, …) — same registrar pattern.
-- Reverse the **ActionCommandMsgs (0x9C) serialize** on the client (send side) to fix our
-  misaligned parse + movement reply (task #11): need exact `ActionCommandCommonData` layout.
+  LabsPlayerUpdate, ActionCommandResponse, ModifierCreated, …). The lobby `cClientSession`
+  registers only idx 1/3/5/7 via the msg-manager singleton (FUN_00a92e20); gameplay handlers
+  use a different path. The **message registry table is at data `0x0118b488`** (references the
+  kGms name array base 0x01036410) — start there.
 - Reverse the message (de)serializers to verify our `WriteTo`/reflection byte-for-byte
   (feeds the catalog-driven packet serializer plan).
