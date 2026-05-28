@@ -135,7 +135,9 @@ These constants empirically diverge from C++ source but are CORRECT for client b
 
 ## External Resources
 
-- **DarksporeGhidra** — ONLY contains AssetData structure definitions (labsPlayer, GameObjectCreateData). Does NOT contain game logic, packet handlers, network code. Never search there for packet behavior.
+- **DarksporeGhidra** (the AssetData-only project) — ONLY contains AssetData structure definitions (labsPlayer, GameObjectCreateData). No game logic / packet handlers.
+- **Darkspore.exe in Ghidra (MCP)** — UPDATED 2026-05-28: the full retail client IS loaded (49507 funcs, `nSporeNet` transport, `kGms*` message table at 0x01036410+, per-message `OnGms*` handlers, session state machine). USE IT for client-side packet behavior/struct layouts. Client packet names match our `PacketType` enum 1:1 (kGmsHelloReq…kGmsDebugPing).
+- **Command matrix** — `docs/architecture/flow/COMMAND_MATRIX.md` maps every PacketID 0x7F–0xCC: direction, C# status, C++ handler. C++ handles only 7 inbound (0x7F,0x88,0x9C,0xAC,0xC2,0xCB,0xCC).
 
 ## C++ Gameplay Flow (Authoritative)
 
