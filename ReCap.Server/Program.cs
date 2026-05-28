@@ -24,6 +24,7 @@ public static class Program
     const string _PORT_ARG = "--port=";
     const string _DB_PATH_ARG = "--database-path=";
     const string _GAME_PATH_ARG = "--game-path=";
+    const string _RAKNET_VERBOSE_ARG = "--raknet-verbose";
     static async Task Main(string[] args)
     {
 #nullable disable
@@ -69,6 +70,10 @@ public static class Program
                     gamePath = gPath;
                 else
                     Logger.error($"Game path not found: '{gPath}'");
+            }
+            else if (arg == _RAKNET_VERBOSE_ARG)
+            {
+                RakNexus.RakLog.Verbose = true;
             }
         }
 
