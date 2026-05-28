@@ -1,0 +1,980 @@
+Darkspore.exe reflection field registrars (callers of HashFunctionn @ 0x00adf410)
+FNV-1: hash = hash*0x01000193 ^ xlat[byte]; basis 0x811c9dc5; mode 1 = case-fold table @0x01191e30
+488 functions, 6292 hashed strings
+
+004045D0  FUN_004045d0  (0 fields)
+    
+004048F0  FUN_004048f0  (1 fields)
+    dnaAmount
+0040A6B0  FUN_0040a6b0  (1 fields)
+    ShowFriendsChat
+0040AF90  FUN_0040af90  (1 fields)
+    ShowFriendsChat
+0040BF10  FUN_0040bf10  (2 fields)
+    difficultyName, minorLevel
+0040C120  FUN_0040c120  (3 fields)
+    avatarLevel, heroName, playerName
+0040C980  FUN_0040c980  (1 fields)
+    command
+00416ED0  FUN_00416ed0  (2 fields)
+    gearScore, gearScore
+00417660  FUN_00417660  (1 fields)
+    gearScore
+00417CA0  FUN_00417ca0  (0 fields)
+    
+004264E0  FUN_004264e0  (0 fields)
+    
+00427A80  FUN_00427a80  (0 fields)
+    
+00427B80  FUN_00427b80  (0 fields)
+    
+00427CB0  FUN_00427cb0  (0 fields)
+    
+00427DE0  FUN_00427de0  (0 fields)
+    
+00427EE0  FUN_00427ee0  (0 fields)
+    
+00428010  FUN_00428010  (0 fields)
+    
+0042B750  FUN_0042b750  (0 fields)
+    
+00437940  FUN_00437940  (0 fields)
+    
+0043C8D0  FUN_0043c8d0  (0 fields)
+    
+0043D3D0  FUN_0043d3d0  (0 fields)
+    
+0043D5B0  FUN_0043d5b0  (1 fields)
+    ShowRadar
+00440000  FUN_00440000  (1 fields)
+    ShowRadar
+00440BD0  FUN_00440bd0  (4 fields)
+    majorDifficulty, minorDifficulty, time, dnaAmount
+004434D0  FUN_004434d0  (1 fields)
+    Level
+004475E0  FUN_004475e0  (1 fields)
+    noTextAlerts
+00447820  FUN_00447820  (2 fields)
+    Labs, RenderUIOnly
+00449270  FUN_00449270  (0 fields)
+    
+0044B230  FUN_0044b230  (1 fields)
+    playInterlevelFMVs
+00451080  FUN_00451080  (1 fields)
+    mixmode_observer
+00468120  FUN_00468120  (1 fields)
+    SporeNetMessages
+0046BDD0  FUN_0046bdd0  (3 fields)
+    BlazeServiceName, BlazeSecure, BlazeEnvironment
+00477CA0  FUN_00477ca0  (1 fields)
+    Flair
+0047AE00  FUN_0047ae00  (9 fields)
+    LabsCreature, LabsCreatureGhost, LabsCreaturePulse, LabsCreatureDistortion, LabsCreaturePhasing, LabsCreatureCircuit, LabsCreatureTrans, LabsCreatureCrystal, LabsCreatureArmor
+00484B10  FUN_00484b10  (1 fields)
+    Flair
+00486550  FUN_00486550  (1 fields)
+    Flair
+0048E170  FUN_0048e170  (1 fields)
+    editorThumb
+00492C70  FUN_00492c70  (2 fields)
+    decal, decalDiffuseUnlit
+004A9220  BinaryModel::ReadResourceModel  (2 fields)
+    InvalidMaterial, Invalid
+004B3660  FUN_004b3660  (0 fields)
+    
+004B4E70  FUN_004b4e70  (0 fields)
+    
+004B57F0  FUN_004b57f0  (3 fields)
+    paintEffectName, paintEffectMaterial, paintEffectGroup
+004B6550  FUN_004b6550  (7 fields)
+    ToonType, ToonInternalColor, ToonInternalWidth, ToonExternalColor, ToonExternalWidth, ToonSensitivity, ToonCleanup
+004B6D30  FUN_004b6d30  (2 fields)
+    toonIdPalette, DefaultRenderingConfig
+004BCDD0  FUN_004bcdd0  (0 fields)
+    
+004BCE30  FUN_004bce30  (1 fields)
+    rtShadow
+004BD020  FUN_004bd020  (0 fields)
+    
+004BD4A0  FUN_004bd4a0  (0 fields)
+    
+004BE940  FUN_004be940  (0 fields)
+    
+004C0300  FUN_004c0300  (0 fields)
+    
+004C2F60  FUN_004c2f60  (2 fields)
+    main, depth
+004C36A0  UIMinimap?  (1 fields)
+    minimap
+004C4590  FUN_004c4590  (1 fields)
+    marker
+004C4890  FUN_004c4890  (1 fields)
+    nodes
+004C7220  FUN_004c7220  (0 fields)
+    
+004C72A0  FUN_004c72a0  (0 fields)
+    
+004CCD30  FUN_004ccd30  (1 fields)
+    labsSimple
+004CE4F0  FUN_004ce4f0  (0 fields)
+    
+004D1C60  FUN_004d1c60  (0 fields)
+    
+004D2390  FUN_004d2390  (0 fields)
+    
+004D2600  FUN_004d2600  (0 fields)
+    
+004D5FA0  FUN_004d5fa0  (0 fields)
+    
+004D7010  FUN_004d7010  (0 fields)
+    
+004DBA50  FUN_004dba50  (0 fields)
+    
+004DBAD0  FUN_004dbad0  (0 fields)
+    
+004DD5E0  FUN_004dd5e0  (0 fields)
+    
+004DEA50  FUN_004dea50  (0 fields)
+    
+004E3230  FUN_004e3230  (1 fields)
+    mixmode_global
+004E40D0  FUN_004e40d0  (1 fields)
+    playerName
+004E42B0  FUN_004e42b0  (1 fields)
+    playerName
+004E48A0  FUN_004e48a0  (1 fields)
+    mixmode_global
+004E7D30  FUN_004e7d30  (1 fields)
+    labs_global
+004E8490  FUN_004e8490  (0 fields)
+    
+004E85A0  FUN_004e85a0  (0 fields)
+    
+004ED250  FUN_004ed250  (0 fields)
+    
+004EFD90  FUN_004efd90  (0 fields)
+    
+004F0920  FUN_004f0920  (0 fields)
+    
+004F0FD0  FUN_004f0fd0  (0 fields)
+    
+004F1950  FUN_004f1950  (1 fields)
+    cCameraComponent
+004F2470  FUN_004f2470  (0 fields)
+    
+004F2C70  FUN_004f2c70  (2 fields)
+    GlobalShadows, SpotShadows
+004F3450  FUN_004f3450  (1 fields)
+    Overdrive
+004F53F0  FUN_004f53f0  (1 fields)
+    broken_effect
+004F6680  FUN_004f6680  (0 fields)
+    
+004FA160  FUN_004fa160  (0 fields)
+    
+004FA8D0  FUN_004fa8d0  (1 fields)
+    overdrive_end
+004FC640  FUN_004fc640  (1 fields)
+    DrawMinimap
+004FECF0  FUN_004fecf0  (7 fields)
+    NullDevice, FlashUI, ToonShading, Glow, Bloom, Fog, DrawMinimap
+004FF260  FUN_004ff260  (2 fields)
+    cryosfootstep, puddle_stomp
+004FFB90  FUN_004ffb90  (9 fields)
+    BlendCube, RGBCube, rgbCreateCube, rgbUseCube, fog, BlendCube, RGBCube, rgb, colorCube
+00503980  FUN_00503980  (4 fields)
+    rtShadow, rtSpotDepthShadow, rtSpotDummyColorShadow, rtSpotColorShadow
+00505710  FUN_00505710  (1 fields)
+    hazard_blizzard
+00506280  FUN_00506280  (1 fields)
+    labsHighlight
+00507340  FUN_00507340  (0 fields)
+    
+005098C0  FUN_005098c0  (2 fields)
+    builtins, sphere
+00509F60  FUN_00509f60  (2 fields)
+    round_brush, wading_water_foam
+0050C6A0  FUN_0050c6a0  (1 fields)
+    overdrive_start.ServerEventDef
+00512420  CameraConfigLoader?  (70 fields)
+    enableJump, enablePlayerRouting, enableWASD, enableSimpleMouse, enableClickToMove, enableVistaShots, enableHealthBars, disableWiggles, wigglesSpringStrength, wigglesSpringDamping, wigglesSpringDistanceLimit, wigglesHitDuration, wigglesHitRootDamping, wigglesHitRootStartTime, wigglesHitRootDuration, arenaHealthPerTick, labsDefaultPitch, labsDefaultZoomedPitch, labsDefaultYaw, labsDefaultZoomedYaw, labsDefaultDistance, labsDefaultZoomedDistance, labsDefaultFOV, labsDefaultZoomedFOV, labsDefaultScreenOffsetX, labsDefaultZoomedScreenOffsetX, labsDefaultScreenOffsetY, labsDefaultZoomedScreenOffsetY, labsDefaultNearClip, labsDefaultZoomedNearClip, labsDefaultZoomedStartDistance, labsAlternatePitch, labsAlternateZoomedPitch, labsAlternateYaw, labsAlternateZoomedYaw, labsAlternateDistance, labsAlternateZoomedDistance, labsAlternateFOV, labsAlternateZoomedFOV, labsAlternateScreenOffsetX, labsAlternateZoomedScreenOffsetX, labsAlternateScreenOffsetY, labsAlternateZoomedScreenOffsetY, labsAlternateNearClip, labsAlternateZoomedNearClip, labsAlternateZoomedStartDistance, labsAlternatePitch2, labsAlternateZoomedPitch2, labsAlternateYaw2, labsAlternateZoomedYaw2, labsAlternateDistance2, labsAlternateZoomedDistance2, labsAlternateFOV2, labsAlternateZoomedFOV2, labsAlternateScreenOffsetX2, labsAlternateZoomedScreenOffsetX2, labsAlternateScreenOffsetY2, labsAlternateZoomedScreenOffsetY2, labsAlternateNearClip2, labsAlternateZoomedNearClip2, labsAlternateZoomedStartDistance2, labsRotateSensitivity, labsRotateMouseSensitivity, labsZoomSensitivity, labsZoomWheelSensitivity, labsTranslateSensitivity, mayaRotateSensitivity, mayaZoomSensitivity, mayaTranslateSensitivity, vistaShotTransitionTime
+00517B20  FUN_00517b20  (0 fields)
+    
+00519090  FUN_00519090  (1 fields)
+    inGameRegistration
+0051B860  FUN_0051b860  (1 fields)
+    gearScore
+0051C360  FUN_0051c360  (2 fields)
+    gearScoreMin, gearScoreMax
+0051C9C0  FUN_0051c9c0  (2 fields)
+    difficultyMode, difficultyLevel
+0051F910  FUN_0051f910  (1 fields)
+    playerName
+005201E0  FUN_005201e0  (2 fields)
+    playerName, playerName
+00536940  FUN_00536940  (0 fields)
+    
+0053AB80  FUN_0053ab80  (2 fields)
+    ClientLag_MinPing, ClientLag_PingVariance
+0053B490  FUN_0053b490  (1 fields)
+    LogNetworkStats
+005401A0  FUN_005401a0  (1 fields)
+    Survey
+00543960  FUN_00543960  (3 fields)
+    UseLiveTelemetryServer, TelemetryServerAddress, telemetryHTTPTimeout
+00547960  FUN_00547960  (2 fields)
+    InteractWithObelisk, InteractHealthObelisk
+0066E3D0  FUN_0066e3d0  (0 fields)
+    
+007138A0  FUN_007138a0  (0 fields)
+    
+00715FC0  FUN_00715fc0  (1 fields)
+    paintBrushHitSplatCached
+00716380  FUN_00716380  (0 fields)
+    
+00716450  FUN_00716450  (2 fields)
+    paintJobRenderStepsPerFrameBoosted, paintJobRenderStepsPerFrame
+0077BE00  FUN_0077be00  (1 fields)
+    PrefsClearGraphicsCache
+007A1270  FUN_007a1270  (1 fields)
+    Movie
+007B21C0  FUN_007b21c0  (0 fields)
+    
+007BF680  FUN_007bf680  (1 fields)
+    Alert
+007BF840  FUN_007bf840  (1 fields)
+    Alert
+007EAC00  FUN_007eac00  (0 fields)
+    
+007EFB90  FUN_007efb90  (0 fields)
+    
+008408E0  FUN_008408e0  (1 fields)
+    GenericStatic
+00844DF0  FUN_00844df0  (1 fields)
+    MessageEffectsModelLoaded
+00853C40  FUN_00853c40  (0 fields)
+    
+00857C00  FUN_00857c00  (0 fields)
+    
+00860100  FUN_00860100  (0 fields)
+    
+00886760  FUN_00886760  (1 fields)
+    generic2D
+008877A0  FUN_008877a0  (1 fields)
+    GlyphCache
+00897110  FUN_00897110  (0 fields)
+    
+00897E70  FUN_00897e70  (0 fields)
+    
+008A3950  FUN_008a3950  (1 fields)
+    editorThumb
+008ADA10  FUN_008ada10  (1 fields)
+    editorThumbnail
+008C1690  FUN_008c1690  (1 fields)
+    effects-point
+008CE130  FUN_008ce130  (1 fields)
+    InvalidMaterial
+008D0520  FUN_008d0520  (3 fields)
+    PlaceholderNormalMap, PlaceholderSpecGlossMap, DefaultWhite
+00917F20  FUN_00917f20  (0 fields)
+    
+0091E790  FUN_0091e790  (1 fields)
+    dnt_no_word_break_dictionary
+0094CCF0  FUN_0094ccf0  (0 fields)
+    
+0095B3B0  FUN_0095b3b0  (0 fields)
+    
+0096B360  FUN_0096b360  (0 fields)
+    
+009736B0  FUN_009736b0  (0 fields)
+    
+00985EA0  FUN_00985ea0  (0 fields)
+    
+0098B3A0  FUN_0098b3a0  (0 fields)
+    
+009BCCF0  FUN_009bccf0  (0 fields)
+    
+009C6DA0  FUN_009c6da0  (1 fields)
+    SimulatorDebugPing
+009CAC50  FindCachedAsset  (0 fields)
+    
+009CB9A0  FUN_009cb9a0  (0 fields)
+    
+009CC1E0  FUN_009cc1e0  (1 fields)
+    Catalog
+009CC4C0  FUN_009cc4c0  (0 fields)
+    
+009CD0F0  CreateInstance  (0 fields)
+    
+009CD7A0  LoadCatalogFile  (1 fields)
+    Catalog
+009CD8C0  FUN_009cd8c0  (0 fields)
+    
+009CFF00  FUN_009cff00  (0 fields)
+    
+009DD9E0  FUN_009dd9e0  (2 fields)
+    InteractWithObelisk, InteractHealthObelisk
+009E1C50  FUN_009e1c50  (3 fields)
+    cLocomotionData, cAgentBlackboard, cAIDirector
+009F43E0  BuildTypeMetadata  (0 fields)
+    
+009F9E00  SPID  (0 fields)
+    
+009FC000  SetAnimationState  (0 fields)
+    
+009FC1A0  SetOverlayAnimationState  (0 fields)
+    
+009FC890  SetOverrideMoveAnimationState  (0 fields)
+    
+00A002C0  NotifyObjects  (0 fields)
+    
+00A06790  CanUseAbility  (0 fields)
+    
+00A09F90  FUN_00a09f90  (0 fields)
+    
+00A0A3C0  FUN_00a0a3c0  (0 fields)
+    
+00A0C340  RegisterObjective  (0 fields)
+    
+00A0C570  RegisterAffix  (0 fields)
+    
+00A0EEA0  FUN_00a0eea0  (0 fields)
+    
+00A15740  FUN_00a15740  (0 fields)
+    
+00A1C9E0  FUN_00a1c9e0  (0 fields)
+    
+00A1E700  FUN_00a1e700  (2 fields)
+    InteractWithDoor, NewInteractWithSwitch
+00A20270  FUN_00a20270  (0 fields)
+    
+00A21130  FUN_00a21130  (0 fields)
+    
+00A211C0  FUN_00a211c0  (0 fields)
+    
+00A21720  FUN_00a21720  (0 fields)
+    
+00A218D0  FUN_00a218d0  (1 fields)
+    cSPVector3
+00A2246A  FUN_00a2246a  (0 fields)
+    
+00A22AB0  FUN_00a22ab0  (0 fields)
+    
+00A32770  FUN_00a32770  (0 fields)
+    
+00A33100  FUN_00a33100  (0 fields)
+    
+00A33160  FUN_00a33160  (0 fields)
+    
+00A3FBA0  FUN_00a3fba0  (1 fields)
+    door opened
+00A3FC00  FUN_00a3fc00  (1 fields)
+    door closed
+00A42700  FUN_00a42700  (0 fields)
+    
+00A43040  RegisterAbility  (1 fields)
+    ability
+00A430E0  RegisterCondition  (1 fields)
+    cAICondition
+00A43260  PreloadAsset  (0 fields)
+    
+00A432E0  PreloadModifier  (0 fields)
+    
+00A43390  PreloadAnimation  (0 fields)
+    
+00AF9850  FUN_00af9850  (0 fields)
+    
+00C12D40  FUN_00c12d40  (0 fields)
+    
+00C292E0  FUN_00c292e0  (4 fields)
+    BlazeServiceNameTrial, BlazeServiceName, BlazeEnvironment, BlazeIgnoreTimeout
+00C321E0  FUN_00c321e0  (1 fields)
+    FriendNotificationIgnoreTimeSeconds
+00C3B8F0  FUN_00c3b8f0  (1 fields)
+    FilterProfanity
+00C3C050  FUN_00c3c050  (1 fields)
+    FilterProfanity
+00C704E0  AudioFileData?  (52 fields)
+    parent, gain, pan, pitch, mindistance, maxdistance, rolloff, streambuffersize, streambufferreadsize, is3d, islooped, samples, fadein, fadeout, priority, autoduck, duckcurve, ducks, attenuation, primitives, soundtype, enable, startdelay, randomstartdelay, showmindistance, footcurvenumlegstogain, footcurveveltogain, footcurvelentohipass, footcurvemasstopitch, footcurvefootsizetopitch, footcurvemasstohipass, footcurvemasstogain, footcurvefootsizetogain, footcurvefootsizetohipass, atmospheric, polyphony, streampoolguid, probability, dspchain, syms, dacoutputmode, ignorecontext, voicetemplate, foottype, mouthtype, weapontype, time, wetlevel, reverbtime, reverbspacesize, timeinvariantpitch, listeneroffset
+00C7BDB0  FUN_00c7bdb0  (0 fields)
+    
+00C8F130  FUN_00c8f130  (0 fields)
+    
+00CFC050  FUN_00cfc050  (0 fields)
+    
+00CFD9A0  FUN_00cfd9a0  (0 fields)
+    
+00CFDA40  FUN_00cfda40  (0 fields)
+    
+00CFFCC0  FUN_00cffcc0  (0 fields)
+    
+00E803E0  FUN_00e803e0  (5 fields)
+    __diffuse, __tintmask, __specbump, __shinymask, __effectsmask
+00E89F40  FUN_00e89f40  (1 fields)
+    black
+00E8C900  FUN_00e8c900  (1 fields)
+    GeomInfo
+00EB2F20  cSpaceshipCameraTuning  (6 fields)
+    Key, name, 0, float, weight, 0
+00EB30E0  cSpaceshipCameraTuning  (1 fields)
+    cSpaceshipCameraTuning
+00EB3120  SpaceshipTuning  (231 fields)
+    asset, level, Level, float, conga_line_move_speed, 0, cSPVector3, dias_offset, 0, float, ui_delay_after_animation, 0, float, ui_delay_mouseover, 0, cSPVector3, dias_light_default_color, 0, cSPVector3, dias_light_swap_color, 0, cSPVector3, dias_light_locked_color, 0, cSPVector3, dias_light_collectable_color, 0, cSPVector3, dias_light_in_deck_color, 0, array, camera_start_collection, cSpaceshipCameraTuning, array, camera_start_map, cSpaceshipCameraTuning, array, camera_start_planet, cSpaceshipCameraTuning, array, camera_collection_map, cSpaceshipCameraTuning, array, camera_collection_editor, cSpaceshipCameraTuning, array, camera_map_collection, cSpaceshipCameraTuning, array, camera_map_editor, cSpaceshipCameraTuning, array, camera_editor_collection, cSpaceshipCameraTuning, array, camera_editor_map, cSpaceshipCameraTuning, array, camera_map_planet, cSpaceshipCameraTuning, array, camera_planet_game, cSpaceshipCameraTuning, array, camera_planet_collection, cSpaceshipCameraTuning, array, camera_planet_editor, cSpaceshipCameraTuning, cSPVector3, small_placard_offset_base, 0, cSPVector3, small_placard_rotation_base, 0, float, small_placard_scale_base, 0, array, small_placard_offset, cSPVector3, array, small_placard_rotation, cSPVector3, array, small_placard_scale, float, cSPVector3, small_deck_placard_offset_base, 0, cSPVector3, small_deck_placard_rotation_base, 0, float, small_deck_placard_scale_base, 0, array, small_deck_placard_offset, cSPVector3, array, small_deck_placard_rotation, cSPVector3, array, small_deck_placard_scale, float, cSPVector3, large_placard_offset_base, 0, cSPVector3, large_placard_rotation_base, 0, float, large_placard_scale_base, 0, array, large_placard_offset, cSPVector3, array, large_placard_rotation, cSPVector3, array, large_placard_scale, float, cSPVector3, large_deck_placard_offset_base, 0, cSPVector3, large_deck_placard_rotation_base, 0, float, large_deck_placard_scale_base, 0, array, large_deck_placard_offset, cSPVector3, array, large_deck_placard_rotation, cSPVector3, array, large_deck_placard_scale, float, cSPVector3, context_menu_offset_base, 0, cSPVector3, context_menu_rotation_base, 0, float, context_menu_scale_base, 0, array, context_menu_offset, cSPVector3, array, context_menu_rotation, cSPVector3, array, context_menu_scale, float, cSPVector3, deck_context_menu_offset_base, 0, cSPVector3, deck_context_menu_rotation_base, 0, float, deck_context_menu_scale_base, 0, array, deck_context_menu_offset, cSPVector3, array, deck_context_menu_rotation, cSPVector3, array, deck_context_menu_scale, float, cSPVector3, empty_squad_slot_offset_base, 0, cSPVector3, empty_squad_slot_rotation_base, 0, float, empty_squad_slot_scale_base, 0, array, empty_squad_slot_offset, cSPVector3, array, empty_squad_slot_rotation, cSPVector3, array, empty_squad_slot_scale, float, cSPVector3, controls_offset, 0, cSPVector3, controls_rotation, 0, float, controls_scale, 0, cSPVector3, squad_controls_offset, 0, cSPVector3, squad_controls_rotation, 0, float, squad_controls_scale, 0, cSPVector3, map_room_ui_offset, 0, cSPVector3, map_room_ui_rotation, 0, float, map_room_ui_scale, 0, cSPVector3, planet_screen_ui_offset, 0, cSPVector3, planet_screen_ui_rotation, 0, float, planet_screen_ui_scale, 0
+00EB6EF0  SpaceshipTuning  (1 fields)
+    SpaceshipTuning
+00EB8170  cToolPos  (15 fields)
+    bool, visible, 0, int, left, 0, int, right, 0, int, top, 0, int, bottom, 0
+00EB8570  cToolPos  (1 fields)
+    cToolPos
+00EB85B0  cAssetQueryString  (3 fields)
+    char*, query, 0
+00EB8690  cAssetQueryString  (1 fields)
+    cAssetQueryString
+00EB86D0  cLayerPrefs  (9 fields)
+    char*, layerName, 0, bool, locked, 0, bool, hidden, 0
+00EB8940  cLayerPrefs  (1 fields)
+    cLayerPrefs
+00EB8980  EditorPrefs  (78 fields)
+    enum, cameraMode, 0, asset, lastLevel, Level, bool, lastLevelLoadedSuccessfully, 0, char*, lastActiveMarkersetString, 0, cToolPos, assetBrowser, 0, cToolPos, propBrowser, 0, cToolPos, aiEditor, 0, cToolPos, layers, 0, bool, showEditorWidgets, 0, bool, toolbarVisible, 0, bool, rotateTool, 0, bool, translateTool, 0, bool, scaleTool, 0, enum, transformSpace, 0, bool, useClipboardCopy, 0, enum, checkoutProtection, 0, bool, newLayerInNewFile, 0, bool, randomRotate, 0, bool, randomScale, 0, float, randomScalePercent, 0, float, gridUnit, 0, float, snapAngle, 0, array, recentQueries, cAssetQueryString, array, recentLayerQueries, cAssetQueryString, array, layerPrefs, cLayerPrefs, bool, useCurrentPositionAsPlayerStartingPoint, 0
+00EB9DC0  EditorPrefs  (1 fields)
+    EditorPrefs
+00EBC6B0  cCinematicView  (15 fields)
+    cSPVector3, position, 0, cSPQuaternion, orientation, 0, float, fov, 0, float, targetTime, 0, float, delayTime, 0
+00EBCAB0  cCinematicView  (1 fields)
+    cCinematicView
+00EBCAF0  Cinematic  (3 fields)
+    array, view, cCinematicView
+00EBCBD0  Cinematic  (1 fields)
+    Cinematic
+00EBEBD0  PopupTip  (3 fields)
+    char, namespace, 0
+00EBECB0  PopupTip  (1 fields)
+    PopupTip
+00EBF8A0  UnlockDef  (33 fields)
+    int, id, 0, int, prerequisite, 0, int, cost, 0, int, level, 0, int, rank, 0, enum, unlockType, 0, int, value, 0, enum, unlockFunction, 0, Key, image, 0, Key, title, 0, Key, description, 0
+00EC0160  UnlockDef  (1 fields)
+    UnlockDef
+00EC01A0  UnlocksTuning  (3 fields)
+    array, unlock, UnlockDef
+00EC0280  UnlocksTuning  (1 fields)
+    UnlocksTuning
+00EC0300  WeaponDef  (21 fields)
+    uint64_t, refId, 0, int, itemLevel, 0, uint32_t, rigblockId, 0, uint32_t, suffixId, 0, int, cost, 0, int, avatarLevel, 0, int, chainProgression, 0
+00EC0870  WeaponDef  (1 fields)
+    WeaponDef
+00EC08B0  WeaponTuning  (3 fields)
+    array, weapon, WeaponDef
+00EC0990  WeaponTuning  (1 fields)
+    WeaponTuning
+00ECFDF0  FUN_00ecfdf0  (1 fields)
+    editor_sym_snap
+00ECFE10  FUN_00ecfe10  (1 fields)
+    editor_sym_unsnap
+00F12EF0  Particles_DecalEnumStrings?  (11 fields)
+    Particles_Decal, Particles_DecalInvertDepth, Particles_DecalIgnoreDepth, Particles_DepthDecal, Particles_Additive, Particles_AdditiveInvertDepth, Particles_AdditiveIgnoreDepth, Particles_Modulate, Particles_NormalMap, Particles_DepthNormalMap, Particles_AlphaTestDissolve
+00F13010  ParticlesLightFogEnumStrings?  (11 fields)
+    ParticlesLightFog_Decal, ParticlesLightFog_DecalInvertDepth, ParticlesLightFog_DecalIgnoreDepth, ParticlesLightFog_DepthDecal, Particles_Additive, Particles_AdditiveInvertDepth, Particles_AdditiveIgnoreDepth, Particles_Modulate, Particles_NormalMap, Particles_DepthNormalMap, Particles_AlphaTestDissolve
+00F22270  ScreenEnumStrings?  (10 fields)
+    ScreenAdditive, ScreenBlend, ScreenTint, ScreenBrighten, ScreenSkyBox, ScreenBackground, ScreenAdditiveTexture, ScreenBlendTexture, ScreenTintTexture, ScreenBrightenTexture
+00F35BB0  FUN_00f35bb0  (1 fields)
+    TooltipTimeoutTime
+00F35C10  FUN_00f35c10  (1 fields)
+    TooltipFastSwitchTime
+00F35C70  FUN_00f35c70  (1 fields)
+    TooltipHoverTime
+00F3F4D0  labsCharacter  (372 fields)
+    int, staticData.version, 0, asset, staticData.nounDef, Noun, uint64_t, staticData.assetID, 0, uint32_t, mCreatureType, 0, uint64_t, mDeployCooldownMs, 0, uint32_t, mAbilityPoints, 0, uint32_t, mAbilityRanks, 0, float, mHealthPoints, 0, float, mMaxHealthPoints, 0, float, mManaPoints, 0, float, mMaxManaPoints, 0, float, mGearScore, 0, float, mGearScoreFlattened, 0, float, staticData.partsAttributes[kAttribute_Strength], 0, float, staticData.partsAttributes[kAttribute_Dexterity], 0, float, staticData.partsAttributes[kAttribute_Mind], 0, float, staticData.partsAttributes[kAttribute_MaxHealthIncrease], 0, float, staticData.partsAttributes[kAttribute_MaxHealth], 0, float, staticData.partsAttributes[kAttribute_MaxMana], 0, float, staticData.partsAttributes[kAttribute_DamageReduction], 0, float, staticData.partsAttributes[kAttribute_PhysicalDefense], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageReduction], 0, float, staticData.partsAttributes[kAttribute_EnergyDefense], 0, float, staticData.partsAttributes[kAttribute_CriticalRating], 0, float, staticData.partsAttributes[kAttribute_NonCombatSpeed], 0, float, staticData.partsAttributes[kAttribute_CombatSpeed], 0, float, staticData.partsAttributes[kAttribute_DamageBuff], 0, float, staticData.partsAttributes[kAttribute_Silence], 0, float, staticData.partsAttributes[kAttribute_Immobilized], 0, float, staticData.partsAttributes[kAttribute_DefenseBoostBasicDamage], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageIncreaseFlat], 0, float, staticData.partsAttributes[kAttribute_AutoCrit], 0, float, staticData.partsAttributes[kAttribute_BehindDirectDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_BehindOrSideDirectDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_CriticalDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_AttackSpeedScale], 0, float, staticData.partsAttributes[kAttribute_CooldownScale], 0, float, staticData.partsAttributes[kAttribute_Frozen], 0, float, staticData.partsAttributes[kAttribute_ProjectileSpeedIncrease], 0, float, staticData.partsAttributes[kAttribute_AoeResistance], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageBuff], 0, float, staticData.partsAttributes[kAttribute_Intangible], 0, float, staticData.partsAttributes[kAttribute_HealingReduction], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageIncreaseFlat], 0, float, staticData.partsAttributes[kAttribute_Immune], 0, float, staticData.partsAttributes[kAttribute_StealthDetection], 0, float, staticData.partsAttributes[kAttribute_LifeSteal], 0, float, staticData.partsAttributes[kAttribute_RejectModifer], 0, float, staticData.partsAttributes[kAttribute_AoEDamage], 0, float, staticData.partsAttributes[kAttribute_TechnologyTypeDamage], 0, float, staticData.partsAttributes[kAttribute_SpacetimeTypeDamage], 0, float, staticData.partsAttributes[kAttribute_LifeTypeDamage], 0, float, staticData.partsAttributes[kAttribute_ElementsTypeDamage], 0, float, staticData.partsAttributes[kAttribute_SupernaturalTypeDamage], 0, float, staticData.partsAttributes[kAttribute_TechnologyTypeResistance], 0, float, staticData.partsAttributes[kAttribute_SpacetimeTypeResistance], 0, float, staticData.partsAttributes[kAttribute_LifeTypeResistance], 0, float, staticData.partsAttributes[kAttribute_ElementsTypeResistance], 0, float, staticData.partsAttributes[kAttribute_SupernaturalTypeResistance], 0, float, staticData.partsAttributes[kAttribute_MovementSpeedBuff], 0, float, staticData.partsAttributes[kAttribute_ImmuneToDebuffs], 0, float, staticData.partsAttributes[kAttribute_BuffDuration], 0, float, staticData.partsAttributes[kAttribute_DebuffDuration], 0, float, staticData.partsAttributes[kAttribute_ManaSteal], 0, float, staticData.partsAttributes[kAttribute_DebuffDurationIncrease], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageReduction], 0, float, staticData.partsAttributes[kAttribute_Incorporeal], 0, float, staticData.partsAttributes[kAttribute_DoTDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_MindControlled], 0, float, staticData.partsAttributes[kAttribute_SwapDisabled], 0, float, staticData.partsAttributes[kAttribute_ImmuneToRandomTeleport], 0, float, staticData.partsAttributes[kAttribute_ImmuneToBanish], 0, float, staticData.partsAttributes[kAttribute_ImmuneToKnockback], 0, float, staticData.partsAttributes[kAttribute_AoERadius], 0, float, staticData.partsAttributes[kAttribute_PetDamage], 0, float, staticData.partsAttributes[kAttribute_PetHealth], 0, float, staticData.partsAttributes[kAttribute_CrystalFind], 0, float, staticData.partsAttributes[kAttribute_DNADropped], 0, float, staticData.partsAttributes[kAttribute_RangeIncrease], 0, float, staticData.partsAttributes[kAttribute_OrbEffectiveness], 0, float, staticData.partsAttributes[kAttribute_OverdriveBuildup], 0, float, staticData.partsAttributes[kAttribute_OverdriveDuration], 0, float, staticData.partsAttributes[kAttribute_LootFind], 0, float, staticData.partsAttributes[kAttribute_Surefooted], 0, float, staticData.partsAttributes[kAttribute_ImmuneToStunned], 0, float, staticData.partsAttributes[kAttribute_ImmuneToSleep], 0, float, staticData.partsAttributes[kAttribute_ImmuneToTerrified], 0, float, staticData.partsAttributes[kAttribute_ImmuneToSilence], 0, float, staticData.partsAttributes[kAttribute_ImmuneToCursed], 0, float, staticData.partsAttributes[kAttribute_ImmuneToPoisonOrDisease], 0, float, staticData.partsAttributes[kAttribute_ImmuneToBurning], 0, float, staticData.partsAttributes[kAttribute_ImmuneToRooted], 0, float, staticData.partsAttributes[kAttribute_ImmuneToSlow], 0, float, staticData.partsAttributes[kAttribute_ImmuneToPull], 0, float, staticData.partsAttributes[kAttribute_DoTDamageDoneIncrease], 0, float, staticData.partsAttributes[kAttribute_AggroIncrease], 0, float, staticData.partsAttributes[kAttribute_AggroDecrease], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageDoneIncrease], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageDoneByAbilityIncrease], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageDoneIncrease], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageDoneByAbilityIncrease], 0, float, staticData.partsAttributes[kAttribute_ChannelTimeDecrease], 0, float, staticData.partsAttributes[kAttribute_CrowdControlDurationDecrease], 0, float, staticData.partsAttributes[kAttribute_DoTDurationDecrease], 0, float, staticData.partsAttributes[kAttribute_AoEDurationIncrease], 0, float, staticData.partsAttributes[kAttribute_HealIncrease], 0, float, staticData.partsAttributes[kAttribute_OnLockdown], 0, float, staticData.partsAttributes[kAttribute_HoTDoneIncrease], 0, float, staticData.partsAttributes[kAttribute_ProjectileDamageIncrease], 0, float, staticData.partsAttributes[kAttribute_DeployBonusInvincibilityTime], 0, float, staticData.partsAttributes[kAttribute_PhysicalDamageDecreaseFlat], 0, float, staticData.partsAttributes[kAttribute_EnergyDamageDecreaseFlat], 0, float, staticData.partsAttributes[kAttribute_MinWeaponDamage], 0, float, staticData.partsAttributes[kAttribute_MaxWeaponDamage], 0, float, staticData.partsAttributes[kAttribute_MinWeaponDamagePercent], 0, float, staticData.partsAttributes[kAttribute_MaxWeaponDamagePercent], 0, float, staticData.partsAttributes[kAttribute_DirectAttackDamage], 0, float, staticData.partsAttributes[kAttribute_DirectAttackDamagePercent], 0, float, staticData.partsAttributes[kAttribute_GetHitAnimDisabled], 0, float, staticData.partsAttributes[kAttribute_XPBoost], 0, float, staticData.partsAttributes[kAttribute_InvisibleToSecurityTeleporters], 0, float, staticData.partsAttributes[kAttribute_BodyScale], 0
+00F453F0  labsCharacter  (1 fields)
+    labsCharacter
+00F45440  labsCrystal  (6 fields)
+    asset, mLabsCrystal.crystalNoun, Noun, uint16_t, mLabsCrystal.level, 0
+00F455E0  labsCrystal  (1 fields)
+    labsCrystal
+00F45620  labsPlayer  (72 fields)
+    bool, mbDataSetup, 0, int, mCurrentDeckIndex, 0, int, mQueuedDeckIndex, 0, cLabsCharacter, mCharacters, 0, uint8_t, mPlayerIndex, 0, uint8_t, mTeam, 0, uint64_t, mPlayerOnlineId, 0, uint32_t, mStatus, 0, float, mStatusProgress, 0, tObjID, mCurrentCreatureId, 0, float, mEnergyPoints, 0, bool, mbIsCharged, 0, int, mDNA, 0, cPlayerCrystal, mCrystals, 0, bool, mCrystalBonuses, 0, uint32_t, mAvatarLevel, 0, float, mAvatarXP, 0, uint32_t, mChainProgression, 0, bool, mLockCamera, 0, bool, mbLockedOverdrive, 0, bool, mbLockedCrystals, 0, uint32_t, mLockedAbilityMin, 0, uint32_t, mLockedDeckIndexMin, 0, uint32_t, mDeckScore, 0
+00F46870  labsPlayer  (1 fields)
+    labsPlayer
+00F468C0  cControllerState  (6 fields)
+    bool, holdPosition, 0, cSPVector3, moveDirection, 0
+00F46A70  cControllerState  (1 fields)
+    cControllerState
+00F46B10  CatalogEntry  (21 fields)
+    char*, assetNameWType, 0, int64_t, compileTime, 0, uint32_t, dataCrc, 0, uint32_t, typeCrc, 0, char*, sourceFileNameWType, 0, int, version, 0, array, tags, char*
+00F470B0  CatalogEntry  (1 fields)
+    CatalogEntry
+00F470F0  Catalog  (3 fields)
+    array, entries, CatalogEntry
+00F471D0  Catalog  (1 fields)
+    Catalog
+00F47230  TestAsset  (6 fields)
+    int, foo, 0, int, bar, 0
+00F47400  TestAsset  (1 fields)
+    TestAsset
+00F47440  TestProcessedAsset  (3 fields)
+    char*, foo, 0
+00F47550  TestProcessedAsset  (1 fields)
+    TestProcessedAsset
+00F47720  cLootData  (30 fields)
+    int, crystalLevel, 0, uint64_t, mLootItem.id, 0, asset, mLootItem.rigblockAsset, LootRigblock, uint32_t, mLootItem.suffixAssetId, 0, uint32_t, mLootItem.prefixAssetId1, 0, uint32_t, mLootItem.prefixAssetId2, 0, int, mLootItem.itemLevel, 0, int, mLootItem.rarity, 0, uint64_t, mLootInstanceId, 0, float, mDNAAmount, 0
+00F47EF0  cLootData  (1 fields)
+    cLootData
+00F47F40  LootData  (4 fields)
+    char*, name, 0, edit
+00F48090  LootData  (1 fields)
+    LootData
+00F480D0  LootSuffix  (299 fields)
+    uint32_t, suffixId, 0, edit, Key, suffixName, 0, edit, int, minLevel, 0, edit, int, maxLevel, 0, edit, array, partTypes, LootData, edit, array, classTypes, LootData, edit, array, scienceTypes, LootData, edit, bool, isUnique, 0, edit, bool, isBasic, 0, edit, array, modifierGranted, LootData, edit, array, abilityImproved, LootData, edit, float, strength, 0, edit, float, dexterity, 0, edit, float, mind, 0, edit, float, health, 0, edit, float, mana, 0, edit, float, critical, 0, edit, float, criticalDamage, 0, edit, float, physicalDefense, 0, edit, float, energyDefense, 0, edit, float, projectileSpeed, 0, edit, float, cooldown, 0, edit, float, aoeDamage, 0, edit, float, aoeResistance%, 0, edit, float, movementSpeed, 0, edit, float, lifeSteal, 0, edit, float, manaSteal, 0, edit, float, attackSpeed, 0, edit, float, damageLifeType, 0, edit, float, damageTechType, 0, edit, float, damageQuantumType, 0, edit, float, damageNecroType, 0, edit, float, damagePlasmaType, 0, edit, float, resistLifeType, 0, edit, float, resistTechType, 0, edit, float, resistQuantumType, 0, edit, float, resistNecroType, 0, edit, float, resistPlasmaType, 0, edit, float, aoeRadius, 0, edit, float, petDamage, 0, edit, float, petHealth, 0, edit, float, crystalFind%, 0, edit, float, lootFind%, 0, edit, float, dnaDropped%, 0, edit, float, rangeIncrease, 0, edit, float, orbEffect, 0, edit, float, overdriveBuildup%, 0, edit, float, overdriveDuration%, 0, edit, float, surefooted%, 0, edit, float, buffDuration%, 0, edit, float, debuffShorten%, 0, edit, float, debuffLengthen%, 0, edit, float, dotDamage%, 0, edit, float, aggroInc%, 0, edit, float, aggroDec%, 0, edit, float, physDmg%, 0, edit, float, physAbDmg%, 0, edit, float, energyDmg%, 0, edit, float, energyAbDmg%, 0, edit, float, immStun, 0, edit, float, immBanish, 0, edit, float, immKnockBack, 0, edit, float, immSleep, 0, edit, float, immTaunt, 0, edit, float, immTerror, 0, edit, float, immSilence, 0, edit, float, immCurse, 0, edit, float, immPoison, 0, edit, float, immBurn, 0, edit, float, immRoot, 0, edit, float, immSlow, 0, edit, float, immPull, 0, edit, float, channelTime%, 0, edit, float, ccDur%, 0, edit, float, dotDur%, 0
+00F4E510  LootSuffix  (1 fields)
+    LootSuffix
+00F4E560  LootPrefix  (299 fields)
+    uint32_t, prefixId, 0, edit, array, partTypes, LootData, edit, array, classTypes, LootData, edit, array, scienceTypes, LootData, edit, array, modifierGranted, LootData, edit, array, abilityImproved, LootData, edit, int, minLevel, 0, edit, int, maxLevel, 0, edit, float, strength, 0, edit, float, dexterity, 0, edit, float, mind, 0, edit, float, health, 0, edit, float, mana, 0, edit, float, critical, 0, edit, float, criticalDamage, 0, edit, float, physicalDefense, 0, edit, float, energyDefense, 0, edit, float, projectileSpeed, 0, edit, float, cooldown, 0, edit, float, aoeDamage, 0, edit, float, aoeResistance%, 0, edit, float, movementSpeed, 0, edit, float, lifeSteal, 0, edit, float, manaSteal, 0, edit, float, attackSpeed, 0, edit, float, damageLifeType, 0, edit, float, damageTechType, 0, edit, float, damageQuantumType, 0, edit, float, damageNecroType, 0, edit, float, damagePlasmaType, 0, edit, float, resistLifeType, 0, edit, float, resistTechType, 0, edit, float, resistQuantumType, 0, edit, float, resistNecroType, 0, edit, float, resistPlasmaType, 0, edit, float, aoeRadius, 0, edit, float, petDamage, 0, edit, float, petHealth, 0, edit, float, crystalFind%, 0, edit, float, lootFind%, 0, edit, float, dnaDropped%, 0, edit, float, rangeIncrease, 0, edit, float, orbEffect, 0, edit, float, overdriveBuildup%, 0, edit, float, overdriveDuration%, 0, edit, float, surefooted%, 0, edit, float, buffDuration%, 0, edit, float, debuffShorten%, 0, edit, float, debuffLengthen%, 0, edit, float, dotDamage%, 0, edit, float, aggroInc%, 0, edit, float, aggroDec%, 0, edit, float, physDmg%, 0, edit, float, physAbDmg%, 0, edit, float, energyDmg%, 0, edit, float, energyAbDmg%, 0, edit, float, immStun, 0, edit, float, immBanish, 0, edit, float, immKnockBack, 0, edit, float, immSleep, 0, edit, float, immTaunt, 0, edit, float, immTerror, 0, edit, float, immSilence, 0, edit, float, immCurse, 0, edit, float, immPoison, 0, edit, float, immBurn, 0, edit, float, immRoot, 0, edit, float, immSlow, 0, edit, float, immPull, 0, edit, float, channelTime%, 0, edit, float, ccDur%, 0, edit, float, dotDur%, 0, edit, float, aoeDurInc%, 0, edit, float, healInc%, 0, edit, float, deploy, 0
+00F54630  LootPrefix  (1 fields)
+    LootPrefix
+00F54680  LootRigblock  (48 fields)
+    uint32_t, rigblockId, 0, edit, Key, rigblockName, 0, edit, Key, rigblockPropKey, 0, edit, char*, rigblockPartType, 0, edit, array, classTypes, LootData, edit, array, scienceTypes, LootData, edit, array, playerCharacters, LootData, edit, int, minLevel, 0, edit, int, maxLevel, 0, edit, Key, rigblockPngKey, 0, edit, Key, rigblockCategoryKey, 0, edit, bool, isUnique, 0, edit
+00F55480  LootRigblock  (1 fields)
+    LootRigblock
+00F554D0  LootPreferences  (268 fields)
+    float, slotChance_Offense, 0, edit, float, slotChance_Defense, 0, edit, float, slotChance_Utility, 0, edit, float, slotChance_Weapon, 0, edit, float, slotChance_Foot, 0, edit, float, slotChance_Hand, 0, edit, float, scienceChance_Tech, 0, edit, float, scienceChance_Quantum, 0, edit, float, scienceChance_Bio, 0, edit, float, scienceChance_Plasma, 0, edit, float, scienceChance_Necro, 0, edit, char, npcDropRarityChances_Basic, 0, edit, char, npcDropRarityChances_Uncommon, 0, edit, char, npcDropRarityChances_Rare, 0, edit, char, npcDropRarityChances_Epic, 0, edit, int, majorLevelMultiplier, 0, edit, int, minorLevelMultiplier, 0, edit, int, lastMinorLevelBonus, 0, edit, int, rarityLevelMultiplier, 0, edit, float, pointValue_BasePoints, 0, edit, char, pointValue_ExponentBasesPerItemLevel, 0, edit, float, pointValue_ExtraStatsBonusFactor, 0, edit, int, pointCost_Strength, 0, edit, int, pointCost_Dexterity, 0, edit, int, pointCost_Mind, 0, edit, int, pointCost_Health, 0, edit, int, pointCost_Mana, 0, edit, int, pointCost_Critical, 0, edit, int, pointCost_Dodge, 0, edit, int, pointCost_Deflection, 0, edit, int, pointCost_PhysicalDamageDecreaseFlat, 0, edit, int, pointCost_EnergyDamageDecreaseFlat, 0, edit, int, pointCost_MinWeaponDamage, 0, edit, int, pointCost_MaxWeaponDamage, 0, edit, int, pointCost_DirectAttackDamage, 0, edit, float, basic_StandardDist, 0, edit, float, basic_SuffixDist, 0, edit, float, uncommon_SuffixDist, 0, edit, float, uncommon_Prefix1Dist, 0, edit, float, uncommon_Prefix2Dist, 0, edit, float, uncommon_StandardDist, 0, edit, float, rare_SuffixDist, 0, edit, float, rare_Prefix1Dist, 0, edit, float, rare_Prefix2Dist, 0, edit, float, rare_StandardDist, 0, edit, float, epic_SuffixDist, 0, edit, float, epic_Prefix1Dist, 0, edit, float, epic_Prefix2Dist, 0, edit, float, epic_StandardDist, 0, edit, float, itemCost_Multiplier, 0, edit, float, itemCost_LevelPower, 0, edit, int, itemCost_RoundingVal, 0, edit, float, baseStatScale_Other, 0, edit, float, baseStatScale_Hand, 0, edit, float, baseStatScale_HandTwo, 0, edit, float, baseStatScale_Feet, 0, edit, float, baseStatScale_FeetTwo, 0, edit, float, baseStatScale_Offense, 0, edit, float, baseStatScale_Defense, 0, edit, float, baseStatScale_Utility, 0, edit, int, minDropLevel_Hands, 0, edit, int, minDropLevel_Feet, 0, edit, int, minDropLevel_Weapons, 0, edit, int, minDropLevel_Offense, 0, edit, int, minDropLevel_Defense, 0, edit, int, minDropLevel_Utility, 0, edit, float, weaponDamage_Scaler, 0, edit
+00F5A090  LootPreferences  (1 fields)
+    LootPreferences
+00F5A300  cKeyAsset  (3 fields)
+    Key, key, 0
+00F5A3E0  cKeyAsset  (1 fields)
+    cKeyAsset
+00F5A420  PlayerClass  (89 fields)
+    bool, testingOnly, 0, char*, speciesName, 0, Key, nameLocaleKey, 0, Key, shortNameLocaleKey, 0, enum, creatureType, 0, Key, localeTableID, 0, enum, homeworld, 0, enum, creatureClass, 0, enum, primaryAttribute, 0, int, unlockLevel, 0, Key, basicAbility, 0, Key, specialAbility1, 0, Key, specialAbility2, 0, Key, specialAbility3, 0, Key, passiveAbility, 0, cSPVector3, sharedAbilityOffset, 0, edit, asset, mpClassAttributes, ClassAttributes, asset, mpClassEffect, ServerEventDef, Key, originalHandBlock, 0, edit, Key, originalFootBlock, 0, edit, Key, originalWeaponBlock, 0, edit, float, weaponMinDamage, 0, edit, float, weaponMaxDamage, 0, edit, bool, noHands, 0, edit, bool, noFeet, 0, edit, array, descriptionTag, enum, array, editableCharacterPart, cKeyAsset
+00F5BCD0  PlayerClass  (1 fields)
+    PlayerClass
+00F5BD20  cLongDescription  (3 fields)
+    cLocalizedAssetString, description, 0
+00F5BE00  cLongDescription  (1 fields)
+    cLongDescription
+00F5BE40  cEliteAffix  (9 fields)
+    asset, mpNPCAffix, NPCAffix, int, minDifficulty, 0, int, maxDifficulty, 0
+00F5C0C0  cEliteAffix  (1 fields)
+    cEliteAffix
+00F5C100  NonPlayerClass  (59 fields)
+    bool, testingOnly, 0, cLocalizedAssetString, name, 0, enum, creatureType, 0, edit, float, aggroRange, 0, float, alertRange, 0, float, dropAggroRange, 0, int, challengeValue, 0, enum, mNPCType, 0, int, npcRank, 0, edit, asset, mpClassAttributes, ClassAttributes, asset, mpClassEffect, ServerEventDef, cLocalizedAssetString, description, 0, array, dropType, enum, float, dropDelay, 0, bool, targetable, 0, float, playerCountHealthScale, 0, array, longDescription, cLongDescription, array, eliteAffix, cEliteAffix, bool, playerPet, 0
+00F5D130  NonPlayerClass  (1 fields)
+    NonPlayerClass
+00F5D170  ClassAttributes  (66 fields)
+    float, baseHealth, 0, float, baseMana, 0, float, baseStrength, 0, float, baseDexterity, 0, float, baseMind, 0, float, basePhysicalDefense, 0, float, baseMagicalDefense, 0, float, baseEnergyDefense, 0, float, baseCritical, 0, float, baseCombatSpeed, 0, float, baseNonCombatSpeed, 0, float, baseStealthDetection, 0, float, baseMovementSpeedBuff, 0, float, maxHealth, 0, float, maxMana, 0, float, maxStrength, 0, float, maxDexterity, 0, float, maxMind, 0, float, maxPhysicalDefense, 0, float, maxMagicalDefense, 0, float, maxEnergyDefense, 0, float, maxCritical, 0
+00F5E310  ClassAttributes  (1 fields)
+    ClassAttributes
+00F5E350  CharacterAnimation  (126 fields)
+    uint32_t, gaitOverlay, 0, char, overrideGait, 0, bool, ignoreGait, 0, Key, morphology, 0, Key, preAggroIdleAnimState, 0, Key, idleAnimState, 0, Key, lobbyIdleAnimState, 0, Key, specialIdleAnimState, 0, Key, walkStopState, 0, Key, victoryIdleAnimState, 0, Key, combatIdleAnimState, 0, Key, moveAnimState, 0, Key, combatMoveAnimState, 0, Key, deathAnimState, 0, Key, aggroAnimState, 0, float, aggroAnimDuration, 0, Key, subsequentAggroAnimState, 0, float, subsequentAggroAnimDuration, 0, Key, enterPassiveIdleAnimState, 0, float, enterPassiveIdleAnimDuration, 0, Key, danceEmoteAnimState, 0, Key, tauntEmoteAnimState, 0, Key, meleeDeathAnimState, 0, Key, meleeCritDeathAnimState, 0, Key, meleeCritKnockbackDeathAnimState, 0, Key, cyberCritDeathAnimState, 0, Key, cyberCritKnockbackDeathAnimState, 0, Key, plasmaCritDeathAnimState, 0, Key, plasmaCritKnockbackDeathAnimState, 0, Key, bioCritDeathAnimState, 0, Key, bioCritKnockbackDeathAnimState, 0, Key, necroCritDeathAnimState, 0, Key, necroCritKnockbackDeathAnimState, 0, Key, spacetimeCritDeathAnimState, 0, Key, spacetimeCritKnockbackDeathAnimState, 0, Key, bodyFadeAnimState, 0, Key, randomAbility1AnimState, 0, Key, randomAbility2AnimState, 0, Key, randomAbility3AnimState, 0, Key, overlay1AnimState, 0, Key, overlay2AnimState, 0, Key, overlay3AnimState, 0
+00F604C0  CharacterAnimation  (1 fields)
+    CharacterAnimation
+00F60510  CharacterType  (33 fields)
+    float, BaseResistance_Technology, 0, float, BaseResistance_Spacetime, 0, float, BaseResistance_Life, 0, float, BaseResistance_Elements, 0, float, BaseResistance_Supernatural, 0, float, DamageMultiplier_Technology, 0, float, DamageMultiplier_Spacetime, 0, float, DamageMultiplier_Life, 0, float, DamageMultiplier_Elements, 0, float, DamageMultiplier_Supernatural, 0, uint32_t, UIColor, 0
+00F60DE0  CharacterType  (1 fields)
+    CharacterType
+00F60EA0  ServerEvent  (78 fields)
+    uint32_t, simpleSwarmEffectID, 0, uint8_t, objectFxIndex, 0, bool, bRemove, 0, bool, bHardStop, 0, bool, bForceAttach, 0, bool, bCritical, 0, asset, asset, ServerEventDef, tObjID, objectId, 0, tObjID, secondaryObjectId, 0, tObjID, attackerId, 0, cSPVector3, position, 0, cSPVector3, facing, 0, cSPQuaternion, orientation, 0, cSPVector3, targetPoint, 0, int, textValue, 0, uint32_t, clientEventID, 0, uint8_t, clientIgnoreFlags, 0, uint64_t, lootReferenceId, 0, uint64_t, lootInstanceId, 0, uint32_t, lootRigblockId, 0, uint32_t, lootSuffixAssetId, 0, uint32_t, lootPrefixAssetId1, 0, uint32_t, lootPrefixAssetId2, 0, int, lootItemLevel, 0, int, lootRarity, 0, uint64_t, lootCreationTime, 0
+00F622A0  ServerEvent  (1 fields)
+    ServerEvent
+00F622F0  cAudioEventData  (20 fields)
+    Key, sound, 0, edit, bool, bIs3D, 0, edit, bool, bIsVoiceOver, 0, edit, bool, bHasLocalOffset, 0, edit, cSPVector3, localOffset, 0, edit
+00F628C0  cAudioEventData  (1 fields)
+    cAudioEventData
+00F62900  cHardpointInfo  (20 fields)
+    enum, type, 0, edit, enum, bodyCap, 0, edit, cSPVector3, localOffset, 0, edit, bool, attractor, 0, edit, bool, attached, 0, edit
+00F62ED0  cHardpointInfo  (1 fields)
+    cHardpointInfo
+00F62F10  cEffectEventData  (60 fields)
+    Key, name, 0, edit, bool, bScaleWithObject, 0, edit, Key, localizedTextKey, 0, edit, bool, bHasTextValue, 0, edit, bool, bSetModelPointer, 0, edit, bool, bZUpAlignment, 0, edit, bool, bCreatureOrientationAlignment, 0, edit, bool, bUseTargetPoint, 0, edit, bool, bSetDirectionFromSecondaryObject, 0, edit, nullable, objectHardpoint, cHardpointInfo, edit, nullable, secondaryObjectHardpoint, cHardpointInfo, edit, float, screenShakeScaleLocalPlayer, 0, edit, float, screenShakeScaleEveryone, 0, edit, float, screenShakeScaleLocalPlayerCritical, 0, edit, float, screenShakeScaleEveryoneCritical, 0, edit
+00F64050  cEffectEventData  (1 fields)
+    cEffectEventData
+00F64090  ServerEventDef  (8 fields)
+    array, audio, cAudioEventData, edit, array, effects, cEffectEventData, edit
+00F64310  ServerEventDef  (1 fields)
+    ServerEventDef
+00F64350  CombatEvent  (24 fields)
+    uint16_t, flags, 0, float, deltaHealth, 0, float, absorbedAmount, 0, tObjID, targetID, 0, tObjID, sourceID, 0, tObjID, abilityID, 0, cSPVector3, damageDirection, 0, int32_t, integerHpChange, 0
+00F64980  CombatEvent  (1 fields)
+    CombatEvent
+00F64A60  InteractableDef  (24 fields)
+    int, numUsesAllowed, 0, edit, Key, interactableAbility, 0, edit, Key, startInteractEvent, 0, edit, Key, endInteractEvent, 0, edit, Key, optionalInteractEvent, 0, edit, int, challengeValue, 0, edit
+00F65170  InteractableDef  (1 fields)
+    InteractableDef
+00F651B0  cInteractableData  (9 fields)
+    int, mNumTimesUsed, 0, int, mNumUsesAllowed, 0, uint32_t, mInteractableAbility, 0
+00F65440  cInteractableData  (1 fields)
+    cInteractableData
+00F654E0  CombatantDef  (4 fields)
+    Key, deathEvent, 0, edit
+00F65630  CombatantDef  (1 fields)
+    CombatantDef
+00F65670  cCombatantData  (6 fields)
+    float, mHitPoints, 0, float, mManaPoints, 0
+00F65830  cCombatantData  (1 fields)
+    cCombatantData
+00F658B0  cGfxComponentDef  (8 fields)
+    enum, gfxType, 0, edit, Key, gfxKey, 0, edit
+00F65B40  cGfxComponentDef  (1 fields)
+    cGfxComponentDef
+00F65B80  Gfx  (8 fields)
+    array, components, cGfxComponentDef, edit, float, boundingRadius, 0, edit
+00F65E10  Gfx  (1 fields)
+    Gfx
+00F65E50  cSPBoundingBox  (8 fields)
+    cSPVector3, min, 0, edit, cSPVector3, max, 0, edit
+00F660D0  cSPBoundingBox  (1 fields)
+    cSPBoundingBox
+00F66110  ExtentsCategory  (8 fields)
+    cSPVector3, extents, 0, edit, float, graphicsScale, 0, edit
+00F66390  ExtentsCategory  (1 fields)
+    ExtentsCategory
+00F663D0  ObjectExtents  (68 fields)
+    ExtentsCategory, critterVertical, 0, edit, ExtentsCategory, critterHorizontal, 0, edit, ExtentsCategory, minionVertical, 0, edit, ExtentsCategory, minionHorizontal, 0, edit, ExtentsCategory, eliteMinionVertical, 0, edit, ExtentsCategory, eliteMinionHorizontal, 0, edit, ExtentsCategory, playerTempest, 0, edit, ExtentsCategory, playerRavager, 0, edit, ExtentsCategory, playerSentinel, 0, edit, ExtentsCategory, lieutenantVertical, 0, edit, ExtentsCategory, lieutenantHorizontal, 0, edit, ExtentsCategory, eliteLieutenantVertical, 0, edit, ExtentsCategory, eliteLieutenantHorizontal, 0, edit, ExtentsCategory, captainVertical, 0, edit, ExtentsCategory, captainHorizontal, 0, edit, ExtentsCategory, bossVertical, 0, edit, ExtentsCategory, bossHorizontal, 0, edit
+00F67770  ObjectExtents  (1 fields)
+    ObjectExtents
+00F677D0  cThumbnailCaptureParameters  (60 fields)
+    float, fovY, 0, edit, float, nearPlane, 0, edit, float, farPlane, 0, edit, cSPVector3, cameraPosition, 0, edit, float, cameraScale, 0, edit, cSPVector3, cameraRotation_0, 0, edit, cSPVector3, cameraRotation_1, 0, edit, cSPVector3, cameraRotation_2, 0, edit, bool, mouseCameraDataValid, 0, edit, cSPVector3, mouseCameraOffset, 0, edit, cSPVector3, mouseCameraSubjectPosition, 0, edit, float, mouseCameraTheta, 0, edit, float, mouseCameraPhi, 0, edit, float, mouseCameraRoll, 0, edit, uint32_t, poseAnimID, 0, edit
+00F68990  cThumbnailCaptureParameters  (1 fields)
+    cThumbnailCaptureParameters
+00F689D0  Noun  (256 fields)
+    enum, nounType, 0, edit, bool, clientOnly, 0, edit, bool, isFixed, 0, edit, bool, isSelfPowered, 0, edit, float, lifetime, 0, edit, enum, gfxPickMethod, 0, edit, float, graphicsScale, 0, edit, Key, modelKey, 0, edit, asset, prefab, Markerset, edit, Key, levelEditorModelKey, 0, edit, cSPBoundingBox, bbox, 0, edit, enum, presetExtents, 0, edit, Key, voice, 0, edit, Key, foot, 0, edit, Key, flightSound, 0, edit, nullable, gfxStates, cGameObjectGfxStates, edit, nullable, doorDef, cDoorDef, edit, nullable, switchDef, cSwitchDef, edit, nullable, pressureSwitchDef, cPressureSwitchDef, edit, nullable, crystalDef, CrystalDef, edit, uint64_t, assetId, 0, edit, asset, npcClassData, NonPlayerClass, edit, asset, playerClassData, PlayerClass, edit, asset, characterAnimationData, CharacterAnimation, edit, nullable, creatureThumbnailData, cThumbnailCaptureParameters, edit, array, eliteAssetIds, uint64_t, edit, enum, physicsType, 0, edit, float, density, 0, edit, Key, physicsKey, 0, edit, bool, affectsNavMesh, 0, edit, bool, dynamicWall, 0, edit, bool, hasLocomotion, 0, edit, enum, locomotionType, 0, edit, bool, hasNetworkComponent, 0, edit, bool, hasCombatantComponent, 0, edit, asset, aiDefinition, AIDefinition, edit, bool, hasCameraComponent, 0, edit, enum, spawnTeamId, 0, edit, bool, isIslandMarker, 0, edit, char*, activateFnNamespace, 0, edit, char*, tickFnNamespace, 0, edit, char*, deactivateFnNamespace, 0, edit, char*, startFnNamespace, 0, edit, char*, endFnNamespace, 0, edit, nullable, triggerVolume, TriggerVolumeDef, edit, nullable, projectile, ProjectileDef, edit, nullable, orbit, OrbitDef, edit, nullable, locomotionTuning, LocomotionTuning, edit, asset, gravityData, GravityForce, edit, SharedComponentData, componentData, 0, edit, Key, toonType, 0, edit, bool, isFlora, 0, edit, bool, isMineral, 0, edit, bool, isCreature, 0, edit, bool, isPlayer, 0, edit, bool, isSpawned, 0, edit, Key, modelEffect, 0, edit, Key, removalEffect, 0, edit, Key, meleeDeathEffect, 0, edit, Key, meleeCritEffect, 0, edit, Key, energyDeathEffect, 0, edit, Key, energyCritEffect, 0, edit, Key, plasmaDeathEffect, 0, edit, Key, plasmaCritEffect, 0, edit
+00F6D2B0  Noun  (1 fields)
+    Noun
+00F6D540  DifficultyTuning  (33 fields)
+    array, HealthPercentIncrease, float, array, DamagePercentIncrease, float, array, ItemLevelRange, cSPVector2, array, GearScoreRange, cSPVector2, cSPVector2, GearScoreMax, 0, array, ExpectedAvatarLevel, int, array, RatingConversion, float, float, StarModeHealthMult, 0, float, StarModeDamageMult, 0, float, StarModeEliteChanceAdd, 0, float, StarModeSuggestedLevelAdd, 0
+00F6DE10  DifficultyTuning  (1 fields)
+    DifficultyTuning
+00F6DE70  cAttributeData  (339 fields)
+    float, mCachedAttributeValues[kAttribute_Strength], 0, float, mCachedAttributeValues[kAttribute_Dexterity], 0, float, mCachedAttributeValues[kAttribute_Mind], 0, float, mCachedAttributeValues[kAttribute_MaxHealthIncrease], 0, float, mCachedAttributeValues[kAttribute_MaxHealth], 0, float, mCachedAttributeValues[kAttribute_MaxMana], 0, float, mCachedAttributeValues[kAttribute_DamageReduction], 0, float, mCachedAttributeValues[kAttribute_PhysicalDefense], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageReduction], 0, float, mCachedAttributeValues[kAttribute_EnergyDefense], 0, float, mCachedAttributeValues[kAttribute_CriticalRating], 0, float, mCachedAttributeValues[kAttribute_NonCombatSpeed], 0, float, mCachedAttributeValues[kAttribute_CombatSpeed], 0, float, mCachedAttributeValues[kAttribute_DamageBuff], 0, float, mCachedAttributeValues[kAttribute_Silence], 0, float, mCachedAttributeValues[kAttribute_Immobilized], 0, float, mCachedAttributeValues[kAttribute_DefenseBoostBasicDamage], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageIncreaseFlat], 0, float, mCachedAttributeValues[kAttribute_AutoCrit], 0, float, mCachedAttributeValues[kAttribute_BehindDirectDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_BehindOrSideDirectDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_CriticalDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_AttackSpeedScale], 0, float, mCachedAttributeValues[kAttribute_CooldownScale], 0, float, mCachedAttributeValues[kAttribute_Frozen], 0, float, mCachedAttributeValues[kAttribute_ProjectileSpeedIncrease], 0, float, mCachedAttributeValues[kAttribute_AoeResistance], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageBuff], 0, float, mCachedAttributeValues[kAttribute_Intangible], 0, float, mCachedAttributeValues[kAttribute_HealingReduction], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageIncreaseFlat], 0, float, mCachedAttributeValues[kAttribute_Immune], 0, float, mCachedAttributeValues[kAttribute_StealthDetection], 0, float, mCachedAttributeValues[kAttribute_LifeSteal], 0, float, mCachedAttributeValues[kAttribute_RejectModifer], 0, float, mCachedAttributeValues[kAttribute_AoEDamage], 0, float, mCachedAttributeValues[kAttribute_TechnologyTypeDamage], 0, float, mCachedAttributeValues[kAttribute_SpacetimeTypeDamage], 0, float, mCachedAttributeValues[kAttribute_LifeTypeDamage], 0, float, mCachedAttributeValues[kAttribute_ElementsTypeDamage], 0, float, mCachedAttributeValues[kAttribute_SupernaturalTypeDamage], 0, float, mCachedAttributeValues[kAttribute_TechnologyTypeResistance], 0, float, mCachedAttributeValues[kAttribute_SpacetimeTypeResistance], 0, float, mCachedAttributeValues[kAttribute_LifeTypeResistance], 0, float, mCachedAttributeValues[kAttribute_ElementsTypeResistance], 0, float, mCachedAttributeValues[kAttribute_SupernaturalTypeResistance], 0, float, mCachedAttributeValues[kAttribute_MovementSpeedBuff], 0, float, mCachedAttributeValues[kAttribute_ImmuneToDebuffs], 0, float, mCachedAttributeValues[kAttribute_BuffDuration], 0, float, mCachedAttributeValues[kAttribute_DebuffDuration], 0, float, mCachedAttributeValues[kAttribute_ManaSteal], 0, float, mCachedAttributeValues[kAttribute_DebuffDurationIncrease], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageReduction], 0, float, mCachedAttributeValues[kAttribute_Incorporeal], 0, float, mCachedAttributeValues[kAttribute_DoTDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_MindControlled], 0, float, mCachedAttributeValues[kAttribute_SwapDisabled], 0, float, mCachedAttributeValues[kAttribute_ImmuneToRandomTeleport], 0, float, mCachedAttributeValues[kAttribute_ImmuneToBanish], 0, float, mCachedAttributeValues[kAttribute_ImmuneToKnockback], 0, float, mCachedAttributeValues[kAttribute_AoERadius], 0, float, mCachedAttributeValues[kAttribute_PetDamage], 0, float, mCachedAttributeValues[kAttribute_PetHealth], 0, float, mCachedAttributeValues[kAttribute_CrystalFind], 0, float, mCachedAttributeValues[kAttribute_DNADropped], 0, float, mCachedAttributeValues[kAttribute_RangeIncrease], 0, float, mCachedAttributeValues[kAttribute_OrbEffectiveness], 0, float, mCachedAttributeValues[kAttribute_OverdriveBuildup], 0, float, mCachedAttributeValues[kAttribute_OverdriveDuration], 0, float, mCachedAttributeValues[kAttribute_LootFind], 0, float, mCachedAttributeValues[kAttribute_Surefooted], 0, float, mCachedAttributeValues[kAttribute_ImmuneToStunned], 0, float, mCachedAttributeValues[kAttribute_ImmuneToSleep], 0, float, mCachedAttributeValues[kAttribute_ImmuneToTerrified], 0, float, mCachedAttributeValues[kAttribute_ImmuneToSilence], 0, float, mCachedAttributeValues[kAttribute_ImmuneToCursed], 0, float, mCachedAttributeValues[kAttribute_ImmuneToPoisonOrDisease], 0, float, mCachedAttributeValues[kAttribute_ImmuneToBurning], 0, float, mCachedAttributeValues[kAttribute_ImmuneToRooted], 0, float, mCachedAttributeValues[kAttribute_ImmuneToSlow], 0, float, mCachedAttributeValues[kAttribute_ImmuneToPull], 0, float, mCachedAttributeValues[kAttribute_DoTDamageDoneIncrease], 0, float, mCachedAttributeValues[kAttribute_AggroIncrease], 0, float, mCachedAttributeValues[kAttribute_AggroDecrease], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageDoneIncrease], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageDoneByAbilityIncrease], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageDoneIncrease], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageDoneByAbilityIncrease], 0, float, mCachedAttributeValues[kAttribute_ChannelTimeDecrease], 0, float, mCachedAttributeValues[kAttribute_CrowdControlDurationDecrease], 0, float, mCachedAttributeValues[kAttribute_DoTDurationDecrease], 0, float, mCachedAttributeValues[kAttribute_AoEDurationIncrease], 0, float, mCachedAttributeValues[kAttribute_HealIncrease], 0, float, mCachedAttributeValues[kAttribute_OnLockdown], 0, float, mCachedAttributeValues[kAttribute_HoTDoneIncrease], 0, float, mCachedAttributeValues[kAttribute_ProjectileDamageIncrease], 0, float, mCachedAttributeValues[kAttribute_DeployBonusInvincibilityTime], 0, float, mCachedAttributeValues[kAttribute_PhysicalDamageDecreaseFlat], 0, float, mCachedAttributeValues[kAttribute_EnergyDamageDecreaseFlat], 0, float, mCachedAttributeValues[kAttribute_MinWeaponDamage], 0, float, mCachedAttributeValues[kAttribute_MaxWeaponDamage], 0, float, mCachedAttributeValues[kAttribute_MinWeaponDamagePercent], 0, float, mCachedAttributeValues[kAttribute_MaxWeaponDamagePercent], 0, float, mCachedAttributeValues[kAttribute_DirectAttackDamage], 0, float, mCachedAttributeValues[kAttribute_DirectAttackDamagePercent], 0, float, mCachedAttributeValues[kAttribute_GetHitAnimDisabled], 0, float, mCachedAttributeValues[kAttribute_XPBoost], 0, float, mCachedAttributeValues[kAttribute_InvisibleToSecurityTeleporters], 0, float, mCachedAttributeValues[kAttribute_BodyScale], 0, float, mCachedWeaponMinDamage, 0, float, mCachedWeaponMaxDamage, 0
+00F73660  cAttributeData  (1 fields)
+    cAttributeData
+00F737B0  cAgentBlackboard  (15 fields)
+    tObjID, mTarget, 0, bool, mbInCombat, 0, uint8_t, mStealthType, 0, bool, mbTargetable, 0, uint32_t, mNumAttackers, 0
+00F73B90  cAgentBlackboard  (1 fields)
+    cAgentBlackboard
+00F73D60  NavMeshLayer  (24 fields)
+    char*, name, 0, edit, float, voxelTestSize, 0, edit, float, agentRadius, 0, edit, float, agentHeight, 0, edit, float, maxStepSize, 0, edit, float, maxWalkableSlopeDegrees, 0, edit
+00F74480  NavMeshLayer  (1 fields)
+    NavMeshLayer
+00F744C0  NavPowerTuning  (8 fields)
+    float, maxWalkableSlopeDegrees, 0, edit, array, navMeshLayers, NavMeshLayer, edit
+00F74740  NavPowerTuning  (1 fields)
+    NavPowerTuning
+00F747D0  Markerset  (12 fields)
+    array, markers, cLabsMarker, Key, group, 0, float, weight, 0, array, condition, enum
+00F74B20  Markerset  (1 fields)
+    Markerset
+00F74B60  LevelMarkerset  (3 fields)
+    asset, markersetAsset, Markerset
+00F74C30  LevelMarkerset  (1 fields)
+    LevelMarkerset
+00F74C70  LevelCameraSettings  (12 fields)
+    float, pitchOverride, 0, edit, float, yawOverride, 0, edit, float, distanceOverride, 0, edit
+00F75010  LevelCameraSettings  (1 fields)
+    LevelCameraSettings
+00F75050  LevelKey  (4 fields)
+    Key, key, 0, edit
+00F751A0  LevelKey  (1 fields)
+    LevelKey
+00F751E0  LevelObjectives  (20 fields)
+    array, objective, LevelKey, edit, array, affix, LevelKey, edit, array, positiveAffix, LevelKey, edit, array, minorAffix, LevelKey, edit, array, majorAffix, LevelKey, edit
+00F757C0  LevelObjectives  (1 fields)
+    LevelObjectives
+00F75800  Level  (75 fields)
+    array, markersets, LevelMarkerset, Key, music, 0, edit, Key, navMesh, 0, edit, Key, physicsMesh, 0, edit, Key, renderingConfig, 0, edit, Key, footstepEffect, 0, edit, nullable, levelConfig, LevelConfig, edit, nullable, firstTimeConfig, LevelConfig, edit, asset, planetConfig, LevelConfig, edit, asset, levelObjectives, LevelObjectives, edit, uint32_t, name, 0, edit, uint32_t, briefDescription, 0, edit, uint32_t, description, 0, edit, enum, primaryType, 0, edit, enum, secondaryType, 0, edit, enum, tertiaryType, 0, edit, enum, quadernaryType, 0, edit, Key, planetScreenBG, 0, edit, nullable, cameraSettings, LevelCameraSettings, edit
+00F76DB0  Level  (1 fields)
+    Level
+00F76E90  DirectorClass  (12 fields)
+    asset, mpNoun, DirectorClass, int, minDifficulty, 0, int, maxDifficulty, 0, bool, hordeLegal, 0
+00F771B0  DirectorClass  (1 fields)
+    DirectorClass
+00F771F0  LevelConfig  (15 fields)
+    array, minion, DirectorClass, array, special, DirectorClass, array, boss, DirectorClass, array, agent, DirectorClass, array, captain, DirectorClass
+00F77620  LevelConfig  (1 fields)
+    LevelConfig
+00F77660  DirectorBucket  (12 fields)
+    int, numMinions, 0, int, numSpecials, 0, int, difficulty, 0, float, chance, 0
+00F77990  DirectorBucket  (1 fields)
+    DirectorBucket
+00F779D0  SectionConfig  (3 fields)
+    array, bucket, DirectorBucket
+00F77AB0  SectionConfig  (1 fields)
+    SectionConfig
+00F77AF0  SpawnPointDef  (8 fields)
+    enum, sectionType, 0, edit, bool, activatesSpike, 0, edit
+00F77D60  SpawnPointDef  (1 fields)
+    SpawnPointDef
+00F77DA0  SpawnTriggerDef  (16 fields)
+    nullable, triggerVolume, TriggerVolumeDef, edit, Key, deathEvent, 0, edit, int, challengeOverride, 0, edit, int, waveOverride, 0, edit
+00F78250  SpawnTriggerDef  (1 fields)
+    SpawnTriggerDef
+00F78290  DirectorTuning  (6 fields)
+    array, OrbDifficultyScale, float, array, HordeDifficultyWave, int
+00F78440  DirectorTuning  (1 fields)
+    DirectorTuning
+00F78480  cAIDirector  (21 fields)
+    bool, mbBossSpawned, 0, bool, mbBossHorde, 0, bool, mbCaptainSpawned, 0, bool, mbBossComplete, 0, bool, mbHordeSpawned, 0, tObjID, mBossId, 0, int, mActiveHordeWaves, 0
+00F789E0  cAIDirector  (1 fields)
+    cAIDirector
+00F78E40  cMapCameraData  (28 fields)
+    char, name, 0, edit, float, fov, 0, edit, float, aspect, 0, edit, float, near, 0, edit, float, far, 0, edit, bool, show_bounds, 0, edit, bool, show_pip, 0, edit
+00F79660  cMapCameraData  (1 fields)
+    cMapCameraData
+00F798E0  LocomotionTuning  (12 fields)
+    float, acceleration, 0, edit, float, deceleration, 0, edit, float, turnRate, 0, edit
+00F79C80  LocomotionTuning  (1 fields)
+    LocomotionTuning
+00F79CC0  cLobParams  (27 fields)
+    float, planeDirLinearParam, 0, float, upLinearParam, 0, float, upQuadraticParam, 0, cSPVector3, lobUpDir, 0, cSPVector3, planeDir, 0, int, bounceNum, 0, float, bounceRestitution, 0, bool, groundCollisionOnly, 0, bool, stopBounceOnCreatures, 0
+00F7A3C0  cLobParams  (1 fields)
+    cLobParams
+00F7A400  cProjectileParams  (45 fields)
+    float, mSpeed, 0, float, mAcceleration, 0, uint32_t, mJinkInfo, 0, float, mRange, 0, float, mSpinRate, 0, cSPVector3, mDirection, 0, uint8_t, mProjectileFlags, 0, float, mHomingDelay, 0, float, mTurnRate, 0, float, mTurnAcceleration, 0, float, mEccentricity, 0, bool, mPiercing, 0, bool, mIgnoreGroundCollide, 0, bool, mIgnoreCreatureCollide, 0, float, mCombatantSweepHeight, 0
+00F7AF80  cProjectileParams  (1 fields)
+    cProjectileParams
+00F7AFC0  cLocomotionData  (54 fields)
+    uint64_t, lobStartTime, 0, float, lobPrevSpeedModifier, 0, cLobParams, lobParams, 0, cProjectileParams, mProjectileParams, 0, uint32_t, mGoalFlags, 0, cSPVector3, mGoalPosition, 0, cSPVector3, mPartialGoalPosition, 0, cSPVector3, mFacing, 0, cSPVector3, mExternalLinearVelocity, 0, cSPVector3, mExternalForce, 0, float, mAllowedStopDistance, 0, float, mDesiredStopDistance, 0, tObjID, mTargetObjectId, 0, cSPVector3, mTargetPosition, 0, cSPVector3, mExpectedGeoCollision, 0, cSPVector3, mInitialDirection, 0, cSPVector3, mOffset, 0, int, reflectedLastUpdate, 0
+00F7BE00  cLocomotionData  (1 fields)
+    cLocomotionData
+00F7BE90  TriggerVolumeEvents  (8 fields)
+    Key, onEnterEvent, 0, edit, Key, onExitEvent, 0, edit
+00F7C120  TriggerVolumeEvents  (1 fields)
+    TriggerVolumeEvents
+00F7C160  TriggerVolumeDef  (92 fields)
+    Key, onEnter, 0, edit, Key, onExit, 0, edit, Key, onStay, 0, edit, nullable, events, TriggerVolumeEvents, edit, bool, useGameObjectDimensions, 0, edit, bool, isKinematic, 0, edit, enum, shape, 0, edit, cSPVector3, offset, 0, edit, float, timeToActivate, 0, edit, bool, persistentTimer, 0, edit, bool, triggerOnceOnly, 0, edit, bool, triggerIfNotBeaten, 0, edit, enum, triggerActivationType, 0, edit, char*, luaCallbackOnEnter, 0, edit, char*, luaCallbackOnExit, 0, edit, char*, luaCallbackOnStay, 0, edit, float, boxWidth, 0, edit, float, boxLength, 0, edit, float, boxHeight, 0, edit, float, sphereRadius, 0, edit, float, capsuleHeight, 0, edit, float, capsuleRadius, 0, edit, bool, serverOnly, 0, edit
+00F7DC00  TriggerVolumeDef  (1 fields)
+    TriggerVolumeDef
+00F7DCD0  NPCAffix  (12 fields)
+    Key, modifier, 0, asset, mpChildAffix, NPCAffix, asset, mpParentAffix, NPCAffix, cLocalizedAssetString, description, 0
+00F7E020  NPCAffix  (1 fields)
+    NPCAffix
+00F7E090  cAffixDifficultyTuning  (18 fields)
+    int, minAffixes, 0, int, maxAffixes, 0, float, chanceToSpawn, 0, int, specialMinAffixes, 0, int, specialMaxAffixes, 0, float, specialChanceToSpawn, 0
+00F7E550  cAffixDifficultyTuning  (1 fields)
+    cAffixDifficultyTuning
+00F7E590  EliteNPCGlobals  (6 fields)
+    array, perLevelTuning, cAffixDifficultyTuning, cSPVector4, textColor, 0
+00F7E750  EliteNPCGlobals  (1 fields)
+    EliteNPCGlobals
+00F7E8C0  CrystalDef  (9 fields)
+    Key, modifier, 0, enum, type, 0, enum, rarity, 0
+00F7EB60  CrystalDef  (1 fields)
+    CrystalDef
+00F7EBA0  CrystalDropDef  (12 fields)
+    int, minLevel, 0, int, maxLevel, 0, int, weight, 0, asset, mpNoun, Noun
+00F7EED0  CrystalDropDef  (1 fields)
+    CrystalDropDef
+00F7EF10  CrystalLevel  (6 fields)
+    int, offset, 0, float, probability, 0
+00F7F0D0  CrystalLevel  (1 fields)
+    CrystalLevel
+00F7F110  CrystalTuning  (9 fields)
+    float, threeInARowBonusPercent, 0, array, CrystalLevel, CrystalLevel, array, crystal, CrystalDropDef
+00F7F3A0  CrystalTuning  (1 fields)
+    CrystalTuning
+00F7F3F0  cGameObjectGfxStateData  (20 fields)
+    Key, name, 0, edit, Key, model, 0, edit, asset, prefab, Markerset, edit, Key, animation, 0, edit, bool, animationLoops, 0, edit
+00F7F9D0  cGameObjectGfxStateData  (1 fields)
+    cGameObjectGfxStateData
+00F7FA10  cGameObjectGfxStates  (4 fields)
+    array, state, cGameObjectGfxStateData, edit
+00F7FB80  cGameObjectGfxStates  (1 fields)
+    cGameObjectGfxStates
+00F7FBC0  GameObjectGfxStateTuning  (12 fields)
+    Key, name, 0, edit, float, animationStartTime, 0, edit, float, animationRate, 0, edit
+00F7FF60  GameObjectGfxStateTuning  (1 fields)
+    GameObjectGfxStateTuning
+00F7FFA0  cVolumeDef  (28 fields)
+    enum, shape, 0, edit, float, boxWidth, 0, edit, float, boxLength, 0, edit, float, boxHeight, 0, edit, float, sphereRadius, 0, edit, float, capsuleHeight, 0, edit, float, capsuleRadius, 0, edit
+00F807E0  cVolumeDef  (1 fields)
+    cVolumeDef
+00F80820  cPressureSwitchDef  (16 fields)
+    nullable, graphicsState_unpressed, cNewGfxState, edit, nullable, graphicsState_pressing, cNewGfxState, edit, nullable, graphicsState_pressed, cNewGfxState, edit, cVolumeDef, volume, 0, edit
+00F80CE0  cPressureSwitchDef  (1 fields)
+    cPressureSwitchDef
+00F80D20  cSwitchDef  (12 fields)
+    nullable, graphicsState_unpressed, cNewGfxState, edit, nullable, graphicsState_pressing, cNewGfxState, edit, nullable, graphicsState_pressed, cNewGfxState, edit
+00F810B0  cSwitchDef  (1 fields)
+    cSwitchDef
+00F810F0  cDoorDef  (28 fields)
+    nullable, graphicsState_open, cNewGfxState, edit, nullable, graphicsState_opening, cNewGfxState, edit, nullable, graphicsState_closed, cNewGfxState, edit, nullable, graphicsState_closing, cNewGfxState, edit, bool, clickToOpen, 0, edit, bool, clickToClose, 0, edit, enum, initialState, 0, edit
+00F81910  cDoorDef  (1 fields)
+    cDoorDef
+00F81950  cNewGfxState  (12 fields)
+    asset, prefab, Markerset, edit, Key, model, 0, edit, Key, animation, 0, edit
+00F81D00  cNewGfxState  (1 fields)
+    cNewGfxState
+00F81D40  cWaterSimData  (64 fields)
+    cSPVector2, water_pos, 0, edit, cSPVector2, water_pos_vari, 0, edit, cSPVector2, water_size, 0, edit, cSPVector2, water_size_vari, 0, edit, float, water_angle, 0, edit, float, water_angle_vari, 0, edit, float, water_intensity, 0, edit, float, water_intensity_vari, 0, edit, float, water_freq, 0, edit, float, water_freq_vari, 0, edit, float, water_wave_speed, 0, edit, float, water_dampening, 0, edit, float, water_normal_scale, 0, edit, char, water_brush, 0, edit, char, water_mask, 0, edit, bool, water_blend, 0, edit
+00F83000  cWaterSimData  (1 fields)
+    cWaterSimData
+00F83050  cGraphicsData  (295 fields)
+    float, camera_far_clip, 0, edit, cSPVector3, shadow_dir, 0, edit, float, shadow_transparency, 0, edit, float, shadow_zbias, 0, edit, float, shadow_camera_z_fade, 0, edit, float, shadow_view_left, 0, edit, float, shadow_view_top, 0, edit, float, shadow_view_right, 0, edit, float, shadow_view_bottom, 0, edit, float, shadow_view_height, 0, edit, float, shadow_view_near, 0, edit, float, shadow_view_far, 0, edit, float, shadow_cull_left, 0, edit, float, shadow_cull_top, 0, edit, float, shadow_cull_right, 0, edit, float, shadow_cull_bottom, 0, edit, float, shadow_cull_near, 0, edit, float, shadow_cull_far, 0, edit, float, bloom, 0, edit, float, brightness, 0, edit, float, contrast, 0, edit, float, saturation, 0, edit, float, hue, 0, edit, char, color_adjust_texture, 0, edit, cSPVector2, wind_dir, 0, edit, float, wind_str, 0, edit, cSPVector3, fog_color, 0, edit, float, fog_density, 0, edit, float, fog_amplitude, 0, edit, float, fog_ground_start, 0, edit, float, fog_ground_end, 0, edit, float, fog_anim_rate, 0, edit, int, fog_strip_length, 0, edit, cSPVector2, fog_dir, 0, edit, float, fog_rate, 0, edit, cSPVector2, fog_scale, 0, edit, char, fog_texture, 0, edit, char, cloud_shadow_texture, 0, edit, cSPVector2, cloud_shadow_direction, 0, edit, cSPVector2, cloud_shadow_tile, 0, edit, float, cloud_shadow_rate, 0, edit, float, cloud_shadow_start, 0, edit, float, cloud_shadow_end, 0, edit, float, cloud_shadow_alpha, 0, edit, float, player_diffuse, 0, edit, float, player_specular, 0, edit, float, player_desaturate, 0, edit, float, player_emissive_level, 0, edit, float, creature_diffuse, 0, edit, float, creature_specular, 0, edit, float, creature_desaturate, 0, edit, float, creature_emissive_level, 0, edit, float, flora_diffuse, 0, edit, float, flora_specular, 0, edit, float, flora_desaturate, 0, edit, float, flora_emissive_level, 0, edit, float, mineral_diffuse, 0, edit, float, mineral_specular, 0, edit, float, mineral_desaturate, 0, edit, float, mineral_emissive_level, 0, edit, float, toonCenterMin, 0, edit, float, toonCenterMax, 0, edit, float, toonAdjacentMin, 0, edit, float, toonAdjacentMax, 0, edit, float, toonCornerMin, 0, edit, float, toonCornerMax, 0, edit, cWaterSimData, water0, 0, edit, cWaterSimData, water1, 0, edit, cWaterSimData, water2, 0, edit, cWaterSimData, water3, 0, edit, bool, camera_blend, 0, edit, bool, color_blend, 0, edit, bool, shadow_blend, 0, edit, bool, bloom_blend, 0
+00F88F40  cGraphicsData  (1 fields)
+    cGraphicsData
+00F88FD0  cGrassData  (88 fields)
+    char, diffuse, 0, edit, char, normal, 0, edit, char, mat, 0, edit, cSPVector3, diffuseTint, 0, edit, cSPVector3, specularTint, 0, edit, cSPVector3, size, 0, edit, cSPVector2, offset, 0, edit, cSPVector2, tile, 0, edit, float, normalLevel, 0, edit, float, flexibility, 0, edit, float, glowLevel, 0, edit, float, emissiveLevel, 0, edit, float, density, 0, edit, float, posVari, 0, edit, float, heightVari, 0, edit, float, width, 0, edit, float, bend, 0, edit, float, bendVari, 0, edit, int, seed, 0, edit, bool, cast_shadows, 0, edit, bool, enable, 0, edit, bool, display_volume, 0, edit
+00F8A950  cGrassData  (1 fields)
+    cGrassData
+00F8A9E0  cSplineCameraData  (8 fields)
+    cSplineCameraNodeBaseData, node, 0, edit, float, duration, 0, edit
+00F8AC70  cSplineCameraData  (1 fields)
+    cSplineCameraData
+00F8AD00  cAnimatorData  (16 fields)
+    char*, animator_name, 0, edit, float, rate, 0, edit, float, delay, 0, edit, char*, track, 0, edit
+00F8B1D0  cAnimatorData  (1 fields)
+    cAnimatorData
+00F8B210  cAnimatedData  (4 fields)
+    char*, animator, 0, edit
+00F8B360  cAnimatedData  (1 fields)
+    cAnimatedData
+00F8B3C0  cLabsMarker  (149 fields)
+    char*, markerName, 0, edit, uint32_t, markerId, 0, asset, nounDef, Noun, edit, cSPVector3, pos, 0, edit, cSPVector3, rotDegrees, 0, edit, float, scale, 0, edit, cSPVector3, dimensions, 0, edit, bool, visible, 0, edit, bool, castShadows, 0, edit, bool, backFaceShadows, 0, edit, bool, onlyShadows, 0, edit, bool, createWithCollision, 0, edit, bool, debugDisplayKDTree, 0, edit, bool, debugDisplayNormals, 0, edit, enum, navMeshSetting, 0, edit, uint64_t, assetOverrideId, 0, edit, SharedComponentData, componentData, 0, edit, nullable, pointLightData, cPointLightData, edit, nullable, spotLightData, cSpotLightData, edit, nullable, lineLightData, cLineLightData, edit, nullable, parallelLightData, cParallelLightData, edit, nullable, graphicsData, cGraphicsData, edit, nullable, animatedData, cAnimatedData, edit, nullable, animatorData, cAnimatorData, edit, nullable, cameraComponentData, cCameraComponentData, edit, nullable, decalData, cDecalData, edit, nullable, waterData, cWaterData, edit, nullable, grassData, cGrassData, edit, nullable, mapCameraData, cMapCameraData, edit, nullable, occluderData, cOccluderData, edit, nullable, splineCameraData, cSplineCameraData, edit, nullable, splineCameraNodeData, cSplineCameraNodeData, edit, nullable, volumeDef, cVolumeDef, bool, ignoreOnXBox, 0, edit, bool, ignoreOnMinSpec, 0, edit, bool, ignoreOnPC, 0, edit, bool, highSpecOnly, 0, edit, uint32_t, targetMarkerId, 0
+00F8DE80  cLabsMarker  (1 fields)
+    cLabsMarker
+00F8DED0  sporelabsObject  (71 fields)
+    uint8_t, mTeam, 0, bool, mbPlayerControlled, 0, uint32_t, mInputSyncStamp, 0, uint8_t, mPlayerIdx, 0, cSPVector3, mLinearVelocity, 0, cSPVector3, mAngularVelocity, 0, cSPVector3, mPosition, 0, cSPQuaternion, mOrientation, 0, float, mScale, 0, edit, float, mMarkerScale, 0, edit, uint32_t, mLastAnimationState, 0, uint64_t, mLastAnimationPlayTimeMs, 0, uint32_t, mOverrideMoveIdleAnimationState, 0, uint32_t, mGraphicsState, 0, uint64_t, mGraphicsStateStartTimeMs, 0, uint64_t, mNewGraphicsStateStartTimeMs, 0, bool, mVisible, 0, bool, mbHasCollision, 0, tObjID, mOwnerID, 0, uint8_t, mMovementType, 0, bool, mDisableRepulsion, 0, uint32_t, mInteractableState, 0, uint32_t, sourceMarkerKey.markerId, 0
+00F8F190  sporelabsObject  (1 fields)
+    sporelabsObject
+00F8F1E0  cGameObjectCreateData  (30 fields)
+    asset, noun, Noun, cSPVector3, position, 0, float, rotXDegrees, 0, float, rotYDegrees, 0, float, rotZDegrees, 0, uint64_t, assetId, 0, float, scale, 0, uint8_t, team, 0, bool, hasCollision, 0, bool, playerControlled, 0
+00F8F9B0  cGameObjectCreateData  (1 fields)
+    cGameObjectCreateData
+00F8F9F0  cAssetProperty  (12 fields)
+    char, name, 0, char, value, 0, guid, key, 0, guid, type, 0
+00F8FD20  cAssetProperty  (1 fields)
+    cAssetProperty
+00F8FD70  cAssetPropertyList  (3 fields)
+    array, mpAssetProperties, cAssetProperty
+00F8FE70  cAssetPropertyList  (1 fields)
+    cAssetPropertyList
+00F8FEB0  ability  (149 fields)
+    char, namespace, 0, bool, requiresAgent, 0, int, allowsMovement, 0, int, maxStackCount, 0, bool, noGlobalCooldown, 0, bool, shouldPursue, 0, bool, alwaysUseCursorPos, 0, bool, channelled, 0, bool, showChannelBar, 0, uint32_t, minimumChannelTimeMs, 0, bool, faceTargetOnCreate, 0, bool, finishOnDeath, 0, uint32_t, descriptors, 0, uint32_t, debuffDescriptors, 0, uint32_t, damageType, 0, uint32_t, damageSource, 0, float, damageCoefficient, 0, float, healingCoefficient, 0, int, modifierPriority, 0, bool, deactivateOnInterrupt, 0, guid, statusAnimation, 0, asset, statusHeadEffect, 0, asset, statusBodyEffect, 0, asset, statusFootEffect, 0, int, activationType, 0, int, deactivationType, 0, int, interfaceType, 0, int, cooldownType, 0, int, targetType, 0, guid, reticleEffect, 0, guid, icon, 0, guid, localizedGroup, 0, guid, localizedName, 0, guid, lootGroup, 0, guid, lootDescription, 0, guid, localizedDescription, 0, guid, localizedOverdriveDescription, 0, edit, float, cooldown, 0, float, cooldownVariance, 0, float, range, 0, int, handledEvents, 0, tAssetPropertyVector, properties, 0, int, scalingAttribute, 0, int, primaryAttributeStat, 0, guid, primaryAttributeStatDelegate, 0, float, manaCoefficient, 0, bool, saveOnDehydrate, 0, bool, rejectable, 0, guid, localizedShortDescription, 0, edit
+00F92530  ability  (1 fields)
+    ability
+00F92580  AIDefinition  (69 fields)
+    array, ainode, cAINode, Key, deathAbility, 0, Key, deathCondition, 0, Key, firstAggroAbility, 0, Key, firstAggroAbility2, 0, Key, firstAlertAbility, 0, Key, subsequentAggroAbility, 0, Key, passiveAbility, 0, uint32_t, aggroType, 0, char, combatIdle, 0, uint32_t, combatIdleCooldown, 0, char, combatIdle2, 0, Key, combatIdle2Condition, 0, uint32_t, combatIdle2Cooldown, 0, char, passiveIdle, 0, char, preAggroIdle, 0, char, preAggroIdle2, 0, float, useSecondaryStart, 0, char, targetTooFar, 0, uint32_t, targetTooFarCooldown, 0, bool, faceTarget, 0, bool, alwaysRunAI, 0, bool, randomizeCooldowns, 0
+00F93770  AIDefinition  (1 fields)
+    AIDefinition
+00F937C0  cAINode  (15 fields)
+    asset, mpPhaseData, Phase, asset, mpConditionData, Condition, int, nodeX, 0, int, nodeY, 0, array, output, int
+00F93BC0  cAINode  (1 fields)
+    cAINode
+00F93C00  Phase  (10 fields)
+    array, gambit, cGambitDefinition, enum, phaseType, 0, edit, bool, startNode, 0
+00F93EF0  Phase  (1 fields)
+    Phase
+00F93F30  Condition  (18 fields)
+    Key, condition, 0, cAssetPropertyList, conditionProps, 0, bool, activateOnce, 0, bool, checkOnSequenceEnd, 0, float, activateTime, 0, float, checkTimeInterval, 0
+00F943E0  Condition  (1 fields)
+    Condition
+00F94420  cGambitDefinition  (15 fields)
+    Key, condition, 0, cAssetPropertyList, conditionProps, 0, Key, ability, 0, cAssetPropertyList, abilityProps, 0, bool, randomizeCooldown, 0
+00F94820  cGambitDefinition  (1 fields)
+    cGambitDefinition
+00F94860  cAICondition  (12 fields)
+    int, conditionType, 0, char, namespace, 0, char, name, 0, tAssetPropertyVector, properties, 0
+00F94B90  cAICondition  (1 fields)
+    cAICondition
+00F94BD0  MagicNumbers  (57 fields)
+    float, DamagePerPointOfStrength, 0, float, DamagePerPointOfDexterity, 0, float, DamagePerPointOfMind, 0, float, HealthPerPointofStrength, 0, float, PhysicalDefensePerPointofDexterity, 0, float, CritRatingPerPointofDexterity, 0, float, EnergyDefensePerPointofMind, 0, float, ManaPerPointofMind, 0, float, DefenseRatingDecreaseMultiplier, 0, float, DefenseRatingDecreaseBase, 0, float, CriticalRatingDecreaseMultiplier, 0, float, CriticalRatingDecreaseBase, 0, float, CriticalDamageBonus, 0, int, PrimaryAttributeIgnoreAmount, 0, float, LeechEffectivenessForAoE, 0, float, LeechEffectivenessForAbilities, 0, float, LeechEffectivenessForBasics, 0, float, DodgePercentCap, 0, float, ResistPercentCap, 0
+00F95AA0  MagicNumbers  (1 fields)
+    MagicNumbers
+00F95AE0  cWaterData  (112 fields)
+    cSPVector2, size, 0, edit, char, reflection, 0, edit, char, mask, 0, edit, char, normal_mask, 0, edit, char, splash_effect, 0, edit, char, foam_effect, 0, edit, cSPVector3, diffuseTint, 0, edit, cSPVector3, specularTint, 0, edit, cSPVector3, depthFogColor, 0, edit, cSPVector2, tile, 0, edit, float, normalLevel, 0, edit, float, specExponent, 0, edit, float, fresnel_bias, 0, edit, float, fresnel_power, 0, edit, float, refract_level, 0, edit, float, reflect_level, 0, edit, float, depth_fog, 0, edit, float, refract_cue_bias, 0, edit, float, refract_cue_scale, 0, edit, float, reflect_cue_bias, 0, edit, float, reflect_cue_scale, 0, edit, float, normal_cue_bias, 0, edit, float, normal_cue_scale, 0, edit, int, simulation, 0, edit, bool, soft_edges, 0, edit, bool, interactive, 0, edit, bool, enable, 0, edit, bool, display_volume, 0, edit
+00F97B50  cWaterData  (1 fields)
+    cWaterData
+00F97BC0  TeleporterDef  (11 fields)
+    uint32_t, destinationMarkerId, 0, nullable, triggerVolume, TriggerVolumeDef, edit, bool, deferTriggerCreation, 0, edit
+00F97F20  TeleporterDef  (1 fields)
+    TeleporterDef
+00F98030  SpaceshipSpawnPointDef  (4 fields)
+    int, index, 0, edit
+00F98180  SpaceshipSpawnPointDef  (1 fields)
+    SpaceshipSpawnPointDef
+00F981C0  SharedComponentData  (40 fields)
+    nullable, audioTrigger, AudioTriggerDef, edit, nullable, teleporter, TeleporterDef, edit, nullable, eventListenerDef, EventListenerDef, edit, nullable, spawnPointDef, SpawnPointDef, edit, nullable, spawnTrigger, SpawnTriggerDef, edit, nullable, interactable, InteractableDef, edit, nullable, defaultGfxState, GameObjectGfxStateTuning, edit, nullable, combatant, CombatantDef, edit, nullable, triggerComponent, TriggerVolumeComponentDef, edit, nullable, spaceshipSpawnPoint, SpaceshipSpawnPointDef, edit
+00F98D50  SharedComponentData  (1 fields)
+    SharedComponentData
+00F98D90  cPointLightData  (56 fields)
+    cSPVector3, diffuse_color, 0, edit, float, diffuse_lamp_power, 0, edit, float, specular_lamp_power, 0, edit, float, inner_radius, 0, edit, float, radius, 0, edit, Key, gobo, 0, edit, int, frames, 0, edit, bool, has_spec, 0, edit, bool, enable, 0, edit, bool, show_volume, 0, edit, bool, wind_blown, 0, edit, cSPVector3, wind_pivot_pos, 0, edit, cSPVector3, wind_pivot_rot, 0, edit, float, wind_flex, 0, edit
+00F99DB0  cPointLightData  (1 fields)
+    cPointLightData
+00F99DF0  cSpotLightData  (76 fields)
+    cSPVector3, diffuse_color, 0, edit, float, diffuse_lamp_power, 0, edit, float, specular_lamp_power, 0, edit, float, inner_radius, 0, edit, float, radius, 0, edit, float, falloff, 0, edit, float, length, 0, edit, float, shadow_bias, 0, edit, Key, gobo, 0, edit, int, frames, 0, edit, bool, has_spec, 0, edit, bool, enable, 0, edit, bool, shadow_caster, 0, edit, bool, show_frustum, 0, edit, bool, show_volume, 0, edit, bool, wind_blown, 0, edit, cSPVector3, wind_pivot_pos, 0, edit, cSPVector3, wind_pivot_rot, 0, edit, float, wind_flex, 0, edit
+00F9B3D0  cSpotLightData  (1 fields)
+    cSpotLightData
+00F9B410  cLineLightData  (56 fields)
+    cSPVector3, diffuse_color, 0, edit, float, diffuse_lamp_power, 0, edit, float, specular_lamp_power, 0, edit, float, inner_radius, 0, edit, float, radius, 0, edit, float, length, 0, edit, Key, gobo, 0, edit, bool, has_spec, 0, edit, bool, enable, 0, edit, bool, show_volume, 0, edit, bool, wind_blown, 0, edit, cSPVector3, wind_pivot_pos, 0, edit, cSPVector3, wind_pivot_rot, 0, edit, float, wind_flex, 0, edit
+00F9C440  cLineLightData  (1 fields)
+    cLineLightData
+00F9C480  cParallelLightData  (48 fields)
+    cSPVector3, diffuse_color, 0, edit, float, diffuse_lamp_power, 0, edit, float, specular_lamp_power, 0, edit, cSPVector3, fill_diffuse, 0, edit, float, fill_diffuse_power, 0, edit, float, fill_specular_power, 0, edit, bool, has_spec, 0, edit, bool, enable, 0, edit, enum, type, 0, edit, float, radius, 0, edit, float, inner_radius, 0, edit, enum, shadowed, 0, edit
+00F9D280  cParallelLightData  (1 fields)
+    cParallelLightData
+00F9D2C0  cSplineCameraNodeBaseData  (32 fields)
+    char, name, 0, edit, float, fov, 0, edit, float, near, 0, edit, float, far, 0, edit, int, knot, 0, edit, float, wait, 0, edit, bool, skipable, 0, edit, char, message, 0, edit
+00F9DC70  cSplineCameraNodeBaseData  (1 fields)
+    cSplineCameraNodeBaseData
+00F9DCC0  cSplineCameraNodeData  (4 fields)
+    cSplineCameraNodeBaseData, node, 0, edit
+00F9DE10  cSplineCameraNodeData  (1 fields)
+    cSplineCameraNodeData
+00F9DEA0  cOccluderData  (16 fields)
+    char, name, 0, edit, int, width, 0, edit, int, height, 0, edit, bool, active, 0, edit
+00F9E340  cOccluderData  (1 fields)
+    cOccluderData
+00F9E3C0  EventListenerData  (12 fields)
+    Key, event, 0, edit, Key, callback, 0, edit, char*, luaCallback, 0, edit
+00F9E760  EventListenerData  (1 fields)
+    EventListenerData
+00F9E7A0  EventListenerDef  (4 fields)
+    array, listener, EventListenerData, edit
+00F9E910  EventListenerDef  (1 fields)
+    EventListenerDef
+00F9E950  cDecalData  (64 fields)
+    cSPVector3, size, 0, edit, char, material, 0, edit, int, layer, 0, edit, char, diffuse, 0, edit, char, normal, 0, edit, cSPVector3, diffuseTint, 0, edit, float, opacity, 0, edit, cSPVector3, specularTint, 0, edit, float, opacityNormal, 0, edit, cSPVector2, tile, 0, edit, float, normalLevel, 0, edit, float, glowLevel, 0, edit, float, emissiveLevel, 0, edit, float, specExponent, 0, edit, bool, enable, 0, edit, bool, display_volume, 0, edit
+00F9FBC0  cDecalData  (1 fields)
+    cDecalData
+00F9FC10  cCameraComponentData  (20 fields)
+    float, azimuth, 0, edit, float, elevation, 0, edit, float, distance, 0, edit, float, transitionRate, 0, edit, float, duration, 0, edit
+00FA01F0  cCameraComponentData  (1 fields)
+    cCameraComponentData
+00FA0230  cCameraComponent  (20 fields)
+    float, azimuth, 0, edit, float, elevation, 0, edit, float, distance, 0, edit, float, transitionRate, 0, edit, float, duration, 0, edit
+00FA0810  cCameraComponent  (1 fields)
+    cCameraComponent
+00FA0890  AudioTriggerDef  (32 fields)
+    enum, type, 0, edit, Key, sound, 0, edit, bool, is3D, 0, edit, bool, retrigger, 0, edit, bool, hardStop, 0, edit, bool, isVoiceover, 0, edit, float, voiceLifetime, 0, edit, nullable, triggerVolume, TriggerVolumeDef, edit
+00FA11D0  AudioTriggerDef  (1 fields)
+    AudioTriggerDef
+00FA1210  objective  (30 fields)
+    char, namespace, 0, uint32_t, descriptionText, 0, uint32_t, progressText, 0, uint32_t, errorText, 0, bool, groupObjective, 0, bool, requiredObjective, 0, bool, timeObjectiveRequires, 0, uint32_t, handledEvents, 0, uint32_t, progressVoiceOver, 0, uint32_t, completedVoiceOver, 0
+00FA19D0  objective  (1 fields)
+    objective
+00FA1A20  affix  (12 fields)
+    char, namespace, 0, uint32_t, localizedText, 0, uint32_t, objective, 0, uint32_t, handledEvents, 0
+00FA1D50  affix  (1 fields)
+    affix
+00FA1D90  AffixTuning  (9 fields)
+    array, positiveChance, uint32_t, array, minorChance, uint32_t, array, majorChance, uint32_t
+00FA2010  AffixTuning  (1 fields)
+    AffixTuning
+00FA2230  GravityForce  (9 fields)
+    float, radius, 0, float, force, 0, float, forceForMover, 0
+00FA24D0  GravityForce  (1 fields)
+    GravityForce
+00FA2780  CollisionVolumeDef  (20 fields)
+    enum, shape, 0, edit, float, boxWidth, 0, edit, float, boxLength, 0, edit, float, boxHeight, 0, edit, float, sphereRadius, 0, edit
+00FA2D70  CollisionVolumeDef  (1 fields)
+    CollisionVolumeDef
+00FA2DB0  ProjectileDef  (12 fields)
+    nullable, creatureCollisionVolume, CollisionVolumeDef, edit, nullable, otherCollisionVolume, CollisionVolumeDef, edit, enum, targetType, 0, edit
+00FA3140  ProjectileDef  (1 fields)
+    ProjectileDef
+00FA3180  OrbitDef  (12 fields)
+    float, orbitHeight, 0, edit, float, orbitRadius, 0, edit, float, orbitSpeed, 0, edit
+00FA3520  OrbitDef  (1 fields)
+    OrbitDef
+00FA3860  TriggerVolumeComponentDef  (4 fields)
+    nullable, triggerVolume, TriggerVolumeDef, edit
+00FA39B0  TriggerVolumeComponentDef  (1 fields)
+    TriggerVolumeComponentDef
