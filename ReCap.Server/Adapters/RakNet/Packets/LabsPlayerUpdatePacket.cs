@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
@@ -25,7 +25,7 @@ public class LabsPlayerUpdatePacket : IRakNetPacket
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
         writer.Write(PlayerId);
-        writer.WriteBE(UpdateBits);
+        writer.Write(UpdateBits);
 
         if ((UpdateBits & PlayerBits) != 0 && PlayerData != null)
         {
@@ -101,9 +101,9 @@ public class LabsPlayerData
         var reflector = new ReflectionSerializer(writer, 24);
         reflector.Begin();
 
-        if (_dataBits.Contains(0)) reflector.Write(0, () => writer.WriteBE(DataSetup));
-        if (_dataBits.Contains(1)) reflector.Write(1, () => writer.WriteBE(CurrentDeckIndex));
-        if (_dataBits.Contains(2)) reflector.Write(2, () => writer.WriteBE(QueuedDeckIndex));
+        if (_dataBits.Contains(0)) reflector.Write(0, () => writer.Write(DataSetup));
+        if (_dataBits.Contains(1)) reflector.Write(1, () => writer.Write(CurrentDeckIndex));
+        if (_dataBits.Contains(2)) reflector.Write(2, () => writer.Write(QueuedDeckIndex));
 
         if (_dataBits.Contains(3))
         {
@@ -116,10 +116,10 @@ public class LabsPlayerData
 
         if (_dataBits.Contains(4)) reflector.Write(4, () => writer.Write(PlayerIndex));
         if (_dataBits.Contains(5)) reflector.Write(5, () => writer.Write(Team));
-        if (_dataBits.Contains(6)) reflector.Write(6, () => writer.WriteBE(PlayerOnlineId));
-        if (_dataBits.Contains(7)) reflector.Write(7, () => writer.WriteBE(Status));
-        if (_dataBits.Contains(8)) reflector.Write(8, () => writer.WriteBE(StatusProgress));
-        if (_dataBits.Contains(12)) reflector.Write(12, () => writer.WriteBE(DNA));
+        if (_dataBits.Contains(6)) reflector.Write(6, () => writer.Write(PlayerOnlineId));
+        if (_dataBits.Contains(7)) reflector.Write(7, () => writer.Write(Status));
+        if (_dataBits.Contains(8)) reflector.Write(8, () => writer.Write(StatusProgress));
+        if (_dataBits.Contains(12)) reflector.Write(12, () => writer.Write(DNA));
 
         if (_dataBits.Contains(13))
         {
@@ -139,15 +139,15 @@ public class LabsPlayerData
             });
         }
 
-        if (_dataBits.Contains(15)) reflector.Write(15, () => writer.WriteBE(AvatarLevel));
-        if (_dataBits.Contains(16)) reflector.Write(16, () => writer.WriteBE(AvatarXP));
-        if (_dataBits.Contains(17)) reflector.Write(17, () => writer.WriteBE(ChainProgression));
-        if (_dataBits.Contains(18)) reflector.Write(18, () => writer.WriteBE(LockCamera));
-        if (_dataBits.Contains(19)) reflector.Write(19, () => writer.WriteBE(LockedOverdrive));
-        if (_dataBits.Contains(20)) reflector.Write(20, () => writer.WriteBE(LockedCrystals));
-        if (_dataBits.Contains(21)) reflector.Write(21, () => writer.WriteBE(LockedAbilityMin));
-        if (_dataBits.Contains(22)) reflector.Write(22, () => writer.WriteBE(LockedDeckIndexMin));
-        if (_dataBits.Contains(23)) reflector.Write(23, () => writer.WriteBE(DeckScore));
+        if (_dataBits.Contains(15)) reflector.Write(15, () => writer.Write(AvatarLevel));
+        if (_dataBits.Contains(16)) reflector.Write(16, () => writer.Write(AvatarXP));
+        if (_dataBits.Contains(17)) reflector.Write(17, () => writer.Write(ChainProgression));
+        if (_dataBits.Contains(18)) reflector.Write(18, () => writer.Write(LockCamera));
+        if (_dataBits.Contains(19)) reflector.Write(19, () => writer.Write(LockedOverdrive));
+        if (_dataBits.Contains(20)) reflector.Write(20, () => writer.Write(LockedCrystals));
+        if (_dataBits.Contains(21)) reflector.Write(21, () => writer.Write(LockedAbilityMin));
+        if (_dataBits.Contains(22)) reflector.Write(22, () => writer.Write(LockedDeckIndexMin));
+        if (_dataBits.Contains(23)) reflector.Write(23, () => writer.Write(DeckScore));
 
         reflector.End();
     }
@@ -177,30 +177,30 @@ public class LabsCharacterData
         using var bw = new BinaryWriter(ms, Encoding.UTF8, true);
 
         ms.Position = 0x008;
-        bw.WriteBE(AssetId);   // uint64 BE at 0x008
-        bw.WriteBE(Version);   // int32 BE at 0x010
+        bw.Write(AssetId);   // uint64 BE at 0x008
+        bw.Write(Version);   // int32 BE at 0x010
 
         ms.Position = 0x0B4;
-        bw.WriteBE(NounId);    // uint32 BE at 0x0B4
+        bw.Write(NounId);    // uint32 BE at 0x0B4
 
-        // mPartAttributes (0x0B8..0x1E0): all zero — no attribute data for fake creatures
+        // mPartAttributes (0x0B8..0x1E0): all zero â€” no attribute data for fake creatures
 
         ms.Position = 0x3B8;
-        bw.WriteBE(CreatureType); // uint32 BE at 0x3B8
+        bw.Write(CreatureType); // uint32 BE at 0x3B8
 
         ms.Position = 0x3C0;
-        bw.WriteBE(DeployCooldown); // uint64 BE at 0x3C0
-        bw.WriteBE(AbilityPoints);  // uint32 BE at 0x3C8
+        bw.Write(DeployCooldown); // uint64 BE at 0x3C0
+        bw.Write(AbilityPoints);  // uint32 BE at 0x3C8
         foreach (var rank in AbilityRanks)
-            bw.WriteBE(rank);       // uint32 BE each, 9 ranks starting at 0x3CC
+            bw.Write(rank);       // uint32 BE each, 9 ranks starting at 0x3CC
 
         ms.Position = 0x3F0;
-        bw.WriteBE(Health);
-        bw.WriteBE(MaxHealth);
-        bw.WriteBE(Mana);
-        bw.WriteBE(MaxMana);
-        bw.WriteBE(GearScore);
-        bw.WriteBE(GearScoreFlattened);
+        bw.Write(Health);
+        bw.Write(MaxHealth);
+        bw.Write(Mana);
+        bw.Write(MaxMana);
+        bw.Write(GearScore);
+        bw.Write(GearScoreFlattened);
 
         outerWriter.Write(buffer);
     }
@@ -210,23 +210,23 @@ public class LabsCharacterData
         var reflector = new ReflectionSerializer(writer, 124);
         reflector.Begin();
 
-        reflector.Write(0, () => writer.WriteBE(Version));
-        reflector.Write(1, () => writer.WriteBE(NounId));
-        reflector.Write(2, () => writer.WriteBE(AssetId));
-        reflector.Write(3, () => writer.WriteBE(CreatureType));
-        reflector.Write(4, () => writer.WriteBE(DeployCooldown));
-        reflector.Write(5, () => writer.WriteBE(AbilityPoints));
+        reflector.Write(0, () => writer.Write(Version));
+        reflector.Write(1, () => writer.Write(NounId));
+        reflector.Write(2, () => writer.Write(AssetId));
+        reflector.Write(3, () => writer.Write(CreatureType));
+        reflector.Write(4, () => writer.Write(DeployCooldown));
+        reflector.Write(5, () => writer.Write(AbilityPoints));
         reflector.Write(6, () =>
         {
             foreach (var rank in AbilityRanks)
-                writer.WriteBE(rank);
+                writer.Write(rank);
         });
-        reflector.Write(7, () => writer.WriteBE(Health));
-        reflector.Write(8, () => writer.WriteBE(MaxHealth));
-        reflector.Write(9, () => writer.WriteBE(Mana));
-        reflector.Write(10, () => writer.WriteBE(MaxMana));
-        reflector.Write(11, () => writer.WriteBE(GearScore));
-        reflector.Write(12, () => writer.WriteBE(GearScoreFlattened));
+        reflector.Write(7, () => writer.Write(Health));
+        reflector.Write(8, () => writer.Write(MaxHealth));
+        reflector.Write(9, () => writer.Write(Mana));
+        reflector.Write(10, () => writer.Write(MaxMana));
+        reflector.Write(11, () => writer.Write(GearScore));
+        reflector.Write(12, () => writer.Write(GearScoreFlattened));
 
         reflector.End();
     }
@@ -240,8 +240,8 @@ public class LabsCatalystData
     // Writes a 16-byte fixed-size block matching Catalyst::WriteTo in C++
     public void WriteTo(BinaryWriter writer)
     {
-        writer.WriteBE(NounId);           // uint32 BE (4 bytes)
-        writer.WriteBE(Rarity);           // uint16 BE (2 bytes)
+        writer.Write(NounId);           // uint32 BE (4 bytes)
+        writer.Write(Rarity);           // uint16 BE (2 bytes)
         writer.Write(new byte[10]);       // 10 bytes padding (zeros)
     }
 
@@ -250,8 +250,8 @@ public class LabsCatalystData
         var reflector = new ReflectionSerializer(writer, 2);
         reflector.Begin();
 
-        reflector.Write(0, () => writer.WriteBE(NounId));
-        reflector.Write(1, () => writer.WriteBE(Rarity));
+        reflector.Write(0, () => writer.Write(NounId));
+        reflector.Write(1, () => writer.Write(Rarity));
 
         reflector.End();
     }

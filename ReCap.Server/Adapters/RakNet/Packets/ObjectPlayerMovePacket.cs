@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 using ReCap.Server.Domain.Gameplay.Objects;
@@ -21,15 +21,15 @@ public class ObjectPlayerMovePacket : IRakNetPacket
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
-        writer.WriteBE(ObjectId);
-        writer.WriteBE(Locomotion.GoalFlags);
-        writer.WriteBE(Locomotion.GoalPosition);
-        writer.WriteBE(Locomotion.Facing);
-        writer.WriteBE(Locomotion.ExternalLinearVelocity);
-        writer.WriteBE(Locomotion.ExternalForce);
-        writer.WriteBE(Locomotion.AllowedStopDistance);
-        writer.WriteBE(Locomotion.DesiredStopDistance);
-        writer.WriteBE(Locomotion.TargetPosition);
-        writer.WriteBE(Locomotion.TargetObjectId);
+        writer.Write(ObjectId);
+        writer.Write(Locomotion.GoalFlags);
+        writer.Write(Locomotion.GoalPosition);
+        writer.Write(Locomotion.Facing);
+        writer.Write(Locomotion.ExternalLinearVelocity);
+        writer.Write(Locomotion.ExternalForce);
+        writer.Write(Locomotion.AllowedStopDistance);
+        writer.Write(Locomotion.DesiredStopDistance);
+        writer.Write(Locomotion.TargetPosition);
+        writer.Write(Locomotion.TargetObjectId);
     }
 }

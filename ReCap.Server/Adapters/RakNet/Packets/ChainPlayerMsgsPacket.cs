@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 using ReCap.Server.Util;
@@ -33,7 +33,7 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
             case 6:
                 Value = reader.ReadByte();
                 Unknown = reader.ReadByte();
-                SquadId = reader.ReadUInt32BE();
+                SquadId = reader.ReadUInt32();
                 break;
         }
     }
@@ -55,7 +55,7 @@ public class ChainPlayerMsgsPacket : IRakNetPacket
         {
             writer.Write(Value);
             writer.Write(Unknown);
-            writer.WriteBE(SquadId);
+            writer.Write(SquadId);
         }
     }
 }

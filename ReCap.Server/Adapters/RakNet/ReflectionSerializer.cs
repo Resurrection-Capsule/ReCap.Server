@@ -50,7 +50,7 @@ public class ReflectionSerializer
             if (_fieldCount <= 8)
                 _writer.Write((byte)_writeBits);
             else
-                _writer.WriteBE(_writeBits);
+                _writer.Write(_writeBits);
 
             _writer.BaseStream.Position = endOffset;
         }

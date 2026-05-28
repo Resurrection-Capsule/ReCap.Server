@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 using ReCap.Server.Util;
 
@@ -39,9 +39,9 @@ public class GamePrepareForStartPacket : IRakNetPacket
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
-        writer.WriteBE(LevelHash);
-        writer.WriteBE(MarkerSetHash);
-        writer.WriteBE(PlayerBitmask);
-        writer.WriteBE(LevelIndex);
+        writer.Write(LevelHash);
+        writer.Write(MarkerSetHash);
+        writer.Write(PlayerBitmask);
+        writer.Write(LevelIndex);
     }
 }

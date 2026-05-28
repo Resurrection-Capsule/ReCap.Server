@@ -1,9 +1,9 @@
-using ReCap.Server.Util;
+﻿using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
 /// <summary>
-/// ActionCommandMsgs (0x9C) — client→server: player gameplay input.
+/// ActionCommandMsgs (0x9C) â€” clientâ†’server: player gameplay input.
 /// C++ reads: ActionCommandCommonData { u32 objectId, vec3 position, quat orientation, u8 type, u8[3] pad }
 /// Then command-specific data depending on type.
 ///
@@ -16,7 +16,7 @@ public class ActionCommandMsgsPacket : IRakNetPacket
 {
     public PacketType Type => PacketType.ActionCommandMsgs;
 
-    // ── Common data (ActionCommandCommonData) ──
+    // â”€â”€ Common data (ActionCommandCommonData) â”€â”€
     public uint ObjectId { get; set; }
     public float PosX { get; set; }
     public float PosY { get; set; }
@@ -30,21 +30,21 @@ public class ActionCommandMsgsPacket : IRakNetPacket
     public byte Pad2 { get; set; }
     public byte Pad3 { get; set; }
 
-    // ── Remaining raw bytes for command-specific data ──
+    // â”€â”€ Remaining raw bytes for command-specific data â”€â”€
     public byte[] ExtraData { get; set; } = Array.Empty<byte>();
 
     public void ReadFrom(Stream stream)
     {
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
 
-        ObjectId = reader.ReadUInt32BE();
-        PosX = reader.ReadSingleBE();
-        PosY = reader.ReadSingleBE();
-        PosZ = reader.ReadSingleBE();
-        OriX = reader.ReadSingleBE();
-        OriY = reader.ReadSingleBE();
-        OriZ = reader.ReadSingleBE();
-        OriW = reader.ReadSingleBE();
+        ObjectId = reader.ReadUInt32();
+        PosX = reader.ReadSingle();
+        PosY = reader.ReadSingle();
+        PosZ = reader.ReadSingle();
+        OriX = reader.ReadSingle();
+        OriY = reader.ReadSingle();
+        OriZ = reader.ReadSingle();
+        OriW = reader.ReadSingle();
         CommandType = reader.ReadByte();
         Pad1 = reader.ReadByte();
         Pad2 = reader.ReadByte();
@@ -58,7 +58,7 @@ public class ActionCommandMsgsPacket : IRakNetPacket
 
     public void WriteTo(Stream stream) { /* server never sends this packet */ }
 
-    // ── Helpers to read command-specific data from ExtraData ──
+    // â”€â”€ Helpers to read command-specific data from ExtraData â”€â”€
 
     /// <summary>
     /// Read movement data: [u32 goalFlags] [vec3 goalPosition]
@@ -69,10 +69,10 @@ public class ActionCommandMsgsPacket : IRakNetPacket
         using var ms = new MemoryStream(ExtraData);
         using var r = new BinaryReader(ms);
         return (
-            r.ReadUInt32BE(),
-            r.ReadSingleBE(),
-            r.ReadSingleBE(),
-            r.ReadSingleBE()
+            r.ReadUInt32(),
+            r.ReadSingle(),
+            r.ReadSingle(),
+            r.ReadSingle()
         );
     }
 
@@ -84,7 +84,7 @@ public class ActionCommandMsgsPacket : IRakNetPacket
     {
         using var ms = new MemoryStream(ExtraData);
         using var r = new BinaryReader(ms);
-        return r.ReadUInt32BE();
+        return r.ReadUInt32();
     }
 
     /// <summary>
@@ -95,6 +95,6 @@ public class ActionCommandMsgsPacket : IRakNetPacket
     {
         using var ms = new MemoryStream(ExtraData);
         using var r = new BinaryReader(ms);
-        return r.ReadUInt32BE();
+        return r.ReadUInt32();
     }
 }

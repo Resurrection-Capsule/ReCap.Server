@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using ReCap.Server.Domain.Gameplay;
 using ReCap.Server.Util;
 
@@ -28,10 +28,10 @@ public class GameStatePacket : IRakNetPacket
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
-        writer.WriteBE(GameTime);
-        writer.WriteBE(TimeElapsed);
+        writer.Write(GameTime);
+        writer.Write(TimeElapsed);
         writer.Write(WireState(State));
-        writer.WriteBE(GameType);
-        writer.WriteBE(1u);
+        writer.Write(GameType);
+        writer.Write(1u);
     }
 }

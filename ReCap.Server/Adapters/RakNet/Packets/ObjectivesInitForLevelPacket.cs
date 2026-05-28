@@ -1,10 +1,10 @@
-using ReCap.Server.Util;
+﻿using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
 /// <summary>
-/// ObjectivesInitForLevel (0xB7) — sends the list of level objectives to the client.
-/// C++: SendObjectivesInitForLevel → [u8 count] [for each: Objective::WriteTo]
+/// ObjectivesInitForLevel (0xB7) â€” sends the list of level objectives to the client.
+/// C++: SendObjectivesInitForLevel â†’ [u8 count] [for each: Objective::WriteTo]
 ///
 /// Objective::WriteTo format:
 ///   [u32 id] [u32 value] [0x40 bytes padding/debug data]
@@ -70,8 +70,8 @@ public class ObjectiveData
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        writer.WriteBE(Id);
-        writer.WriteBE(Value);
+        writer.Write(Id);
+        writer.Write(Value);
         stream.Write(DebugPadding, 0, DebugPadding.Length);
     }
 

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 using ReCap.Server.Util;
 
@@ -19,8 +19,8 @@ public class HelloPlayerPacket : IRakNetPacket
 
         PlayerType = reader.ReadByte();
         GameplayIndex = reader.ReadByte();
-        Address = reader.ReadUInt32BE();
-        Port = reader.ReadUInt16BE();
+        Address = reader.ReadUInt32();
+        Port = reader.ReadUInt16();
     }
 
     public void WriteTo(Stream stream)
@@ -29,7 +29,7 @@ public class HelloPlayerPacket : IRakNetPacket
 
         writer.Write(PlayerType);
         writer.Write(GameplayIndex);
-        writer.WriteBE(Address);
+        writer.Write(Address);
         writer.Write(Port);
     }
 }

@@ -348,7 +348,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         if (packet.Status == 0x08)
         {
             State = GameState.Dungeon;
-            sender.SendPacket(new GameStartPacket(0));
+            sender.SendPacket(new GameStartPacket(Chain.LevelIndex));
             sender.SendPacket(new DebugPingPacket());
         }
 

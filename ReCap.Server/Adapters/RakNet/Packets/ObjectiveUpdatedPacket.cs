@@ -1,9 +1,9 @@
-using ReCap.Server.Util;
+﻿using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
 /// <summary>
-/// ObjectiveUpdated (0xB8) — updates a single objective's progress.
+/// ObjectiveUpdated (0xB8) â€” updates a single objective's progress.
 /// C++: SendObjectiveUpdate
 ///
 /// Format:
@@ -32,13 +32,13 @@ public class ObjectiveUpdatedPacket : IRakNetPacket
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        writer.WriteBE(ObjectiveId);
+        writer.Write(ObjectiveId);
         stream.WriteByte(ClientId);
         stream.WriteByte(Medal);
-        writer.WriteBE(Voiceover);
+        writer.Write(Voiceover);
         stream.WriteByte(ShowNotif ? (byte)1 : (byte)0);
-        writer.WriteBE(Value);
-        writer.WriteBE((uint)2); // unk1
-        writer.WriteBE((uint)3); // unk2
+        writer.Write(Value);
+        writer.Write((uint)2); // unk1
+        writer.Write((uint)3); // unk2
     }
 }

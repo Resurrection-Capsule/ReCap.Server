@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Util;
@@ -24,15 +24,15 @@ public class GameObjectCreateData
         var baseOffset = stream.Position;
 
         stream.Position = baseOffset;
-        writer.WriteBE(Noun);
-        writer.WriteBE(Position);
-        writer.WriteBE(RotXDegrees);
-        writer.WriteBE(RotYDegrees);
-        writer.WriteBE(RotZDegrees);
+        writer.Write(Noun);
+        writer.Write(Position);
+        writer.Write(RotXDegrees);
+        writer.Write(RotYDegrees);
+        writer.Write(RotZDegrees);
 
         stream.Position = baseOffset + 0x20;
-        writer.WriteBE(AssetId);
-        writer.WriteBE(Scale);
+        writer.Write(AssetId);
+        writer.Write(Scale);
         writer.Write(Team);
         writer.Write(HasCollision);
         writer.Write(PlayerControlled);
@@ -46,13 +46,13 @@ public class GameObjectCreateData
         var reflector = new ReflectionSerializer(writer, 10);
         
         reflector.Begin();
-        reflector.Write(0, () => writer.WriteBE(Noun));
-        reflector.Write(1, () => writer.WriteBE(Position));
-        reflector.Write(2, () => writer.WriteBE(RotXDegrees));
-        reflector.Write(3, () => writer.WriteBE(RotYDegrees));
-        reflector.Write(4, () => writer.WriteBE(RotZDegrees));
-        reflector.Write(5, () => writer.WriteBE(AssetId));
-        reflector.Write(6, () => writer.WriteBE(Scale));
+        reflector.Write(0, () => writer.Write(Noun));
+        reflector.Write(1, () => writer.Write(Position));
+        reflector.Write(2, () => writer.Write(RotXDegrees));
+        reflector.Write(3, () => writer.Write(RotYDegrees));
+        reflector.Write(4, () => writer.Write(RotZDegrees));
+        reflector.Write(5, () => writer.Write(AssetId));
+        reflector.Write(6, () => writer.Write(Scale));
         reflector.Write(7, () => writer.Write(Team));
         reflector.Write(8, () => writer.Write(HasCollision));
         reflector.Write(9, () => writer.Write(PlayerControlled));

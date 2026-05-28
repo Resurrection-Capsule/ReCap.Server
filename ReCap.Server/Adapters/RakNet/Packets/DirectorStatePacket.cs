@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using ReCap.Server.Util;
 
@@ -25,9 +25,9 @@ public class DirectorStatePacket : IRakNetPacket
         // Write<uint32_t>(stream, mIntensityState);
         // Write<float>(stream, mIntensity);
         
-        writer.WriteBE(1u); // Enabled
-        writer.WriteBE(0u); // State
-        writer.WriteBE(0u); // IntensityState
-        writer.WriteBE(0f); // Intensity
+        writer.Write(1u); // Enabled
+        writer.Write(0u); // State
+        writer.Write(0u); // IntensityState
+        writer.Write(0f); // Intensity
     }
 }

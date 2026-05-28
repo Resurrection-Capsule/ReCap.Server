@@ -1,26 +1,29 @@
 ﻿using System.Text;
 
+using ReCap.Server.Util;
+
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
 public class GameStartPacket : IRakNetPacket
 {
     public PacketType Type => PacketType.GameStart;
-    public byte Unk1 { get; set; }
 
-    public GameStartPacket(byte unk1) => Unk1 = unk1;
+    public uint LevelIndex { get; set; }
+
+    public GameStartPacket(uint levelIndex) => LevelIndex = levelIndex;
     public GameStartPacket() { }
 
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
-        writer.Write(Unk1);
+        writer.Write(LevelIndex);
     }
 
     public void ReadFrom(Stream stream)
     {
         using var reader = new BinaryReader(stream, Encoding.UTF8, true);
 
-        Unk1 = reader.ReadByte();
+        LevelIndex = reader.ReadUInt32();
     }
 }

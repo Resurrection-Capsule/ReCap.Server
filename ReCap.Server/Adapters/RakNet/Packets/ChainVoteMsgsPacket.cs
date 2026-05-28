@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers.Binary;
 using System.IO;
 using System.Text;
@@ -41,7 +41,7 @@ public class ChainVoteMsgsPacket : IRakNetPacket
                 }
                 break;
             case 1:
-                writer.WriteBE(SecondsUntilDeployment);
+                writer.Write(SecondsUntilDeployment);
                 break;
             case 2:
                 writer.Write(StayInParty);

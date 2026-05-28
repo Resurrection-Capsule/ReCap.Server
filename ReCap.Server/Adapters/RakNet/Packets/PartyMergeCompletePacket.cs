@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 using ReCap.Server.Util;
 
@@ -19,13 +19,13 @@ public class PartyMergeCompletePacket : IRakNetPacket
     {
         using var reader = new BinaryReader(stream, Encoding.UTF8, true);
 
-        Timestamp = reader.ReadUInt64BE();
+        Timestamp = reader.ReadUInt64();
     }
 
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
-        writer.WriteBE(Timestamp);
+        writer.Write(Timestamp);
     }
 }

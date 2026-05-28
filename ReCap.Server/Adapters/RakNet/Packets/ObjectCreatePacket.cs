@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 using ReCap.Server.Domain.Gameplay.Objects;
@@ -22,7 +22,7 @@ public class ObjectCreatePacket : IRakNetPacket
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
-        writer.WriteBE(ObjectId);
+        writer.Write(ObjectId);
         
         CreateData.WriteReflection(stream);
         ObjectData.WriteReflection(stream);

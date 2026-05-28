@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Util;
@@ -23,21 +23,21 @@ public class LobParams
         var baseOffset = stream.Position;
 
         stream.Position = baseOffset + 0x18;
-        writer.WriteBE(LobUpDir);
+        writer.Write(LobUpDir);
 
         stream.Position = baseOffset + 0x30;
-        writer.WriteBE(BounceNum);
-        writer.WriteBE(BounceRestitution);
+        writer.Write(BounceNum);
+        writer.Write(BounceRestitution);
         writer.Write(GroundCollisionOnly);
         writer.Write(StopBounceOnCreatures);
 
         stream.Position = baseOffset + 0x3C;
-        writer.WriteBE(PlaneDir);
+        writer.Write(PlaneDir);
 
         stream.Position = baseOffset + 0x48;
-        writer.WriteBE(PlaneDirLinearParam);
-        writer.WriteBE(UpLinearParam);
-        writer.WriteBE(UpQuadraticParam);
+        writer.Write(PlaneDirLinearParam);
+        writer.Write(UpLinearParam);
+        writer.Write(UpQuadraticParam);
 
         stream.Position = baseOffset + 0x54;
     }
@@ -48,13 +48,13 @@ public class LobParams
         var reflector = new ReflectionSerializer(writer, 9);
         
         reflector.Begin();
-        reflector.Write(0, () => writer.WriteBE(PlaneDirLinearParam));
-        reflector.Write(1, () => writer.WriteBE(UpLinearParam));
-        reflector.Write(2, () => writer.WriteBE(UpQuadraticParam));
-        reflector.Write(3, () => writer.WriteBE(LobUpDir));
-        reflector.Write(4, () => writer.WriteBE(PlaneDir));
-        reflector.Write(5, () => writer.WriteBE(BounceNum));
-        reflector.Write(6, () => writer.WriteBE(BounceRestitution));
+        reflector.Write(0, () => writer.Write(PlaneDirLinearParam));
+        reflector.Write(1, () => writer.Write(UpLinearParam));
+        reflector.Write(2, () => writer.Write(UpQuadraticParam));
+        reflector.Write(3, () => writer.Write(LobUpDir));
+        reflector.Write(4, () => writer.Write(PlaneDir));
+        reflector.Write(5, () => writer.Write(BounceNum));
+        reflector.Write(6, () => writer.Write(BounceRestitution));
         reflector.Write(7, () => writer.Write(GroundCollisionOnly));
         reflector.Write(8, () => writer.Write(StopBounceOnCreatures));
         reflector.End();
@@ -85,25 +85,25 @@ public class ProjectileParams
         var baseOffset = stream.Position;
 
         stream.Position = baseOffset;
-        writer.WriteBE(Speed);
-        writer.WriteBE(Acceleration);
-        writer.WriteBE(JinkInfo);
-        writer.WriteBE(Range);
-        writer.WriteBE(SpinRate);
-        writer.WriteBE(Direction);
+        writer.Write(Speed);
+        writer.Write(Acceleration);
+        writer.Write(JinkInfo);
+        writer.Write(Range);
+        writer.Write(SpinRate);
+        writer.Write(Direction);
         writer.Write(ProjectileFlags);
 
         stream.Position = baseOffset + 0x24;
-        writer.WriteBE(HomingDelay);
-        writer.WriteBE(TurnRate);
-        writer.WriteBE(TurnAcceleration);
+        writer.Write(HomingDelay);
+        writer.Write(TurnRate);
+        writer.Write(TurnAcceleration);
         writer.Write(Piercing);
         writer.Write(IgnoreGroundCollide);
         writer.Write(IgnoreCreatureCollide);
 
         stream.Position = baseOffset + 0x34;
-        writer.WriteBE(Eccentricity);
-        writer.WriteBE(CombatantSweepHeight);
+        writer.Write(Eccentricity);
+        writer.Write(CombatantSweepHeight);
 
         stream.Position = baseOffset + 0x3C;
     }
@@ -114,21 +114,21 @@ public class ProjectileParams
         var reflector = new ReflectionSerializer(writer, 15);
         
         reflector.Begin();
-        reflector.Write(0, () => writer.WriteBE(Speed));
-        reflector.Write(1, () => writer.WriteBE(Acceleration));
-        reflector.Write(2, () => writer.WriteBE(JinkInfo));
-        reflector.Write(3, () => writer.WriteBE(Range));
-        reflector.Write(4, () => writer.WriteBE(SpinRate));
-        reflector.Write(5, () => writer.WriteBE(Direction));
+        reflector.Write(0, () => writer.Write(Speed));
+        reflector.Write(1, () => writer.Write(Acceleration));
+        reflector.Write(2, () => writer.Write(JinkInfo));
+        reflector.Write(3, () => writer.Write(Range));
+        reflector.Write(4, () => writer.Write(SpinRate));
+        reflector.Write(5, () => writer.Write(Direction));
         reflector.Write(6, () => writer.Write(ProjectileFlags));
-        reflector.Write(7, () => writer.WriteBE(HomingDelay));
-        reflector.Write(8, () => writer.WriteBE(TurnRate));
-        reflector.Write(9, () => writer.WriteBE(TurnAcceleration));
-        reflector.Write(10, () => writer.WriteBE(Eccentricity));
+        reflector.Write(7, () => writer.Write(HomingDelay));
+        reflector.Write(8, () => writer.Write(TurnRate));
+        reflector.Write(9, () => writer.Write(TurnAcceleration));
+        reflector.Write(10, () => writer.Write(Eccentricity));
         reflector.Write(11, () => writer.Write(Piercing));
         reflector.Write(12, () => writer.Write(IgnoreGroundCollide));
         reflector.Write(13, () => writer.Write(IgnoreCreatureCollide));
-        reflector.Write(14, () => writer.WriteBE(CombatantSweepHeight));
+        reflector.Write(14, () => writer.Write(CombatantSweepHeight));
         reflector.End();
     }
 }
@@ -160,38 +160,38 @@ public class LocomotionData
         var baseOffset = stream.Position;
 
         stream.Position = baseOffset + 0x08;
-        writer.WriteBE(ReflectedLastUpdate);
+        writer.Write(ReflectedLastUpdate);
 
         stream.Position = baseOffset + 0x44;
         ProjectileParams.WriteTo(stream);
 
         stream.Position = baseOffset + 0x84;
-        writer.WriteBE(ExpectedGeoCollision);
-        writer.WriteBE(TargetObjectId);
+        writer.Write(ExpectedGeoCollision);
+        writer.Write(TargetObjectId);
 
         stream.Position = baseOffset + 0x9C;
-        writer.WriteBE(InitialDirection);
+        writer.Write(InitialDirection);
 
         stream.Position = baseOffset + 0xD8;
-        writer.WriteBE(LobStartTime);
-        writer.WriteBE(LobPrevSpeedModifier);
+        writer.Write(LobStartTime);
+        writer.Write(LobPrevSpeedModifier);
         LobParams.WriteTo(stream);
 
         stream.Position = baseOffset + 0x138;
-        writer.WriteBE(Offset);
-        writer.WriteBE(GoalFlags);
-        writer.WriteBE(GoalPosition);
-        writer.WriteBE(PartialGoalPosition);
+        writer.Write(Offset);
+        writer.Write(GoalFlags);
+        writer.Write(GoalPosition);
+        writer.Write(PartialGoalPosition);
 
         stream.Position = baseOffset + 0x178;
-        writer.WriteBE(Facing);
-        writer.WriteBE(ExternalLinearVelocity);
-        writer.WriteBE(ExternalForce);
-        writer.WriteBE(AllowedStopDistance);
-        writer.WriteBE(DesiredStopDistance);
+        writer.Write(Facing);
+        writer.Write(ExternalLinearVelocity);
+        writer.Write(ExternalForce);
+        writer.Write(AllowedStopDistance);
+        writer.Write(DesiredStopDistance);
 
         stream.Position = baseOffset + 0x1AC;
-        writer.WriteBE(TargetPosition);
+        writer.Write(TargetPosition);
 
         stream.Position = baseOffset + 0x290;
     }
@@ -202,24 +202,24 @@ public class LocomotionData
         var reflector = new ReflectionSerializer(writer, 18);
         
         reflector.Begin();
-        reflector.Write(0, () => writer.WriteBE(LobStartTime));
-        reflector.Write(1, () => writer.WriteBE(LobPrevSpeedModifier));
+        reflector.Write(0, () => writer.Write(LobStartTime));
+        reflector.Write(1, () => writer.Write(LobPrevSpeedModifier));
         reflector.Write(2, () => LobParams.WriteReflection(stream));
         reflector.Write(3, () => ProjectileParams.WriteReflection(stream));
-        reflector.Write(4, () => writer.WriteBE(GoalFlags));
-        reflector.Write(5, () => writer.WriteBE(GoalPosition));
-        reflector.Write(6, () => writer.WriteBE(PartialGoalPosition));
-        reflector.Write(7, () => writer.WriteBE(Facing));
-        reflector.Write(8, () => writer.WriteBE(ExternalLinearVelocity));
-        reflector.Write(9, () => writer.WriteBE(ExternalForce));
-        reflector.Write(10, () => writer.WriteBE(AllowedStopDistance));
-        reflector.Write(11, () => writer.WriteBE(DesiredStopDistance));
-        reflector.Write(12, () => writer.WriteBE(TargetObjectId));
-        reflector.Write(13, () => writer.WriteBE(TargetPosition));
-        reflector.Write(14, () => writer.WriteBE(ExpectedGeoCollision));
-        reflector.Write(15, () => writer.WriteBE(InitialDirection));
-        reflector.Write(16, () => writer.WriteBE(Offset));
-        reflector.Write(17, () => writer.WriteBE(ReflectedLastUpdate));
+        reflector.Write(4, () => writer.Write(GoalFlags));
+        reflector.Write(5, () => writer.Write(GoalPosition));
+        reflector.Write(6, () => writer.Write(PartialGoalPosition));
+        reflector.Write(7, () => writer.Write(Facing));
+        reflector.Write(8, () => writer.Write(ExternalLinearVelocity));
+        reflector.Write(9, () => writer.Write(ExternalForce));
+        reflector.Write(10, () => writer.Write(AllowedStopDistance));
+        reflector.Write(11, () => writer.Write(DesiredStopDistance));
+        reflector.Write(12, () => writer.Write(TargetObjectId));
+        reflector.Write(13, () => writer.Write(TargetPosition));
+        reflector.Write(14, () => writer.Write(ExpectedGeoCollision));
+        reflector.Write(15, () => writer.Write(InitialDirection));
+        reflector.Write(16, () => writer.Write(Offset));
+        reflector.Write(17, () => writer.Write(ReflectedLastUpdate));
         reflector.End();
     }
 }

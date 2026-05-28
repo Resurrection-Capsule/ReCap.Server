@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Util;
@@ -37,22 +37,22 @@ public class SporelabsObject
         var baseOffset = stream.Position;
 
         stream.Position = baseOffset + 0x010;
-        writer.WriteBE(Scale);
-        writer.WriteBE(MarkerScale);
+        writer.Write(Scale);
+        writer.Write(MarkerScale);
 
         stream.Position = baseOffset + 0x018;
-        writer.WriteBE(Position);
-        writer.WriteBE(Orientation);
-        writer.WriteBE(LinearVelocity);
-        writer.WriteBE(AngularVelocity);
+        writer.Write(Position);
+        writer.Write(Orientation);
+        writer.Write(LinearVelocity);
+        writer.Write(AngularVelocity);
 
         stream.Position = baseOffset + 0x050;
-        writer.WriteBE(OwnerID);
+        writer.Write(OwnerID);
         writer.Write(Team);
         writer.Write(PlayerIdx);
 
         stream.Position = baseOffset + 0x058;
-        writer.WriteBE(InputSyncStamp);
+        writer.Write(InputSyncStamp);
         writer.Write(PlayerControlled);
 
         stream.Position = baseOffset + 0x05F;
@@ -61,27 +61,27 @@ public class SporelabsObject
         writer.Write(MovementType);
 
         stream.Position = baseOffset + 0x088;
-        writer.WriteBE(SourceMarkerKeyMarkerId);
+        writer.Write(SourceMarkerKeyMarkerId);
 
         stream.Position = baseOffset + 0x0AC;
-        writer.WriteBE(LastAnimationState);
+        writer.Write(LastAnimationState);
 
         stream.Position = baseOffset + 0x0B8;
-        writer.WriteBE(LastAnimationPlayTimeMs);
-        writer.WriteBE(OverrideMoveIdleAnimationState);
+        writer.Write(LastAnimationPlayTimeMs);
+        writer.Write(OverrideMoveIdleAnimationState);
 
         stream.Position = baseOffset + 0x258;
-        writer.WriteBE(GraphicsState);
+        writer.Write(GraphicsState);
 
         stream.Position = baseOffset + 0x260;
-        writer.WriteBE(GraphicsStateStartTimeMs);
-        writer.WriteBE(NewGraphicsStateStartTimeMs);
+        writer.Write(GraphicsStateStartTimeMs);
+        writer.Write(NewGraphicsStateStartTimeMs);
 
         stream.Position = baseOffset + 0x284;
         writer.Write(DisableRepulsion);
 
         stream.Position = baseOffset + 0x288;
-        writer.WriteBE(InteractableState);
+        writer.Write(InteractableState);
 
         stream.Position = baseOffset + 0x308;
     }
@@ -94,27 +94,27 @@ public class SporelabsObject
         reflector.Begin();
         reflector.Write(0, () => writer.Write(Team));
         reflector.Write(1, () => writer.Write(PlayerControlled));
-        reflector.Write(2, () => writer.WriteBE(InputSyncStamp));
+        reflector.Write(2, () => writer.Write(InputSyncStamp));
         reflector.Write(3, () => writer.Write(PlayerIdx));
-        reflector.Write(4, () => writer.WriteBE(LinearVelocity));
-        reflector.Write(5, () => writer.WriteBE(AngularVelocity));
-        reflector.Write(6, () => writer.WriteBE(Position));
-        reflector.Write(7, () => writer.WriteBE(Orientation));
-        reflector.Write(8, () => writer.WriteBE(Scale));
-        reflector.Write(9, () => writer.WriteBE(MarkerScale));
-        reflector.Write(10, () => writer.WriteBE(LastAnimationState));
-        reflector.Write(11, () => writer.WriteBE(LastAnimationPlayTimeMs));
-        reflector.Write(12, () => writer.WriteBE(OverrideMoveIdleAnimationState));
-        reflector.Write(13, () => writer.WriteBE(GraphicsState));
-        reflector.Write(14, () => writer.WriteBE(GraphicsStateStartTimeMs));
-        reflector.Write(15, () => writer.WriteBE(NewGraphicsStateStartTimeMs));
+        reflector.Write(4, () => writer.Write(LinearVelocity));
+        reflector.Write(5, () => writer.Write(AngularVelocity));
+        reflector.Write(6, () => writer.Write(Position));
+        reflector.Write(7, () => writer.Write(Orientation));
+        reflector.Write(8, () => writer.Write(Scale));
+        reflector.Write(9, () => writer.Write(MarkerScale));
+        reflector.Write(10, () => writer.Write(LastAnimationState));
+        reflector.Write(11, () => writer.Write(LastAnimationPlayTimeMs));
+        reflector.Write(12, () => writer.Write(OverrideMoveIdleAnimationState));
+        reflector.Write(13, () => writer.Write(GraphicsState));
+        reflector.Write(14, () => writer.Write(GraphicsStateStartTimeMs));
+        reflector.Write(15, () => writer.Write(NewGraphicsStateStartTimeMs));
         reflector.Write(16, () => writer.Write(Visible));
         reflector.Write(17, () => writer.Write(HasCollision));
-        reflector.Write(18, () => writer.WriteBE(OwnerID));
+        reflector.Write(18, () => writer.Write(OwnerID));
         reflector.Write(19, () => writer.Write(MovementType));
         reflector.Write(20, () => writer.Write(DisableRepulsion));
-        reflector.Write(21, () => writer.WriteBE(InteractableState));
-        reflector.Write(22, () => writer.WriteBE(SourceMarkerKeyMarkerId));
+        reflector.Write(21, () => writer.Write(InteractableState));
+        reflector.Write(22, () => writer.Write(SourceMarkerKeyMarkerId));
         reflector.End();
     }
 }
