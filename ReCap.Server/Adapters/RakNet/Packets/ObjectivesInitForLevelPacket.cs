@@ -64,23 +64,17 @@ public class ObjectiveData
     public uint Id    { get; set; }
     public uint Value { get; set; }
 
-    // C++ debug pattern: 0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF repeating for 0x40 bytes
-    private static readonly byte[] DebugPadding = BuildDebugPadding(0x40);
+    // C++ Objective::WriteTo (Types.cpp): [u32 id][u32 value][char[0x30] description, null-padded].
+    // Total = 0x38 (56) bytes per objective. Description left empty (zeroed). The previous
+    // 0x40 garbage-pattern padding mis-sized every objective and desynced the client read,
+    // crashing on Dungeon entry.
+    private const int DescriptionSize = 0x30;
 
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
         writer.Write(Id);
         writer.Write(Value);
-        stream.Write(DebugPadding, 0, DebugPadding.Length);
-    }
-
-    private static byte[] BuildDebugPadding(int length)
-    {
-        byte[] pattern = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF };
-        var result = new byte[length];
-        for (int i = 0; i < length; i++)
-            result[i] = pattern[i & 7];
-        return result;
+        stream.Write(new byte[DescriptionSize], 0, DescriptionSize);
     }
 }

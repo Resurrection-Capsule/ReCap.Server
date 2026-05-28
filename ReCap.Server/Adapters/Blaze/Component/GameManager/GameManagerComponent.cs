@@ -83,6 +83,12 @@ public class GameManagerComponent : IComponent
         }
 
         GameHandler?.AddClientToGame(client.UserId, game.Id);
+
+        if (request.GameAttribs.TryGetValue("SelectedDifficulty", out var difficulty) && uint.TryParse(difficulty, out var levelIndex))
+            game.SelectLevel(levelIndex);
+        else
+            Log($"ResetDedicatedServer: no SelectedDifficulty attr; keeping default level");
+
         game.SetupPlayer(client.UserId, 0);
         game.SetupBot(1);
         game.SetupBot(2);

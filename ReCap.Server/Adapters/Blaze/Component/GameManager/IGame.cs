@@ -24,4 +24,5 @@ public interface IGame
 
     bool SetupPlayer(ulong playerId, byte slot);
     void SetupBot(byte slot);
+    void SelectLevel(uint levelIndex);
 }

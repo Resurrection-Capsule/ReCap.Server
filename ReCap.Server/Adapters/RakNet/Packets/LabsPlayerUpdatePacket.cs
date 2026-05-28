@@ -176,17 +176,29 @@ public class LabsCharacterData
         using var ms = new MemoryStream(buffer, writable: true);
         using var bw = new BinaryWriter(ms, Encoding.UTF8, true);
 
+        // Offsets per AssetData.Parser catalog `labsCharacter` (0x620). LE on wire.
+        ms.Position = 0x004;
+        bw.Write(NounId);    // staticData.nounDef @ 0x004
+
         ms.Position = 0x008;
-        bw.Write(AssetId);   // uint64 BE at 0x008
-        bw.Write(Version);   // int32 BE at 0x010
+        bw.Write(AssetId);   // staticData.assetID (u64) @ 0x008
 
-        ms.Position = 0x0B4;
-        bw.Write(NounId);    // uint32 BE at 0x0B4
+        ms.Position = 0x010;
+        bw.Write(Version);   // staticData.version @ 0x010
 
-        // mPartAttributes (0x0B8..0x1E0): all zero â€” no attribute data for fake creatures
+        // staticData.partsAttributes[] (float per AttributeType index). Leaving these zero
+        // gives AttackSpeedScale/CooldownScale = 0, which the client divides by when setting
+        // up the deployed hero -> crash. Fill the essentials (offsets from the catalog).
+        void PartAttr(int offset, float value) { ms.Position = offset; bw.Write(value); }
+        PartAttr(0x0C8, MaxHealth);   // [MaxHealth]
+        PartAttr(0x0CC, MaxMana);     // [MaxMana]
+        PartAttr(0x114, 1.0f);        // [AttackSpeedScale]
+        PartAttr(0x118, 1.0f);        // [CooldownScale]
+        PartAttr(0x258, 1.0f);        // [MinWeaponDamage]
+        PartAttr(0x25C, 5.0f);        // [MaxWeaponDamage]
 
         ms.Position = 0x3B8;
-        bw.Write(CreatureType); // uint32 BE at 0x3B8
+        bw.Write(CreatureType); // mCreatureType @ 0x3B8
 
         ms.Position = 0x3C0;
         bw.Write(DeployCooldown); // uint64 BE at 0x3C0

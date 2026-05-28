@@ -10,24 +10,16 @@ public class DirectorStatePacket : IRakNetPacket
 
     public void ReadFrom(Stream stream) { }
 
+    // C++ cAIDirector::WriteTo (Types.cpp:147) emits a fixed 0x4D0-byte (1232) blob.
+    // At Dungeon entry every field is zero (no boss/horde), so a zeroed blob is exact.
+    // Layout for reference (Write<T> wrapper, byte-swapped):
+    //   0x00D bool mbBossSpawned, 0x00E mbBossHorde, 0x00F mbCaptainSpawned,
+    //   0x010 bool mbBossComplete, 0x014 u32 mBossId,
+    //   0x47C i32 mActiveHordeWaves, 0x48C bool mbHordeSpawned. Remainder zero.
+    private const int BlobSize = 0x4D0;
+
     public void WriteTo(Stream stream)
     {
-        using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
-        
-        // C++ Server:
-        // void Server::SendDirectorState(...)
-        // outStream.Write(PacketID::DirectorState);
-        // director.WriteTo(outStream);
-        
-        // Director.WriteTo(outStream) implementation in C++:
-        // Write<uint32_t>(stream, mEnabled);
-        // Write<uint32_t>(stream, mState);
-        // Write<uint32_t>(stream, mIntensityState);
-        // Write<float>(stream, mIntensity);
-        
-        writer.Write(1u); // Enabled
-        writer.Write(0u); // State
-        writer.Write(0u); // IntensityState
-        writer.Write(0f); // Intensity
+        stream.Write(new byte[BlobSize], 0, BlobSize);
     }
 }

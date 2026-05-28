@@ -36,6 +36,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private bool ReadyForStart = false;
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
+    private readonly Dictionary<byte, uint[]> _deckObjectIds = new();
     public GameState State { get; private set; } = GameState.Initializing;
 
     public IEnumerable<ulong> GetPlayerIds() => Players.Where(p => !p.Value.IsBot).Select(p => p.Value.Id);
@@ -62,6 +63,21 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
             SendLabsPlayerUpdate(player.Client);
         }
+    }
+
+    public void SelectLevel(uint levelIndex)
+    {
+        Chain.SetLevelByIndex((int)levelIndex);
+        Chain.StarLevel = 0;
+        Chain.CompletedLevel = false;
+
+        if (Assets != null)
+        {
+            Chain.PopulateFromLevel(Assets);
+            Chain.ResolveMarkerSet(Assets);
+        }
+
+        Log.Game.Info($"Level selected: index={levelIndex} name={Chain.LevelName} level=0x{Chain.Level:X8}");
     }
 
     public bool SetupPlayer(ulong playerId, byte slot)
@@ -186,10 +202,18 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         player.ResetUpdateBits();
     }
 
+    // TODO(robust): squad creatures are hardcoded; should come from the player's
+    // saved deck/squad (Blaze) instead of fixed nouns. Tracked separately.
+    private static readonly uint[] SquadCreatureNouns = { 1667741389u, 749013658u, 3591937345u };
+    private static readonly uint[] SquadCreatureTypes = { 2u, 0u, 3u };
+
+    // C++ Server::OnDebugPing Dungeon → mGame.SwapCharacter(player, 1): deck index 1 is deployed.
+    private const int DeployedDeckIndex = 1;
+
     private void FillSquadCharacters(LabsPlayerData playerData)
     {
-        uint[] creatureNouns = { 1667741389u, 749013658u, 3591937345u };
-        uint[] creatureTypes = { 2u, 0u, 3u };
+        uint[] creatureNouns = SquadCreatureNouns;
+        uint[] creatureTypes = SquadCreatureTypes;
         for (int i = 0; i < 3; i++)
         {
             float maxHealth = 200f;
@@ -382,18 +406,56 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         SendLabsPlayerUpdate(sender);
     }
 
+    private Vector3? ResolveSpawnPosition()
+    {
+        if (Assets == null) return null;
+
+        // C++ Instance::LoadLevel reads CameraSpawnPoint markers from the level's
+        // "<level>_design" markerset (fallback "_design_spawners"). Our markerset keys
+        // are Fnv1a of the name WITHOUT the ".Markerset" extension (see LevelLoader).
+        var ms = Assets.GetMarkerSetByName($"{Chain.LevelName}_design")
+              ?? Assets.GetMarkerSetByName($"{Chain.LevelName}_design_spawners");
+        if (ms is null)
+        {
+            Log.Game.Debug($"spawn: markerset '{Chain.LevelName}_design' not found");
+            return null;
+        }
+        if (ms.FindByName("markers") is not ArrayValue markers)
+        {
+            Log.Game.Debug($"spawn: markerset '{Chain.LevelName}_design' has no markers array");
+            return null;
+        }
+
+        // nounDef is a DataType.Asset -> parsed as the asset NAME string (or null).
+        foreach (var marker in markers.Items)
+        {
+            if (string.Equals(marker.FindByName("nounDef").AsString(), "CameraSpawnPoint.Noun", StringComparison.OrdinalIgnoreCase))
+                return marker.FindByName("pos").AsVector3();
+        }
+
+        var names = markers.Items.Select(m => m.FindByName("nounDef").AsString())
+            .Where(s => !string.IsNullOrEmpty(s)).Distinct().Take(10);
+        Log.Game.Debug($"spawn: {markers.Items.Count} markers, no CameraSpawnPoint; nounDef names: {string.Join(", ", names)}");
+        return null;
+    }
+
     private void OnPlayerStart(RakNetClient client)
     {
         var player = GetPlayerByClient(client);
         if (player == null) return;
+
+        client.SendPacket(ObjectivesInitForLevelPacket.CreateDefault());
 
         if (Assets != null)
         {
             var markers = Assets.GetLevelMarkers(Chain.LevelName);
             foreach (var marker in markers)
             {
-                var nounDef = marker.FindByName("nounDef").AsUInt32();
-                if (nounDef == 0) continue;
+                // nounDef is a DataType.Asset -> parsed as the noun NAME string.
+                var nounName = marker.FindByName("nounDef").AsString();
+                if (string.IsNullOrEmpty(nounName)) continue;
+                if (string.Equals(nounName, "CameraSpawnPoint.Noun", StringComparison.OrdinalIgnoreCase)) continue;
+                var nounDef = ChainData.FnvHash(nounName);
 
                 var markerPos = marker.FindByName("pos").AsVector3();
                 var markerScale = marker.FindByName("scale").AsFloat();
@@ -428,26 +490,22 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             }
         }
 
-        var spawnPos = new Vector3(44.0f, 0.47f, 17.5f);
-        uint creatureNoun = 1667741389u;
+        var resolvedSpawn = ResolveSpawnPosition();
+        if (resolvedSpawn == null)
+            Log.Game.Warn($"No CameraSpawnPoint marker for {Chain.LevelName}; using fallback spawn");
+        var spawnPos = resolvedSpawn ?? new Vector3(44.0f, 0.47f, 17.5f);
 
-        var objectId = _nextObjectId++;
-        _playerCharacterObjectIds[player.Slot] = objectId;
-        Objects.Spawn(objectId, creatureNoun, spawnPos, 1.0f, team: 1, playerControlled: true);
-
-        var createPacket = new ObjectCreatePacket
+        // C++ OnPlayerStart force-creates ALL squad character objects so the client
+        // can find them on swap; only then is one deployed via SwapCharacter.
+        var deckObjectIds = new uint[SquadCreatureNouns.Length];
+        for (int i = 0; i < SquadCreatureNouns.Length; i++)
         {
-            ObjectId = objectId,
-            CreateData = new GameObjectCreateData
-            {
-                Noun = creatureNoun,
-                Position = spawnPos,
-                Scale = 1.0f,
-                Team = 1,
-                HasCollision = true,
-                PlayerControlled = true
-            },
-            ObjectData = new SporelabsObject
+            var charObjId = _nextObjectId++;
+            deckObjectIds[i] = charObjId;
+            var noun = SquadCreatureNouns[i];
+            Objects.Spawn(charObjId, noun, spawnPos, 1.0f, team: 1, playerControlled: true);
+
+            var objData = new SporelabsObject
             {
                 Position = spawnPos,
                 Team = 1,
@@ -457,12 +515,64 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 HasCollision = true,
                 Scale = 1.0f,
                 MarkerScale = 1.0f
-            }
-        };
-        client.SendPacket(createPacket);
-        Log.Game.Info($"Spawned hero objectId={objectId} noun=0x{creatureNoun:X} at ({spawnPos.X},{spawnPos.Y},{spawnPos.Z})");
+            };
 
-        client.SendPacket(new PlayerCharacterDeployPacket(player.Slot, objectId));
+            // C++ SendObjectUpdate sequence for a creature: ObjectCreate -> ObjectUpdate
+            // -> CombatantData -> AttributeData. The player hero needs all four or the
+            // client fades out / crashes on deploy.
+            client.SendPacket(new ObjectCreatePacket
+            {
+                ObjectId = charObjId,
+                CreateData = new GameObjectCreateData
+                {
+                    Noun = noun,
+                    Position = spawnPos,
+                    Scale = 1.0f,
+                    Team = 1,
+                    HasCollision = true,
+                    PlayerControlled = true
+                },
+                ObjectData = objData
+            });
+            client.SendPacket(new ObjectUpdatePacket { ObjectId = charObjId, ObjectData = objData });
+
+            var charData = player.PlayerData?.Characters[i];
+            float maxHp = charData?.MaxHealth ?? 200f;
+            float maxMp = charData?.MaxMana ?? 200f;
+
+            client.SendPacket(new CombatantDataUpdatePacket { ObjectId = charObjId, HitPoints = maxHp, ManaPoints = maxMp });
+
+            var attrs = new AttributeDataUpdatePacket { ObjectId = charObjId };
+            attrs.Set(AttributeDataUpdatePacket.MaxHealth, maxHp);
+            attrs.Set(AttributeDataUpdatePacket.MaxMana, maxMp);
+            attrs.Set(AttributeDataUpdatePacket.AttackSpeedScale, 1f);
+            attrs.Set(AttributeDataUpdatePacket.CooldownScale, 1f);
+            attrs.Set(AttributeDataUpdatePacket.InvisibleToSecurityTeleporters, 1f);
+            attrs.Set(AttributeDataUpdatePacket.MinWeaponDamage, 1f);
+            attrs.Set(AttributeDataUpdatePacket.MaxWeaponDamage, 5f);
+            client.SendPacket(attrs);
+        }
+        _deckObjectIds[player.Slot] = deckObjectIds;
+        _playerCharacterObjectIds[player.Slot] = deckObjectIds[DeployedDeckIndex];
+
+        Log.Game.Info($"Spawned squad ({deckObjectIds.Length} chars) at ({spawnPos.X:F1},{spawnPos.Y:F1},{spawnPos.Z:F1}); deploying deck={DeployedDeckIndex}");
+
+        SwapCharacter(client, player, DeployedDeckIndex, deckObjectIds[DeployedDeckIndex]);
+    }
+
+    // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,
+    // send LPU. Without it the client never binds an active hero and fades out.
+    private void SwapCharacter(RakNetClient client, Player player, int deckIndex, uint objectId)
+    {
+        if (player.PlayerData != null)
+        {
+            player.PlayerData.CurrentDeckIndex = (byte)deckIndex;
+            player.PlayerData.SetDataBit(1);
+        }
+        player.SetUpdateBits(LabsPlayerUpdatePacket.PlayerBits);
+        client.SendPacket(new PlayerCharacterDeployPacket(player.Slot, (uint)deckIndex, objectId));
+        SendLabsPlayerUpdate(client);
+        Log.Game.Info($"Deployed deck={deckIndex} objectId={objectId}");
     }
 
     private void HandleActionCommand(RakNetClient sender, ActionCommandMsgsPacket packet)
