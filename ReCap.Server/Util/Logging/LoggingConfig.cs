@@ -69,6 +69,7 @@ public static class LoggingConfig
             case "warn": case "warning": case "w": level = LogEventLevel.Warning; return true;
             case "error": case "err": case "e": level = LogEventLevel.Error; return true;
             case "fatal": case "f": level = LogEventLevel.Fatal; return true;
+            case "off": case "none": case "silent": case "mute": level = LogEventLevel.Fatal; return true;
             default: level = LogEventLevel.Information; return false;
         }
     }
