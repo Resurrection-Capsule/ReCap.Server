@@ -1,5 +1,6 @@
 using System.Numerics;
 using AssetData.Parser;
+using AssetData.Parser.Model;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Adapters.RakNet.Packets;
 using ReCap.Server.Domain.Gameplay.Objects;
@@ -7,6 +8,7 @@ using ReCap.Server.Domain.Gameplay.Objects;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Models;
 using ReCap.Server.Services;
+using ReCap.Server.Services.Assets;
 
 namespace ReCap.Server.Domain.Gameplay;
 
@@ -25,6 +27,9 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     public double GameClock = 999999999;
     public AssetDatabase? Assets { get; } = assetDatabase;
     public ChainData Chain { get; } = new();
+    public ObjectManager Objects { get; } = new(assetDatabase);
+
+    private DateTime _lastTick = DateTime.UtcNow;
 
     private int PlayersConnected = 0;
     private bool ReadyForStart = false;
@@ -36,6 +41,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     public void Update()
     {
+        var now = DateTime.UtcNow;
+        var delta = (now - _lastTick).TotalSeconds;
+        _lastTick = now;
+        Objects.Update(delta);
+
         foreach (var player in Players.Values)
         {
             if (player.Client == null) continue;
@@ -175,12 +185,24 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         player.ResetUpdateBits();
     }
 
-    private static void FillSquadCharacters(LabsPlayerData playerData)
+    private void FillSquadCharacters(LabsPlayerData playerData)
     {
         uint[] creatureNouns = { 1667741389u, 749013658u, 3591937345u };
         uint[] creatureTypes = { 2u, 0u, 3u };
         for (int i = 0; i < 3; i++)
         {
+            float maxHealth = 200f;
+            float maxMana = 200f;
+
+            var attrs = Assets?.ResolveClassAttributesForCreature(creatureNouns[i]);
+            if (attrs is not null)
+            {
+                var h = attrs.FindByName("maxHealth").AsFloat();
+                var m = attrs.FindByName("maxMana").AsFloat();
+                if (h > 0f) maxHealth = h;
+                if (m > 0f) maxMana = m;
+            }
+
             playerData.Characters[i] = new LabsCharacterData
             {
                 Version = 1,
@@ -190,10 +212,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 DeployCooldown = 0,
                 AbilityPoints = 10,
                 AbilityRanks = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-                Health = 200f,
-                MaxHealth = 200f,
-                Mana = 200f,
-                MaxMana = 200f,
+                Health = maxHealth,
+                MaxHealth = maxHealth,
+                Mana = maxMana,
+                MaxMana = maxMana,
                 GearScore = 300f,
                 GearScoreFlattened = 300f
             };
@@ -308,7 +330,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         {
             State = GameState.PreDungeon;
 
-            if (Assets != null) Chain.PopulateFromLevel(Assets);
+            if (Assets != null)
+            {
+                Chain.PopulateFromLevel(Assets);
+                Chain.ResolveMarkerSet(Assets);
+            }
 
             var prepareStart = new GamePrepareForStartPacket(Chain.Level, Chain.MarkerSet, 1, Chain.LevelIndex);
             sender.SendPacket(prepareStart);
@@ -362,16 +388,18 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (Assets != null)
         {
-            var markers = Assets.GetLevelMarkers($"{Chain.LevelName}.level");
+            var markers = Assets.GetLevelMarkers(Chain.LevelName);
             foreach (var marker in markers)
             {
-                var nounDef = marker["nounDef"]?.AsUInt32() ?? 0;
+                var nounDef = marker.FindByName("nounDef").AsUInt32();
                 if (nounDef == 0) continue;
 
-                var markerPos = marker["pos"]?.AsVector3() ?? Vector3.Zero;
-                var markerScale = marker["scale"]?.AsFloat() ?? 1.0f;
+                var markerPos = marker.FindByName("pos").AsVector3();
+                var markerScale = marker.FindByName("scale").AsFloat();
+                if (markerScale == 0f) markerScale = 1.0f;
 
                 var markerObjId = _nextObjectId++;
+                Objects.Spawn(markerObjId, nounDef, markerPos, markerScale, team: 2, playerControlled: false);
                 var npcPacket = new ObjectCreatePacket
                 {
                     ObjectId = markerObjId,
@@ -404,6 +432,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         var objectId = _nextObjectId++;
         _playerCharacterObjectIds[player.Slot] = objectId;
+        Objects.Spawn(objectId, creatureNoun, spawnPos, 1.0f, team: 1, playerControlled: true);
 
         var createPacket = new ObjectCreatePacket
         {

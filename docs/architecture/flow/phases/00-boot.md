@@ -12,7 +12,7 @@ sequenceDiagram
     participant Net as Server adapters
     participant Loop as Event loop
 
-    OS->>Main: argv (--port, --game-path, --database-path)
+    OS->>Main: argv (--port, --assetdata-path, --database-path)
     Main->>Cfg: parse args + read config.xml / defaults
     Cfg-->>Main: ports, paths, version locked, hostname
     Main->>Asset: kick off asset/noun warm-up (background)
@@ -112,10 +112,10 @@ sequenceDiagram
 
 | Step | Location | What happens |
 |---|---|---|
-| `static async Task Main(string[] args)` | `Program.cs:27` | Parses `--port`, `--database-path`, `--game-path`, `--help`. |
+| `static async Task Main(string[] args)` | `Program.cs:27` | Parses `--port`, `--database-path`, `--assetdata-path`, `--help`. |
 | Elevation check | `Program.cs:76-85` | If on default privileged port and not elevated, calls `TryRelaunchElevatedAsync`. |
 | `ServerConfig.Configure(serverOpts)` | `Program.cs:107` | Snapshots a `ServerConfigOptions` into static `ServerConfig` (`Config/ServerConfig.cs:47`). |
-| `new AssetDatabase(...)` | `Program.cs:109-111` | Optional. Only if `--game-path` supplied. |
+| `new AssetDatabase(...)` | `Program.cs:109-111` | Optional. Only if `--assetdata-path` supplied. |
 | `new GameService { Assets = assetDatabase }` | `Program.cs:113` | Shared in-memory game registry. |
 | `new SqliteConfig(); dbConfig.Start()` | `Program.cs:118-119` | EF Core `DbContext`; `EnsureCreated` + seed (`Config/SqliteConfig.cs:28`). |
 | Redirector via `Task.Run(redirector.Start)` | `Program.cs:126-127` | TLS on :42127. |
@@ -139,7 +139,7 @@ There is **no config file**. All overrides come from CLI args:
 
 - `--port=<int>` — REST port.
 - `--database-path=<dir>` — directory for `server.db`.
-- `--game-path=<file>` — path to `AssetData_Binary.package`.
+- `--assetdata-path=<file>` — path to `AssetData_Binary.package`.
 
 Ports for Redirector / Lobby / RakNet are hardcoded in `Program.cs:126`, `Program.cs:130`, `Program.cs:134`.
 
@@ -191,7 +191,7 @@ Implicit: process exit. The only explicit `Stop()` chain is in the `HttpListener
 | Item | C++ | C# | Status |
 |---|---|---|---|
 | Entry point | `Main.cpp:303` | `Program.cs:27` | ✅ |
-| CLI args parsed | `--timestamps`, `--version`, `--darkspore-path`, `--help` | `--port`, `--database-path`, `--game-path`, `--help` | ⚠️ Different sets. C++ uses `darkspore-path`; C# uses `game-path` for the package file directly. |
+| CLI args parsed | `--timestamps`, `--version`, `--darkspore-path`, `--help` | `--port`, `--database-path`, `--assetdata-path`, `--help` | ⚠️ Different sets. C++ uses `darkspore-path`; C# uses `assetdata-path` for the package file directly. |
 | Config source | `config.xml` + hardcoded defaults | Hardcoded `ServerConfigOptions` only | ⚠️ No XML loader on C# side. |
 | Shared event loop | `boost::asio::io_context` (`Main.cpp:46`) | None — one `Task.Run` per adapter | ⚠️ No back-pressure across adapters. |
 | Scheduler | `Game::Scheduler` (`Main.cpp:110`) | None | ❌ |
@@ -207,7 +207,7 @@ Implicit: process exit. The only explicit `Stop()` chain is in the `HttpListener
 | HTTP router shared between 3 servers | `Main.cpp:147-149` | n/a (only one HTTP server) | ❌ |
 | RakNet server | constructed via `Game::Instance` / scheduler | `Program.cs:134`, port 42000 hardcoded | ⚠️ Different lifetime owner. |
 | Persistent store | `SporeNet::Instance` (in-memory; XML + JSON files) | `SqliteConfig` (EF Core / SQLite) | ⚠️ Completely different storage. |
-| Asset / noun warm-up | Background thread eagerly populates `NounDatabase`, Lua scripts, installer copies game data | Lazy: `AssetDatabase` constructed only if `--game-path` provided; reads on demand | ⚠️ Eager vs lazy. Verify the client tolerates a cold cache on first lookup. |
+| Asset / noun warm-up | Background thread eagerly populates `NounDatabase`, Lua scripts, installer copies game data | Lazy: `AssetDatabase` constructed only if `--assetdata-path` provided; reads on demand | ⚠️ Eager vs lazy. Verify the client tolerates a cold cache on first lookup. |
 | Signal handling | `mSignals` async (SIGINT/SIGTERM stops `io_service`) | None — `Ctrl+C` kills the process | ⚠️ No clean shutdown. |
 
 ---

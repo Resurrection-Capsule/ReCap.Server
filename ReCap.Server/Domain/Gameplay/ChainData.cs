@@ -1,3 +1,6 @@
+using AssetData.Parser.Model;
+using ReCap.Server.Services.Assets;
+
 namespace ReCap.Server.Domain.Gameplay;
 
 public class ChainData
@@ -24,7 +27,7 @@ public class ChainData
 
     public ChainData()
     {
-        SetLevelByIndex(1); // zelems_1 instead of tutorial
+        SetLevelByIndex(1);
 
         EnemyNouns[0] = FnvHash("VerdanthBasicMelee.Noun");
         EnemyNouns[1] = FnvHash("ZelemBasicHybrid.Noun");
@@ -35,70 +38,61 @@ public class ChainData
 
     public void PopulateFromLevel(ReCap.Server.Services.AssetDatabase db)
     {
-        var levelAsset = db.GetAsset(LevelName + ".level");
-        if (levelAsset == null) 
+        var levelAsset = db.GetLevel(LevelName);
+        if (levelAsset == null)
             return;
 
-        var planetConfigKey = levelAsset["planetConfig"]?.DisplayValue;
+        var planetConfigKey = (levelAsset.FindByName("planetConfig") as StringValue)?.Value;
         if (string.IsNullOrEmpty(planetConfigKey))
             return;
 
-        var planetConfig = db.GetAsset(planetConfigKey);
+        var planetConfig = db.GetAssetByName(planetConfigKey);
         if (planetConfig == null)
             return;
 
-        var minions = planetConfig["minion"]?.Elements;
-        var specials = planetConfig["special"]?.Elements;
-        
         int enemyIndex = 0;
-        void AddToEnemyNouns(System.Collections.Generic.IEnumerable<AssetData.Parser.AssetNode>? elements)
+        void AddToEnemyNouns(ArrayValue? array)
         {
-            if (elements == null) return;
-            foreach (var el in elements)
+            if (array == null) return;
+            foreach (var el in array.Items)
             {
                 if (enemyIndex >= EnemyNouns.Length) break;
-                var nounNode = el["mpNoun"] as AssetData.Parser.StringNode;
-                if (nounNode != null && !string.IsNullOrEmpty(nounNode.Value))
-                {
-                    if (!nounNode.Value.Contains("_"))
-                    {
-                        EnemyNouns[enemyIndex++] = FnvHash(nounNode.Value);
-                    }
-                }
+                if (el.FindByName("mpNoun") is not StringValue noun || string.IsNullOrEmpty(noun.Value)) continue;
+                if (noun.Value.Contains('_')) continue;
+                EnemyNouns[enemyIndex++] = FnvHash(noun.Value);
             }
         }
 
-        AddToEnemyNouns(minions);
-        AddToEnemyNouns(specials);
+        AddToEnemyNouns(planetConfig.FindByName("minion") as ArrayValue);
+        AddToEnemyNouns(planetConfig.FindByName("special") as ArrayValue);
 
-        var bosses = planetConfig["boss"]?.Elements;
-        var agents = planetConfig["agent"]?.Elements;
-        
         int levelIndex = 0;
-        void AddToLevelNouns(System.Collections.Generic.IEnumerable<AssetData.Parser.AssetNode>? elements)
+        void AddToLevelNouns(ArrayValue? array)
         {
-            if (elements == null) return;
-            foreach (var el in elements)
+            if (array == null) return;
+            foreach (var el in array.Items)
             {
                 if (levelIndex >= LevelNouns.Length) break;
-                var nounNode = el["mpNoun"] as AssetData.Parser.StringNode;
-                if (nounNode != null && !string.IsNullOrEmpty(nounNode.Value))
-                {
-                    if (!nounNode.Value.Contains("_"))
-                    {
-                        LevelNouns[levelIndex++] = FnvHash(nounNode.Value);
-                    }
-                }
+                if (el.FindByName("mpNoun") is not StringValue noun || string.IsNullOrEmpty(noun.Value)) continue;
+                if (noun.Value.Contains('_')) continue;
+                LevelNouns[levelIndex++] = FnvHash(noun.Value);
             }
         }
 
-        AddToLevelNouns(bosses);
-        AddToLevelNouns(agents);
+        AddToLevelNouns(planetConfig.FindByName("boss") as ArrayValue);
+        AddToLevelNouns(planetConfig.FindByName("agent") as ArrayValue);
     }
 
     public string LevelName => LevelIndex < LevelNames.Length ? LevelNames[LevelIndex] : LevelNames[0];
 
-    public uint MarkerSet => FnvHash($"{LevelName}_ai_1.Markerset");
+    private uint? _resolvedMarkerSet;
+
+    public uint MarkerSet => _resolvedMarkerSet ?? FnvHash($"{LevelName}_ai_1.Markerset");
+
+    public void ResolveMarkerSet(ReCap.Server.Services.AssetDatabase db)
+    {
+        _resolvedMarkerSet = db.GetAIMarkerSetHash(LevelName);
+    }
 
     public uint MinorDifficulty => LevelIndex > 0 ? ((LevelIndex - 1) % 4) + 1 : 0;
     public uint MajorDifficulty => LevelIndex > 0 ? ((LevelIndex - 1) / 4) + 1 : 0;
@@ -109,16 +103,15 @@ public class ChainData
             return;
 
         LevelIndex = (uint)index;
-        
-        // The first level is the tutorial. Its asset name is Darkspore_Tutorial_cryos_1_v2,
-        // but the UI localization hash it expects is purely "tutorial.Level"
+        _resolvedMarkerSet = null;
+
         if (index == 0)
         {
             Level = FnvHash("tutorial.Level");
         }
         else
         {
-            Level = FnvHash($"{LevelNames[index]}.Level"); 
+            Level = FnvHash($"{LevelNames[index]}.Level");
         }
     }
 

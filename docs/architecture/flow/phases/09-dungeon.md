@@ -152,7 +152,7 @@ C++ (`Instance.cpp:308-435`) does:
 
 ### C# `Game.OnPlayerStart` (`Game.cs:358-436`)
 
-1. Iterates `Assets.GetLevelMarkers($"{Chain.LevelName}.level")` (if `--game-path` provided).
+1. Iterates `Assets.GetLevelMarkers($"{Chain.LevelName}.level")` (if `--assetdata-path` provided).
 2. For each marker: builds an `ObjectCreatePacket` with the marker's `nounDef`, position, scale; `Team=2`, `HasCollision=true`, `PlayerControlled=false`.
 3. Spawns the player hero at hardcoded `Vector3(44.0f, 0.47f, 17.5f)` with `creatureNoun = 1667741389u` (= `0x636B7CCD`), `Team=1`, `PlayerControlled=true`.
 4. Sends `PlayerCharacterDeployPacket(player.Slot, objectId)`.

@@ -206,11 +206,11 @@ The C# `WriteChainData` declares `byte[] buffer = new byte[0x170]` to give itsel
 
 #### Default content gaps (C# only — when `Assets == null`)
 
-`ChainData()` constructor (`ChainData.cs:25-34`) seeds **only 5** of the 6 enemy hashes (`EnemyNouns[5]` stays `0`) and **no** level nouns (`LevelNouns[0]`, `LevelNouns[1]` both `0`). C++ `ChainVoteData::ChainVoteData()` (`Types.cpp:1067-1075`) seeds all 6 enemies and both level nouns. If `--game-path` is not provided to the C# server, `Chain.PopulateFromLevel(Assets)` is not called and the missing slots stay zero on the wire. With `--game-path` set, `PopulateFromLevel` overwrites everything from the planet config, so the gap closes.
+`ChainData()` constructor (`ChainData.cs:25-34`) seeds **only 5** of the 6 enemy hashes (`EnemyNouns[5]` stays `0`) and **no** level nouns (`LevelNouns[0]`, `LevelNouns[1]` both `0`). C++ `ChainVoteData::ChainVoteData()` (`Types.cpp:1067-1075`) seeds all 6 enemies and both level nouns. If `--assetdata-path` is not provided to the C# server, `Chain.PopulateFromLevel(Assets)` is not called and the missing slots stay zero on the wire. With `--assetdata-path` set, `PopulateFromLevel` overwrites everything from the planet config, so the gap closes.
 
 ### Asset-driven enemy / level nouns (C# only)
 
-C# `Game.cs:289-301` calls `Chain.PopulateFromLevel(Assets)` before sending the blob whenever `Assets != null` (i.e. `--game-path` was provided). This pulls the planet config from `AssetData_Binary.package` and replaces the `EnemyNouns` / `LevelNouns` arrays with real hashes (`ChainData.cs:36-97`). C++ uses static defaults seeded in `RakNet/Types.cpp:1067-1075`:
+C# `Game.cs:289-301` calls `Chain.PopulateFromLevel(Assets)` before sending the blob whenever `Assets != null` (i.e. `--assetdata-path` was provided). This pulls the planet config from `AssetData_Binary.package` and replaces the `EnemyNouns` / `LevelNouns` arrays with real hashes (`ChainData.cs:36-97`). C++ uses static defaults seeded in `RakNet/Types.cpp:1067-1075`:
 
 ```cpp
 mEnemyNouns[0] = utils::hash_id("VerdanthBasicMelee.Noun");
@@ -285,7 +285,7 @@ C# `ChainVoteMsgsPacket.cs:47`: `writer.Write(StayInParty);` — 1 byte body.
 | Blob `0xD9..0xEC` (party-override + nocturna fmvs) | yes | yes (C# writes explicit `0` at `0xE5..0xE8`; C++ leaves alloc-zero — same bytes) | ✅ M4-2 |
 | Blob `0xED/0xEE` tail (6 u32 = 10/20/30/40/50/60) | present, **starts at `0xED`** (cursor continuation) | present, **starts at `0xEE`** (hardcoded `tailOffset`) | ⚠️ M4-2 — 1-byte offset divergence in `!CompletedLevel` path. LE rule says C# is correct on the wire. |
 | `mCompletedLevel` branch | conditional 0x4D..0xD8 block + per-player chain summary at 0x76 step 0x19 | symmetric in C# (`ChainVoteMsgsPacket.cs:87-128`) | ✅ |
-| Defaults for enemy / level nouns | static FNV hashes seeded in `RakNet/Types.cpp:1067-1075` | overridden from level asset via `PopulateFromLevel(Assets)` if `--game-path` provided | ⚠️ C# is asset-driven; C++ is static. |
+| Defaults for enemy / level nouns | static FNV hashes seeded in `RakNet/Types.cpp:1067-1075` | overridden from level asset via `PopulateFromLevel(Assets)` if `--assetdata-path` provided | ⚠️ C# is asset-driven; C++ is static. |
 | Send sequence on `ChainPlayerMsgs(1, 0)` | `SendChainVoteMessages(client, 0)` then `(client, 1)` | identical | ✅ |
 | Send sequence on `ChainPlayerMsgs(1, 2)` (cashout) | `SendChainVoteMessages(client, 2)` | `Game.cs:302-305`: sends `Value=2 StayInParty=false` | ✅ |
 | Duplicate blob on `DebugPing` while in `ChainVoting` | no | yes (`Game.cs:274-276`) | ⚠️ Extra packet may confuse the client. |
@@ -299,7 +299,7 @@ C# `ChainVoteMsgsPacket.cs:47`: `writer.Write(StayInParty);` — 1 byte body.
 1. **State enum mapping.** Verify `GameplayState.cs` wire values match C++ exactly. If `Initializing` is `0x00` (the default `enum` starting value), the first `GameStatePacket` after `AttachPlayer` advertises a state the client doesn't understand. Use the same numbering as the C++ wire constants (`Spaceship = 0x02` as the first valid state).
 2. **Drop the duplicate blob on `DebugPing` (ChainVoting branch).** C++ has no equivalent. Remove the `ChainVoteMsgsPacket Value=0` send from `Game.HandleDebugPing` to avoid double-blobs.
 3. ~~**Confirm the `0xEE` tail bytes don't corrupt parsing.**~~ **Resolved (M4-2, 2026-05-24).** C# tail sits at `0xEE..0x105`, fully inside the `0x151` window, no collisions with any earlier write. C++ writes the same 6 u32s at `0xED..0x104` (1 byte earlier, no `SetWriteOffset` before the loop). Since the **🔒 LE-correct** rule comes from working-client observation, the C# offset `0xEE` is the canonical wire position. No fix needed; documented in the diff table above.
-4. **Asset-driven enemy / level nouns.** Confirm the path works without `--game-path`. If `Assets == null`, the constructor defaults in `ChainData.cs:25-34` only fill 5 of 6 enemy slots and 0 level nouns; the 6th enemy and both level nouns stay 0 on the wire. C++ defaults fill all 6 enemies + 2 levels.
+4. **Asset-driven enemy / level nouns.** Confirm the path works without `--assetdata-path`. If `Assets == null`, the constructor defaults in `ChainData.cs:25-34` only fill 5 of 6 enemy slots and 0 level nouns; the 6th enemy and both level nouns stay 0 on the wire. C++ defaults fill all 6 enemies + 2 levels.
 5. **`byteCount=2` C# handler missing.** Implement an explicit no-op or document that the client never actually sends 2-byte `ChainPlayerMsgs` so the path can stay empty.
 6. **`mCompletedLevel` last-summary `playerIndex` clobber (both sides).** The summary loop writes `playerIdx = 3` to byte `0xD9` for the 4th entry, then `SetWriteOffset(0xD9)` + `Write<u32>(0)` overwrites it with the party-value-override zero. Reading `mChainSummary[3].playerIndex` from the wire yields `0`. C# replicates this faithfully. If the client UI shows player-4 stats incorrectly attributed, this is the cause. C++ behaviour confirmed at `Types.cpp:1276-1281`; C# at `ChainVoteMsgsPacket.cs:127-131`. Probably harmless because the planet-data block at `0xEE+` carries its own `playerIndex` byte per entry.
 

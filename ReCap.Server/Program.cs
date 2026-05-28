@@ -23,13 +23,13 @@ public static class Program
     const string _HELP_ARG = "--help";
     const string _PORT_ARG = "--port=";
     const string _DB_PATH_ARG = "--database-path=";
-    const string _GAME_PATH_ARG = "--game-path=";
+    const string _ASSETDATA_PATH_ARG = "--assetdata-path=";
     const string _RAKNET_VERBOSE_ARG = "--raknet-verbose";
     static async Task Main(string[] args)
     {
 #nullable disable
         string databasePath = null;
-        string gamePath = null;
+        string assetDataPath = null;
         int port = Api.DEFAULT_PORT;
 
 
@@ -61,13 +61,13 @@ public static class Program
                     databasePath = dbPath;
                 }
             }
-            else if (arg.StartsWith(_GAME_PATH_ARG))
+            else if (arg.StartsWith(_ASSETDATA_PATH_ARG))
             {
-                string gPath = arg.Substring(_GAME_PATH_ARG.Length);
+                string gPath = arg.Substring(_ASSETDATA_PATH_ARG.Length);
                 gPath = CommandLineHelper.UnwrapArg(gPath);
 
                 if (File.Exists(gPath))
-                    gamePath = gPath;
+                    assetDataPath = gPath;
                 else
                     Logger.error($"Game path not found: '{gPath}'");
             }
@@ -103,17 +103,20 @@ public static class Program
             serverOpts.ServerDatabaseDirectory = databasePath;
         }
 
-        if (!string.IsNullOrWhiteSpace(gamePath))
+        if (!string.IsNullOrWhiteSpace(assetDataPath))
         {
-            Logger.info($"Using game path: '{gamePath}'");
-            serverOpts.GamePath = gamePath;
+            Logger.info($"Using AssetData path: '{assetDataPath}'");
+            serverOpts.GamePath = assetDataPath;
         }
 
         ServerConfig.Configure(serverOpts);
 
-        var assetDatabase = string.IsNullOrWhiteSpace(ServerConfig.GamePath)
-            ? null
-            : new AssetDatabase(ServerConfig.GamePath);
+        AssetDatabase? assetDatabase = null;
+        if (!string.IsNullOrWhiteSpace(ServerConfig.GamePath))
+        {
+            assetDatabase = new AssetDatabase(ServerConfig.GamePath);
+            _ = assetDatabase.WarmUpAsync();
+        }
 
         var gameService = new GameService { Assets = assetDatabase };
 
@@ -201,7 +204,7 @@ public static class Program
         string.Empty,
         $"{_BEFORE_ARG}{_PORT_ARG}<int>         {_AFTER_ARG}Port number",
         $"{_BEFORE_ARG}{_DB_PATH_ARG}<str>{_AFTER_ARG}Path to a directory in which to create/store/access the 'server.db'",
-        $"{_BEFORE_ARG}{_GAME_PATH_ARG}<str>{_AFTER_ARG}Path to the Darkspore AssetData_Binary.package file",
+        $"{_BEFORE_ARG}{_ASSETDATA_PATH_ARG}<str>{_AFTER_ARG}Path to the Darkspore AssetData_Binary.package file",
     }.AsReadOnly();
     static void PrintHelp()
     {

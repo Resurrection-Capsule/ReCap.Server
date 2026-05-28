@@ -83,6 +83,44 @@ Decompiling `AssetData::cAssetProperty @ 0x00f8f9f0` shows the per-field record
 
 ---
 
+## 3.5 Type-name mismatches — field-descriptor type ≠ self-registered name
+
+A handful of field-descriptors hash a **different** type-name string than the
+one their struct self-registers with. Confirmed cases from the dump:
+
+| Owning struct | Field | Declared type (hashed at +0x04) | Self-registered name | Self-reg address |
+|---|---|---|---|---|
+| `labsPlayer` | `mCharacters` | `cLabsCharacter` | `labsCharacter` | `0x00F3F4D0` |
+| `labsPlayer` | `mCrystals`   | `cPlayerCrystal` | `labsCrystal`   | `0x00F45440` |
+
+The strings have **different lengths** (14 vs 11, 14 vs 11), so the per-byte
+`xlat[]` translation cannot collapse them — `FNV1a(xlat("cPlayerCrystal"))` is
+genuinely distinct from `FNV1a(xlat("labsCrystal"))`. At runtime,
+`FindTypeByHash(field.typeHash)` on these fields returns null and the parser
+would fall through to the sentinel/value-type switch, leaving them unread.
+
+**This does not break the game**, because both cases are on `labsPlayer` — a
+runtime-only struct (player state, network serialization, editor inspection)
+with **no on-disk asset representation**. Verified: `AssetData_Binary.package`
+contains zero `*.labsPlayer` entries. The reflection metadata exists for
+non-binary-load purposes; the broken `FindTypeByHash` on `mCharacters`/`mCrystals`
+is never exercised on the parse path.
+
+**Implication for C# ports.** When porting a struct from the dump, always
+prefer the **self-registered name** (from the one-field "type self-reg" line,
+e.g. `00F455E0 labsCrystal (1 fields)`) over the name appearing in a
+neighbouring field-descriptor declaration. The C++ source name (`cFoo`) is
+retained for source-RTTI purposes but the registry publishes the bare name.
+Lifting the C++ name (e.g. `IStruct("mCrystals", "cPlayerCrystal", …)`)
+produces a fabricated type the registry cannot resolve.
+
+**Open**: whether any **wire-emitting** format has the same mismatch is
+unverified. A grep for field-descriptor type-names that aren't keys in the
+self-registration list would catch any new offender — worth running before
+trusting a freshly ported stub.
+
+---
+
 ## 4. Reading `REFLECTION_SCHEMA_DUMP.txt`
 
 For each registrar the dump lists the hashed strings in source order. Within a

@@ -142,7 +142,7 @@ Asset access goes through `Services/AssetDatabase.cs` (uses `lib/AssetData.Parse
 
 Entry point `Program.Main` (`Program.cs:27`):
 
-1. Parse CLI args (`--port=`, `--database-path=`, `--game-path=`)
+1. Parse CLI args (`--port=`, `--database-path=`, `--assetdata-path=`)
 2. Optional elevation (`ProcessPermissions.RerunElevatedAsync`)
 3. `ServerConfig.Configure(serverOpts)` (`Program.cs:107`)
 4. Construct `AssetDatabase` from `GamePath` (if provided)

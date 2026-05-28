@@ -25,3 +25,8 @@ exe_rtti.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# Scratch / debug
+output.txt
+parse_raknet.py
+logs/

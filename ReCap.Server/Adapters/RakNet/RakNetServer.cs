@@ -149,6 +149,8 @@ public class RakNetServer
     public static void SendPacket(RakNetClient client, IRakNetPacket packet, PacketReliability reliability = PacketReliability.RELIABLE_ORDERED)
         => SendPacket(client.Session, packet, reliability);
 
+    private static bool IsNoisyPacket(PacketType type) => type == PacketType.GameState;
+
     public static void SendPacket(RakNetSession session, IRakNetPacket packet, PacketReliability reliability = PacketReliability.RELIABLE_ORDERED)
     {
         using var ms = new MemoryStream();
@@ -157,6 +159,7 @@ public class RakNetServer
 
         packet.WriteTo(ms);
 
+        if (!IsNoisyPacket(packet.Type) || RakNexus.RakLog.Verbose)
         {
             var bytes = ms.ToArray();
             string hex;

@@ -72,6 +72,9 @@ public class GameManagerComponent : IComponent
     {
         var request = packet.ReadContent<CreateGameRequest>();
 
+        Log($"ResetDedicatedServer GameAttribs: [{string.Join(", ", request.GameAttribs.Select(kv => $"{kv.Key}={kv.Value}"))}]");
+        Log($"ResetDedicatedServer GameType={request.GameTypeName} GameName={request.GameName} GameMode={request.GameSettings} Slots={request.SlotCapacities.Count}");
+
         var game = GameHandler?.CreateGame();
         if (game is null)
         {

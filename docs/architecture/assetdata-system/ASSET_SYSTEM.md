@@ -31,7 +31,7 @@ sealed class AssetDatabase : IDisposable
 }
 ```
 
-Constructed once at `Program.cs:111` when `--game-path` is supplied. Shared via `GameService.Assets`. **Single instance per process.** No global singleton, no eager warm-up.
+Constructed once at `Program.cs:111` when `--assetdata-path` is supplied. Shared via `GameService.Assets`. **Single instance per process.** No global singleton, no eager warm-up.
 
 ### 2. `ReCap.Server/Domain/Gameplay/ChainData.cs` — `PopulateFromLevel(db)`
 
@@ -89,7 +89,7 @@ C# computes the wire `MarkerSetHash` via `FnvHash($"{LevelName}_ai_1.Markerset")
 
 ### 8. Generic `_cache` not invalidated on reload
 
-If the user swaps `--game-path` mid-process (currently impossible, but a future admin endpoint might do so), the cache is stale. No invalidation hook.
+If the user swaps `--assetdata-path` mid-process (currently impossible, but a future admin endpoint might do so), the cache is stale. No invalidation hook.
 
 ### 9. `AssetNode` is observable for MVVM
 
@@ -131,7 +131,7 @@ C++ `GlobalLua::Initialize()` (`Main.cpp:196`) loads gameplay scripts referenced
 
 ## Redesign goals
 
-1. **Eager warm-up on boot** (background thread) once `--game-path` is supplied.
+1. **Eager warm-up on boot** (background thread) once `--assetdata-path` is supplied.
 2. **Indexed typed catalogues** for the same 8 categories C++ exposes plus `Level` and `Markerset`.
 3. **O(1) lookups** by FNV hash key (no linear scans).
 4. **One source of truth** for marker-set hashes — read from the asset, not computed from the filename.
@@ -362,7 +362,7 @@ If the full redesign is too big to take in one go, these standalone fixes alread
 ## Open questions
 
 1. Does the binary `noun` asset embed pointers to `NonPlayerClass` / `PlayerClass` / `AIDefinition` / `Phase` via raw asset IDs, or via name strings? If IDs, the cross-reference resolution is trivial. If names, the resolver has to FNV-hash each one.
-2. How does the C++ build handle "no `Game.Config.STORAGE_PATH` set + no `--game-path` provided"? Does it fall back to embedded test data, or refuse to start? Mirror the same behaviour in C#.
+2. How does the C++ build handle "no `Game.Config.STORAGE_PATH` set + no `--assetdata-path` provided"? Does it fall back to embedded test data, or refuse to start? Mirror the same behaviour in C#.
 3. Is the `_ai_1.Markerset` suffix a stable convention or does it vary per level? If it varies, the redesign needs to learn which markerset is the "AI markers" one from the level asset itself rather than from the name suffix.
 4. Lua ability loading — port the C++ Lua VM, or stub abilities entirely until a different mechanism (e.g. C# ability scripts) replaces it?
 5. Should `AssetDatabase` be a singleton (`Instance` accessor) like C++'s `NounDatabase` does, or be DI-scoped? C++ uses singleton; C# convention favours DI. Singleton is fine for now since there's never more than one package loaded at a time.
@@ -371,12 +371,12 @@ If the full redesign is too big to take in one go, these standalone fixes alread
 
 ## Acceptance criteria for "robust"
 
-- [ ] `dotnet run --project ReCap.Server -- --game-path=/path/to/AssetData_Binary.package` reports "AssetDatabase ready, 12 345 nouns, 25 levels indexed in 1 234 ms" within 2 s of boot on a warm filesystem.
+- [ ] `dotnet run --project ReCap.Server -- --assetdata-path=/path/to/AssetData_Binary.package` reports "AssetDatabase ready, 12 345 nouns, 25 levels indexed in 1 234 ms" within 2 s of boot on a warm filesystem.
 - [ ] `AssetDatabase.GetNoun(id)` returns in O(1) (`Dictionary.TryGetValue`).
 - [ ] No 50 ms tick exceeds 5 ms because of an unexpected asset parse.
-- [ ] `Chain.MarkerSet` matches the value the C++ build emits for the same `--game-path`.
+- [ ] `Chain.MarkerSet` matches the value the C++ build emits for the same `--assetdata-path`.
 - [ ] `OnPlayerStart` creates the same set of marker objects (count + nouns) as the C++ build for the same level.
-- [ ] Removing `--game-path` falls back to in-memory defaults without crashing (`AssetDatabase.IsReady == false`, handlers degrade gracefully — e.g. `Chain.EnemyNouns` keeps the hardcoded values).
+- [ ] Removing `--assetdata-path` falls back to in-memory defaults without crashing (`AssetDatabase.IsReady == false`, handlers degrade gracefully — e.g. `Chain.EnemyNouns` keeps the hardcoded values).
 - [ ] `dotnet build` warning count does not increase.
 - [ ] No `INotifyPropertyChanged` machinery sits in a server-side hot path.
 
