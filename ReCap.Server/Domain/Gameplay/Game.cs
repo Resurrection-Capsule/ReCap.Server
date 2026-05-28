@@ -210,6 +210,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // C++ Server::OnDebugPing Dungeon → mGame.SwapCharacter(player, 1): deck index 1 is deployed.
     private const int DeployedDeckIndex = 1;
 
+    // Marker-based NPC spawn is too greedy (spawns non-object design markers) and crashes
+    // the client. Off until we filter by real spawnable noun types like C++ does.
+    private const bool SpawnLevelMarkers = false;
+
     private void FillSquadCharacters(LabsPlayerData playerData)
     {
         uint[] creatureNouns = SquadCreatureNouns;
@@ -446,7 +450,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         client.SendPacket(ObjectivesInitForLevelPacket.CreateDefault());
 
-        if (Assets != null)
+        // DISABLED: the marker loop spawns EVERY marker with a nounDef as a team-2 object,
+        // including non-spawnable design markers (lights, cameras, decals, water, triggers).
+        // Those create invalid objects the client dereferences each frame -> null-deref crash
+        // (Exception Report: ACCESS_VIOLATION read 0x0 in per-frame object loop). C++ only
+        // spawns specific noun types (obelisks/enemies). Re-enable with proper type filtering.
+        if (SpawnLevelMarkers && Assets != null)
         {
             var markers = Assets.GetLevelMarkers(Chain.LevelName);
             foreach (var marker in markers)
