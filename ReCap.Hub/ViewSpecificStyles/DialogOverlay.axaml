@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="using:ReCap.CommonUI"
+                    xmlns:rctr="using:ReCap.CommonUI"
+                    xmlns:v="using:ReCap.Hub.Views">
+    <ControlTheme x:Key="{x:Type v:DialogOverlayView}"
+                TargetType="{x:Type v:DialogOverlayView}"
+                BasedOn="{StaticResource {x:Type ContentControl}}">
+        <Setter Property="Background" Value="{DynamicResource DialogOverlay.BackdropFilmBrush}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel>
+                    <DockPanel x:Name="UnderlayFilm"
+                            Margin="1">
+                        <Rectangle DockPanel.Dock="Left" />
+                        <Rectangle DockPanel.Dock="Right" />
+                        <rctr:AngledBorder Background="{TemplateBinding Background}"
+                                        CornerRadius="5" />
+                    </DockPanel>
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Margin="{TemplateBinding Padding}" />
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+        
+        <Style Selector="^ /template/ Rectangle">
+            <Setter Property="Width" Value="17" />
+            <Setter Property="Fill" Value="{Binding Background, RelativeSource={RelativeSource Mode=TemplatedParent}, Mode=OneWay}" />
+            <Setter Property="Margin" Value="0,5" />
+        </Style>
+
+
+        <Style Selector="^ /template/ DockPanel#UnderlayFilm">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="{StaticResource Closeable.AnimationDuration}" />
+                </Transitions>
+            </Setter>
+        </Style>
+        
+        <Style Selector="^[IsHitTestVisible=False] /template/ DockPanel#UnderlayFilm">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+    </ControlTheme>
+
+
+    <!--
+    <ControlTheme x:Key="SizeInwards"
+                TargetType="{x:Type Control}">
+        <Style Selector="^[HorizontalAlignment=Stretch][VerticalAlignment=Stretch]">
+            <Setter Property="Margin" Value="200,100" />
+        </Style>
+    </ControlTheme>
+    -->
+</ResourceDictionary>

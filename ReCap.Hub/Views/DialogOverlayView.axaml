@@ -1,0 +1,16 @@
+<UserControl x:Class="ReCap.Hub.Views.DialogOverlayView"
+            xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:v="clr-namespace:ReCap.Hub.Views"
+            xmlns:vm="clr-namespace:ReCap.Hub.ViewModels"
+            xmlns:rctr="using:ReCap.CommonUI"
+            Theme="{DynamicResource {x:Type v:DialogOverlayView}}"
+            IsHitTestVisible="{Binding HasDialog}">
+    <rctr:Closeable x:Name="DialogContainer"
+                    Command="{Binding CloseCommand, Mode=OneWay}"
+                    IsOpen="{Binding HasDialog, Mode=TwoWay}"
+                    Content="{Binding CurrentDialog, Mode=OneWay}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Padding="0" />
+</UserControl>

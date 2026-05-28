@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Nullable>disable</Nullable>
+		<LangVersion>9.0</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="hub.editorconfig" Link=".editorconfig" />
+	</ItemGroup>
+</Project>
