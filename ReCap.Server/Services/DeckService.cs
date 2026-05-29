@@ -17,6 +17,14 @@ public class DeckService
         return deckRepository.getDecksByAccountId(account.Id);
     }
 
+    // Persist a squad/deck edit (api.deck.updateDecks). slot is the 1-based squad id.
+    public void updateDeck(AccountModel account, int slot, List<ulong> creatureIds) {
+        var deck = deckRepository.getDecksByAccountId(account.Id).FirstOrDefault(d => d.Slot == slot);
+        if (deck == null) return;
+        deck.CreatureIds = creatureIds;
+        deckRepository.updateDeck(deck);
+    }
+
     public List<Deck> createDecksForAccount(AccountModel account) {
         List<Deck> decks = [];
         for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {

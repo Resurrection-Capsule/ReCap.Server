@@ -1,6 +1,7 @@
 using AutoMapper;
 using ReCap.Server.Adapters.Rest.Contracts.Game;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models;
+using ReCap.Server.Config;
 using ReCap.Server.Domain;
 using ReCap.Server.Models;
 
@@ -24,8 +25,17 @@ public class CreatureMapper
         return mapper.Map<CreatureModel>(creature);
     }
 
+    public static string CreaturePngUrl(ulong creatureId, string method)
+        => $"http://{ServerConfig.HostName}/recap/api?method={method}&id={creatureId}";
+
     public CreatureContract toContract(CreatureModel creature) {
-        return mapper.Map<CreatureContract>(creature);
+        var contract = mapper.Map<CreatureContract>(creature);
+        // Always expose image urls; the endpoint falls back to the template png when the
+        // creature has no custom (edited) png. Deck/squad cards need these or the in-game
+        // deck HUD fails to bind and crashes.
+        contract.LargePngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureLargePng");
+        contract.ThumbPngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureThumbPng");
+        return contract;
     }
 
     public GetCreatureResponseContract toGetCreatureContract(CreatureTemplateModel creatureTemplate, CreatureModel creature, bool includeAbilities, bool includeParts) {
@@ -43,8 +53,8 @@ public class CreatureMapper
         response.TemplateID = creature.TemplateID;
         response.GearScore = creature.GearScore;
         response.ItemPoints = creature.ItemPoints;
-        response.LargePngUrl = creature.LargePngUrl;
-        response.ThumbPngUrl = creature.ThumbPngUrl;
+        response.LargePngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureLargePng");
+        response.ThumbPngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureThumbPng");
         response.Stats = creature.getStatsAsString();
 
         return response;

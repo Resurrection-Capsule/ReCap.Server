@@ -36,4 +36,10 @@ public class DeckRepositoryAdapter
         sqliteConfig.Decks.Add(deckModel);
         sqliteConfig.SaveChanges();
     }
+
+    public void updateDeck(DeckModel deck)
+    {
+        sqliteConfig.Decks.Update(deck);
+        sqliteConfig.SaveChanges();
+    }
 }

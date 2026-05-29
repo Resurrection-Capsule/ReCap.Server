@@ -25,20 +25,19 @@ public class DeckMapper
     }
 
     public DeckContract toContract(DeckModel deck, List<CreatureModel> creatures) {
-        var deckContract = new DeckContract{
+        return new DeckContract{
             ID = deck.ID,
             Name = deck.Name,
             Category = deck.Category,
             Slot = deck.Slot,
             Locked = deck.Locked ? 1 : 0,
-            Creatures = deck.CreatureIds.Select(creatureId => creatureMapper.toContract(creatures.Find(c => c.ID == creatureId))).ToList()
+            // Use the deck's actual creature ids (was a TODO hack that returned
+            // creatures[slot*3..] by list index, ignoring the deck). Skip ids not found.
+            Creatures = deck.CreatureIds
+                .Select(id => creatures.Find(c => c.ID == id))
+                .Where(c => c != null)
+                .Select(c => creatureMapper.toContract(c!))
+                .ToList()
         };
-        // TODO: Temporary code
-        deckContract.Creatures = [
-            creatureMapper.toContract(creatures[deck.Slot*3]),
-            creatureMapper.toContract(creatures[deck.Slot*3 + 1]),
-            creatureMapper.toContract(creatures[deck.Slot*3 + 2])
-        ];
-        return deckContract;
     }
 }

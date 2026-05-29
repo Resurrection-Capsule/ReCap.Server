@@ -65,8 +65,8 @@ public class ReCapRestController
     {
         ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
         var creature = creatureService.getCreatureById(creatureId);
-        var base64 = creature.LargePngBase64;
-        return Convert.FromBase64String(base64);
+        // We only ship per-template thumbnails, so large falls back to the thumb too.
+        return CreatureImage(creature.LargePngBase64, creature.TemplateID);
     }
 
     [RequestMapping(Name="api.game.getCreatureThumbPng")]
@@ -74,7 +74,16 @@ public class ReCapRestController
     {
         ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
         var creature = creatureService.getCreatureById(creatureId);
-        var base64 = creature.ThumbPngBase64;
-        return Convert.FromBase64String(base64);
+        return CreatureImage(creature.ThumbPngBase64, creature.TemplateID);
+    }
+
+    // Custom (edited) png if present, otherwise the creature's template thumbnail.
+    private static byte[] CreatureImage(string? customBase64, ulong templateId)
+    {
+        if (!string.IsNullOrEmpty(customBase64))
+            return Convert.FromBase64String(customBase64);
+
+        var path = Path.Combine(ServerConfig.ResourcesDirectory, "static", "template_png", $"{templateId}_thumb.png");
+        return File.Exists(path) ? File.ReadAllBytes(path) : Array.Empty<byte>();
     }
 }

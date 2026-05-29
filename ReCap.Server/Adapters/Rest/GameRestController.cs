@@ -393,7 +393,25 @@ public class GameRestController
     [RequestMapping(Name="api.deck.updateDecks")]
     public byte[] updateDecks(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        // C++ User::UpdateSquad: pve_active_slot + pve_creatures (CSV of creature ids), idem pvp.
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
+        ApplyDeckUpdate(account, parameters, "pve_active_slot", "pve_creatures");
+        ApplyDeckUpdate(account, parameters, "pvp_active_slot", "pvp_creatures");
+
+        return XmlHelper.Serialize(new Contracts.ResponseContract { Stat = "ok", Code = 200, Result = 1 });
+    }
+
+    private void ApplyDeckUpdate(AccountModel account, Dictionary<string,string> parameters, string slotKey, string creaturesKey)
+    {
+        if (!parameters.TryGetValue(slotKey, out var slotStr) || !int.TryParse(slotStr, out var slot))
+            return;
+
+        var creatureIds = parameters.GetValueOrDefault(creaturesKey, "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => (ulong)Convert.ToInt64(s.Trim()))
+            .ToList();
+
+        deckService.updateDeck(account, slot, creatureIds);
     }
 
     [RequestMapping(Name="api.game.exitGame")]
