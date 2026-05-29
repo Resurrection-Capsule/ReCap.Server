@@ -25,16 +25,18 @@ public class CreatureMapper
         return mapper.Map<CreatureModel>(creature);
     }
 
-    public static string CreaturePngUrl(ulong creatureId, string method)
-        => $"http://{ServerConfig.HostName}/recap/api?method={method}&id={creatureId}";
+    // The client only fetches png urls that resolve to an actual .png file (it ignores
+    // /recap/api?... query urls). C++ serves /template_png/<templateId>_thumb.png and the
+    // client requests exactly that at login to build the creature cards; without it the
+    // in-game deck HUD never binds its cards and crashes. We ship those thumbnails under
+    // resources/static/template_png/, served at /template_png/.
+    public static string CreaturePngUrl(ulong templateId)
+        => $"http://{ServerConfig.HostName}/template_png/{templateId}_thumb.png";
 
     public CreatureContract toContract(CreatureModel creature) {
         var contract = mapper.Map<CreatureContract>(creature);
-        // Always expose image urls; the endpoint falls back to the template png when the
-        // creature has no custom (edited) png. Deck/squad cards need these or the in-game
-        // deck HUD fails to bind and crashes.
-        contract.LargePngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureLargePng");
-        contract.ThumbPngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureThumbPng");
+        contract.LargePngUrl = CreaturePngUrl(creature.TemplateID);
+        contract.ThumbPngUrl = CreaturePngUrl(creature.TemplateID);
         return contract;
     }
 
@@ -53,8 +55,8 @@ public class CreatureMapper
         response.TemplateID = creature.TemplateID;
         response.GearScore = creature.GearScore;
         response.ItemPoints = creature.ItemPoints;
-        response.LargePngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureLargePng");
-        response.ThumbPngUrl = CreaturePngUrl(creature.ID, "api.game.getCreatureThumbPng");
+        response.LargePngUrl = CreaturePngUrl(creature.TemplateID);
+        response.ThumbPngUrl = CreaturePngUrl(creature.TemplateID);
         response.Stats = creature.getStatsAsString();
 
         return response;
