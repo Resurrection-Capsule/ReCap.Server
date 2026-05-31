@@ -44,7 +44,9 @@ dotnet run --project ReCap.Server -- --port=9000
 dotnet run --project ReCap.Server -- --assetdata-path=<path>/AssetData_Binary.package
 ```
 
-Target framework: .NET 9.0. Submodules (`lib/RakNexus`, `lib/AssetData.Parser`) must init (`git submodule update --init --recursive`). No test suite.
+Target framework: .NET 9.0. Submodules (`lib/RakNexus`, `lib/AssetData.Parser`) must init (`git submodule update --init --recursive`).
+
+Tests: `ReCap.Tests` (xUnit, `dotnet test ReCap.Tests/ReCap.Tests.csproj`) is the M1 golden-harness — byte-level `WriteTo`/reflection asserts vs verified C++ wire (LE). Keep green; assertions must cite VERIFIED_FACTS / C++ `file:line`, never restate old dogma.
 
 ## Architecture
 
