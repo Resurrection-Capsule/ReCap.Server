@@ -42,6 +42,14 @@ Roots: C++ source `…/ReCapCpp/darkspore_server/source`; C# `ReCap.Server/`.
 
 C# fix `35a64f8` aligned the hero create/update to these (was a single bloated `{0,1,3,6,7,16,17}` objData → 91B create + 46B update). Golden-tested in `ReCap.Tests/Packets/ObjectCreateTests.cs`.
 
+**Capture breakdown of the dungeon-entry ObjectCreate batch** (createData fields decoded):
+| size | count | team | collision | playerControlled | noun(s) | = |
+|---|---|---|---|---|---|---|
+| 59B | 3 | 1 | 1 | 1 | the 3 squad creature nouns | **heroes** |
+| 81B | 3 | 0 | 1 | 0 | 2 distinct (`b28b12f2`, `518ea41e`×2) | special collidable objects (obelisks/teleporters?) |
+| 93B | **278** | 0 | 0 | 0 | **all the same noun `0x2983c017`** | 278 instances of one no-collision marker/decoration noun |
+The bulk is NOT diverse enemies — it is 278 copies of a single no-collision noun (`0x2983c017`, to be identified) + 3 collidable specials + 3 heroes. Phase 1 must replicate this population. (Enemies-with-AI are a later phase; this capture had none spawned as combatants.)
+
 ### 1.5 Level-spawn pipeline (C++)
 `Instance::OnPlayerStart` (Instance.cpp:308) → `LoadLevel()` reads `data/serverdata/level/<level>.level.xml` (Level.cpp:354), whose `<markersets>` name markerset files `data/serverdata/markerset/<name>.xml` (pugixml; `Markerset::Load` Level.cpp:245). Named subsets by suffix: `_obelisk_1` (obelisks), `_design`/`_design_spawners` (teleporters/design), `_AI_Wander*` (enemy spawns). Each marker → `ObjectManager::Create(marker)` (sets position/orientation/scale/markerId, adds to `mActiveObjects`). Enemies use `ObjectManager::Create(mChainData.GetEnemyNoun(rand 0..5))` at director markers (Instance.cpp:355). Then `OnPlayerStart` loops `GetActiveObjects()` (Instance.cpp:404) → `SendObjectCreate` each (the **278** objects in the capture); the 3 heroes (pre-created by `Player::SetCharacter`) get `SendObjectUpdate`.
 
@@ -119,6 +127,18 @@ We can reimplement the living world cleanly (possibly better than C++'s reverse-
 5. **Marker `componentData` → InteractableData/Teleporter.** Obelisks need `InteractableDataUpdate` (0x98) content (timesUsed/usesAllowed/ability) and teleporters need the teleporter component. Not yet decoded.
 6. **The 81B ObjectCreate variant** (`{6 Position,7 Orientation}`) — which object type (teleporter? plain marker?).
 7. **assetId in createData** — 0 for heroes AND enemies in the capture; confirm 0 is acceptable for all (the client may resolve assets from the noun).
+
+## 6. Ghidra annotations (client mapping)
+
+As we confirm client functions we **rename them in the Ghidra project** (persisted) and cite them here. Convention: `Namespace::VerbNoun` for the symbol name (logical namespace via `::`, since the MCP has no create-namespace), plus a plate comment beginning `Namespace::Name  [ReCap-mapped YYYY-MM-DD]` with the address, role, and any crash/contract notes. Use coherent namespaces: `ClientUI` (HUD/view layer), `Scaleform` (GFx movie helpers), `ClientNet` (nSporeNet / OnGms handlers), etc.
+
+| Address | Mapped name | Role |
+|---|---|---|
+| `0x007ee9d0` | `ClientUI::ViewManager_UpdatePerFrame` | Per-frame UI/HUD view-manager update; dispatches the current subview's `vtable[0x30]`; increments frame counter `+0x70`. |
+| `0x00551f10` | `Scaleform::Movie_InvokeMethod` | GFx movie method-invoke helper; the crash null is the *caller's* `[subview+0x20]` (movie handle), not this fn. |
+| `0x00423f60` | _(suspected `ClientUI::HudSubview_Init`, UNVERIFIED — partial agent)_ | Common subview ctor; zeroes +0x08/0c/18/1c/28/2c but NOT +0x20 (movie). Verify before renaming. |
+
+(Crash site `0x00551f47` is inside the caller of `Scaleform::Movie_InvokeMethod`.)
 
 ## 4. C# divergence summary (→ DIVERGENCE_LEDGER D-009)
 - ✅ Hero ObjectCreate/ObjectUpdate field sets aligned (`35a64f8`, golden-tested).

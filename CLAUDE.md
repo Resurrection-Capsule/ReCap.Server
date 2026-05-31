@@ -112,6 +112,7 @@ Wire encoding (endianness, reflection bitmaps, WriteTo-vs-WriteReflection, per-f
 ## External Resources
 
 - **Darkspore.exe in Ghidra (MCP)** — full retail client loaded (49507 funcs, `nSporeNet` transport, `kGms*` message table, per-message `OnGms*` handlers). USE IT for client-side packet behavior / struct layouts / crash mapping (image base 0x400000 matches exception addresses). Ghidra debugger available for live runtime inspection.
+  - **Annotate as you map (persist in the project):** when a function/struct is confirmed, rename it in Ghidra (`rename_function_by_address`) and add a plate comment. Convention: symbol = `Namespace::VerbNoun` (logical namespace via `::`; no create-namespace tool), plate comment starts `Namespace::Name  [ReCap-mapped YYYY-MM-DD]` + address + role + crash/contract notes. Namespaces: `ClientUI`, `Scaleform`, `ClientNet`, etc. Cite the address↔name in the relevant doc. Only rename what's verified (not unconfirmed agent guesses). The MCP has a PascalCase/verb linter — its warnings are non-fatal style nags; namespace clarity wins.
 - **DarksporeGhidra** (AssetData-only project) — only AssetData structure definitions; no game logic.
 - **Command matrix** — `docs/architecture/flow/COMMAND_MATRIX.md` maps every PacketID 0x7F–0xCC: direction, C# status, C++ handler.
 - **Wireshark MCP / dumpcap** — wire capture for C++-vs-C# byte diffs (Npcap Loopback adapter; same-host traffic to own LAN IP loops there too).
