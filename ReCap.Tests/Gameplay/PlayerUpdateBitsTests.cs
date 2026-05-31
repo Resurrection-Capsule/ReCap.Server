@@ -69,22 +69,28 @@ public class PlayerUpdateBitsTests
     [Fact]
     public void LabsPlayerData_SetInitialDataBits_Matches_Cpp_Setup()
     {
-        // C++ Player::Setup sets: DataSetup(0), Team(5), PlayerOnlineId(6),
-        // LockCamera(18), LockAbilityMin(21), LockDeckIndexMin(22),
-        // Level(15), DNA(12), Experience(16)
-        // C++ Player constructor sets: PlayerIndex(4), ChainProgression(17),
-        // CharacterData(3), CrystalData(13), CrystalBonuses(14)
-        // SetStatus sets: Status(7), StatusProgress(8)
-        // SetSquad sets: CurrentDeckIndex(1), QueuedDeckIndex(2), DeckScore(23)
+        // Verified C++ hello-time union (Player.cpp):
+        //   ctor (Player.cpp:58-66): PlayerIndex(4), ChainProgression(17),
+        //     CharacterData(3), CrystalData(13), CrystalBonuses(14)
+        //   Setup() (Player.cpp:178-206): DataSetup(0), Team(5), PlayerOnlineId(6),
+        //     LockCamera(18), LockAbilityMin(21), LockDeckIndexMin(22), Level(15),
+        //     DNA(12), Experience(16); Setup() calls SetStatus(0,0) -> Status(7), StatusProgress(8)
+        //   SetSquad's CurrentDeckIndex(1)/QueuedDeckIndex(2)/DeckScore(23) fire later at
+        //   PrepareGameStart, NOT at hello -> excluded here.
         var pd = new LabsPlayerData();
         pd.SetInitialDataBits();
 
-        byte[] expectedBits = { 0, 1, 2, 4, 5, 6, 7, 8, 12, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
+        byte[] expectedBits = { 0, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 17, 18, 21, 22 };
         foreach (var b in expectedBits)
         {
             Assert.True(pd._dataBits.Contains(b),
                 $"Expected DataBit {b} to be set in SetInitialDataBits");
         }
+
+        // And the squad/deck bits must NOT be set at hello.
+        foreach (var b in new byte[] { 1, 2, 23 })
+            Assert.False(pd._dataBits.Contains(b),
+                $"DataBit {b} (squad/deck) should NOT be set until PrepareGameStart");
     }
 
     [Fact]

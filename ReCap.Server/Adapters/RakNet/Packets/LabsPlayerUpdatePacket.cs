@@ -98,7 +98,11 @@ public class LabsPlayerData
         // movie from them; with no characters at hello the HUD movie stays null -> deck-HUD GFx
         // invoke on null -> client crash. The old "bit 3 breaks chain vote" (CLAUDE.md FROZEN) was
         // a malformed-Character-block artifact; offsets now verified 1:1 vs C++ Character::WriteTo.
-        byte[] initialBits = { 0, 3, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22 };
+        // C++ hello-time union (Player.cpp): ctor sets {4,17,3,13,14} (Player.cpp:58-66);
+        // Setup() sets {0,5,6,18,21,22,15,12,16} and calls SetStatus(0,0) -> {7,8}
+        // (Player.cpp:178-206). SetSquad's {1,2,23} fires later at PrepareGameStart, not hello.
+        // Full set = {0,3,4,5,6,7,8,12,13,14,15,16,17,18,21,22}. See DIVERGENCE_LEDGER D-004.
+        byte[] initialBits = { 0, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 17, 18, 21, 22 };
         foreach (var b in initialBits) _dataBits.Add(b);
     }
 
