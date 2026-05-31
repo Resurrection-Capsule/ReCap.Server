@@ -683,10 +683,15 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 },
                 ObjectData = objData
             });
+
+            // C++ pairs every ObjectCreate with an InteractableDataUpdate (0x98) companion
+            // (wire: 0x98 ×N matching ObjectCreate ×N). Send a zeroed-blob companion per object.
+            client.SendPacket(new InteractableDataUpdatePacket { ObjectId = objId });
+
             spawned++;
         }
 
-        Log.Game.Info($"PopulateLevel({Chain.LevelName}): spawned {spawned} objects, skipped {skipped} visual-only markers");
+        Log.Game.Info($"PopulateLevel({Chain.LevelName}): spawned {spawned} objects (+0x98 each), skipped {skipped} visual-only markers");
     }
 
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,
