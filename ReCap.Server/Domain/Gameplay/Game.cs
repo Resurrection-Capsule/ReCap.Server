@@ -521,9 +521,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         // C++ Instance::OnPlayerStart force-creates ALL squad character objects (the GetActiveObjects
         // ObjectCreate loop) BEFORE one is deployed via SwapCharacter. PlayerCharacterDeploy references
-        // a hero objId; with no preceding ObjectCreate the client binds the deck-HUD to a nonexistent
-        // object and null-derefs. Per hero C++ sends ObjectCreate -> ObjectUpdate -> CombatantData ->
-        // AttributeData. Hero object dataBits {0,1,3,6,7,16,17} make ObjectCreate 93B, matching C++.
+        // a hero objId; with no preceding ObjectCreate the client can't bind the deck-HUD.
+        // WIRE-VERIFIED field sets (cpp_loopback hero objId=1, DIVERGENCE_LEDGER D-009):
+        //   ObjectCreate object-reflection = {0 Team, 1 PlayerControlled, 3 PlayerIdx, 17 HasCollision}
+        //     (C++ hero = 59B; NOT 93B — 93B is the enemy variant). Position is NOT in the create
+        //     reflection; C++ leaves createData.position zero and positions the hero via ObjectUpdate.
+        //   ObjectUpdate object-reflection = {6 Position, 16 Visible} (C++ hero = 21B).
         var deckObjectIds = new uint[squad.Count];
         for (int i = 0; i < squad.Count; i++)
         {
@@ -532,19 +535,16 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             var noun = squad[i].Noun;
             Objects.Spawn(charObjId, noun, spawnPos, 1.0f, team: 1, playerControlled: true);
 
-            var objData = new SporelabsObject
+            var createObj = new SporelabsObject
             {
                 Team = 1,
                 PlayerControlled = true,
                 PlayerIdx = player.Slot,
-                Position = spawnPos,
-                Orientation = Quaternion.Identity,
-                Visible = true,
                 HasCollision = true,
                 Scale = 1.0f,
                 MarkerScale = 1.0f
             };
-            foreach (byte bit in new byte[] { 0, 1, 3, 6, 7, 16, 17 }) objData.SetDataBit(bit);
+            foreach (byte bit in new byte[] { 0, 1, 3, 17 }) createObj.SetDataBit(bit);
 
             client.SendPacket(new ObjectCreatePacket
             {
@@ -558,9 +558,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                     HasCollision = true,
                     PlayerControlled = true
                 },
-                ObjectData = objData
+                ObjectData = createObj
             });
-            client.SendPacket(new ObjectUpdatePacket { ObjectId = charObjId, ObjectData = objData });
+
+            var moveObj = new SporelabsObject { Position = spawnPos, Visible = true };
+            foreach (byte bit in new byte[] { 6, 16 }) moveObj.SetDataBit(bit);
+            client.SendPacket(new ObjectUpdatePacket { ObjectId = charObjId, ObjectData = moveObj });
 
             float maxHp = squad[i].MaxHealth > 0 ? squad[i].MaxHealth : 200f;
             float maxMp = squad[i].MaxMana > 0 ? squad[i].MaxMana : 200f;

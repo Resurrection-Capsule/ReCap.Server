@@ -33,3 +33,8 @@ logs/
 
 # Wire captures (large pcapng, not source)
 captures/
+
+# wire-diff scratch tooling
+cmp_lpu.py
+decode_obj.py
+s2c_payloads.txt
