@@ -114,6 +114,7 @@ public class AuthenticationComponent : IComponent
         }
 
         client.UserId = account.Id;
+        client.Username = account.Username;
         InitializeClientExtendedData(client);
 
         var response = new LoginResponse
@@ -279,6 +280,7 @@ public class AuthenticationComponent : IComponent
         }
 
         client.UserId = account.Id;
+        client.Username = account.Username;
         client.AuthToken = request.AuthToken;
         InitializeClientExtendedData(client);
 
@@ -307,6 +309,7 @@ public class AuthenticationComponent : IComponent
         }
 
         client.UserId = account.Id;
+        client.Username = account.Username;
         InitializeClientExtendedData(client);
 
         client.RespondTo(packet, BuildSessionInfo(account, client));

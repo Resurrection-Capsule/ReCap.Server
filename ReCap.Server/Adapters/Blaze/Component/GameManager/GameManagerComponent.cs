@@ -136,7 +136,7 @@ public class GameManagerComponent : IComponent
         notify.GameData.PresenceMode = request.PresenceMode;
         notify.GameData.QueueCapacity = request.QueueCapacity;
         notify.GameData.TeamCapacity = request.TeamCapacity;
-        notify.GameData.TeamIds = request.TeamIds;
+        notify.GameData.TeamIds.Add(0); // C++ forces tids=[userSlot=0] (GameManagerComponent.cpp:1184), not the request's
         notify.GameData.VoipNetwork = request.VoipNetwork;
         notify.GameData.VersionString = request.VersionString;
         notify.GameData.PlatformHostInfo.PlayerId = client.UserId;
@@ -151,22 +151,10 @@ public class GameManagerComponent : IComponent
         notify.GameData.NetworkQosData.NatType = NatType.Open;
         notify.GameData.NetworkQosData.UpstreamBitsPerSecond = 2;
 
-        notify.GameData.GameAttribs.Add("ServerBuildVersion", "1.0.903.854");
-
-        if (!notify.GameData.GameAttribs.ContainsKey("GameOwnerId"))
-            notify.GameData.GameAttribs.Add("GameOwnerId", client.UserId.ToString());
-
-        if (!notify.GameData.GameAttribs.ContainsKey("GameOwnerName"))
-            notify.GameData.GameAttribs.Add("GameOwnerName", "HelloDarkspore");
-
-        if (!notify.GameData.GameAttribs.ContainsKey("GameFlags"))
-            notify.GameData.GameAttribs.Add("GameFlags", "0");
-
-        if (!notify.GameData.GameAttribs.ContainsKey("ExpectedPlayerCount"))
-            notify.GameData.GameAttribs.Add("ExpectedPlayerCount", "10");
-
-        if (!notify.GameData.GameAttribs.ContainsKey("PrivateMatch"))
-            notify.GameData.GameAttribs.Add("PrivateMatch", "0");
+        // C++ (GameManagerComponent.cpp:1161) echoes the client's createGame attributes verbatim
+        // and injects NOTHING. The client provides its own GameOwnerName/etc.; the lobby owner name
+        // comes from the PROS player NAME field, not these attribs. Injecting extra keys diverged
+        // from C++ — removed for fidelity (C++ proves the client needs none of them).
 
         notify.GameData.HostNetworkAddressList.Add(hostAddr);
 
@@ -179,11 +167,11 @@ public class GameManagerComponent : IComponent
             SlotType = SlotType.Public,
             GameId = game.Id,
             AccountLocale = 0x656E5553,
-            PlayerName = "HelloDarkspore",
+            PlayerName = client.Username,
             PlayerId = client.UserId,
             JoinedGameTimestamp = CurrentUnixTime,
             PlayerState = PlayerState.ActiveConnecting,
-            TeamIndex = 0xFFFF,
+            TeamIndex = request.JoiningTeamIndex, // C++ uses gameData.tIndex (GameManagerComponent.cpp:1212), not hardcoded 0xFFFF
             PlayerSessionId = client.UserId,
         };
         player.NetworkAddress.ActiveMember = NetworkAddressMember.IpPairAddress;
