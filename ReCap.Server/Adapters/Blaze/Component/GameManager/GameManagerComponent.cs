@@ -41,14 +41,16 @@ public class GameManagerComponent : IComponent
     {
         var request = packet.ReadContent<UpdateGameSessionRequest>();
 
-        client.RespondTo(packet);
+        uint gameId = 1; // It's hardcoded to 1 for now
+
+        // C++ FinalizeGameCreation replies WriteJoinGame -> { GID } (GameManagerComponent.cpp:1105);
+        // C# previously replied with an empty body, so the client read GID=0 from the finalize reply.
+        client.RespondTo(packet, new JoinGameResponse() { GameId = gameId });
 
         // From C++ FinalizeGameCreation
         // NotifyGameStateChange(request, gameId, GameState::InGame);
         // NotifyGamePlayerStateChange(request, gameId, user->get_id(), PlayerState::Connected);
         // NotifyPlayerJoinCompleted(request, gameId, user->get_id());
-
-        uint gameId = 1; // It's hardcoded to 1 for now
 
         client.Notify(new NotifyGameStateChange() { GameId = gameId, GameState = GameState.InGame }, 4, 0x64);
         
