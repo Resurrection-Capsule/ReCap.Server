@@ -22,9 +22,13 @@ C++ reference = **ground truth** for packet structures, values, protocol flow. D
 - **Memory write-back rule (CRITICAL):** After every confirmed fix, C++ alignment, or invalidated assumption, update `memory/` files in the same turn. Mark stale memories outdated (prepend `OUTDATED YYYY-MM-DD:` + new state). Never let memory drift behind code.
 - **Evidence over dogma.** No protocol claim is true because a doc or memory says so. Trust only what is verified against C++ source (`file:line`) or a wire capture. Before relying on any "rule", confirm it. When a verified fact contradicts an old claim, supersede it and log it.
 
+## North star: reimplement, don't transliterate
+
+C++ (`ReCapCpp`) is a **reverse-engineered approximation** with visible shortcuts/quirks (e.g. an enemy-spawn `break` that caps enemies at 1/set; a debug-pattern objective description; build drift between its prebuilt binary and its source tree). The goal is NOT to copy C++ byte-for-byte forever — it's to build a **robust, clean C# reimplementation that satisfies the retail client's real contract**, ideally *closer to what the original game did* than C++'s approximation. **But the client is strict** — it null-derefs on the smallest misread. So any "improve beyond C++" move requires **solid, verified confirmation** of the real behavior (wire capture of the working binary, and/or the client's own parse in Ghidra), never a guess/interpretation. Confirm first (VERIFIED_FACTS), then reimplement cleanly. The capture is wire ground-truth where C++ source has drifted.
+
 ## Port-fidelity workflow (current focus)
 
-Goal: 1:1 byte-level fidelity vs C++ for the single-player Dungeon path. Driven by the design spec, not by past "laws" (which proved stale and were purged 2026-05-31).
+Goal: a correct single-player Dungeon path the retail client plays end to end. Use C++ as the primary reference, the working-binary capture as wire ground-truth, and the Ghidra client as the arbiter of the client's required contract. Driven by the design spec, not by past "laws" (which proved stale and were purged 2026-05-31).
 
 - **Spec:** `docs/superpowers/specs/2026-05-31-port-fidelity-plan-design.md` — the methodology.
 - **Verified facts:** `docs/architecture/VERIFIED_FACTS.md` — the ONLY trusted protocol truths, each cited. Read this, not old "rule" docs.

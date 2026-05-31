@@ -96,6 +96,21 @@ Still unconfirmed (Ghidra route too slow): the exact `OnGms` parse for 0xB7/0xB8
 
 ---
 
+## 5. Open questions — confirm BEFORE reimplementing (client is strict)
+
+We can reimplement the living world cleanly (possibly better than C++'s reverse-eng approximation), but each of these must be **confirmed** (capture and/or Ghidra), not guessed — a misread null-derefs the client.
+
+**Crucial (blocks the crash fix):**
+1. **What is the client's "level-ready / stay-in-dungeon" gate?** The C# client re-issues `joinRoom`/`getPartList` ~1s after deploy (the C++ client never does) and then crashes — it is *falling back to a menu/room state*. What condition makes the client bail? A count of objects? A specific object type (obelisk/spawn)? A "level loaded" packet/event? A timeout waiting for movement? → **Ghidra: the per-frame `FUN_007ee9d0` subview update + what gates the cObjectivePopup/HUD movie (`+0x20`) load.** Without this we might spawn 278 objects and still bail.
+
+**Important (correctness of the reimplementation):**
+2. **Object ordering vs deploy.** C++ sends ALL ObjectCreate (heroes via `Player::SetCharacter` early, the rest in the `GetActiveObjects` batch) BEFORE `PlayerCharacterDeploy`; heroes go out as ObjectUpdate (already `Created`). Does the client require the full world present before deploy?
+3. **Team per object type.** Heroes=1. Enemy/marker team is unconfirmed in C++ `Create(marker)` (left default). The client may target/color by team.
+4. **Which markers spawn, and the enemy rule.** C++ loads `_obelisk_1`/`_design`/`_design_spawners`/`_AI_Wander*`, picks enemy nouns randomly from chain (`GetEnemyNoun(rand 0..5)`) at director markers, and has a `break` capping enemies to 1/set (looks like a C++ shortcut, not the original). The faithful/robust choice is open — confirm what the client expects vs what reads as a C++ hack.
+5. **Marker `componentData` → InteractableData/Teleporter.** Obelisks need `InteractableDataUpdate` (0x98) content (timesUsed/usesAllowed/ability) and teleporters need the teleporter component. Not yet decoded.
+6. **The 81B ObjectCreate variant** (`{6 Position,7 Orientation}`) — which object type (teleporter? plain marker?).
+7. **assetId in createData** — 0 for heroes AND enemies in the capture; confirm 0 is acceptable for all (the client may resolve assets from the noun).
+
 ## 4. C# divergence summary (→ DIVERGENCE_LEDGER D-009)
 - ✅ Hero ObjectCreate/ObjectUpdate field sets aligned (`35a64f8`, golden-tested).
 - ✅ ObjectivesInit → 7-byte/objective + per-tick ObjectiveUpdated (`dd7bb02`, golden-tested). Awaiting client-verify gate.
