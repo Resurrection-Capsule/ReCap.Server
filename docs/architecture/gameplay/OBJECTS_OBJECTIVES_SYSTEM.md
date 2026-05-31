@@ -86,20 +86,18 @@ Capture `0xB7` bytes: `b705 ee3397ff 090000 f37342ac 010000 6175c061 010000 cc85
 
 ---
 
-## 3. Client consumption (Ghidra) — PENDING
+## 3. Client consumption (Ghidra) — PARTIAL (analysis stalled)
 
-Open questions for the client (`Darkspore.exe`, base 0x400000), under analysis:
-- Crash `@0x00551f47` (`MOV ECX,[ESI+0x20]`, +0x20 = null GFx movie) reached from per-frame UI update `FUN_007ee9d0` — which HUD subview is it (deck `cPlayerDeck` @0x51b860, or objectives HUD)?
-- What gates that subview's movie creation (+0x20) — a packet/event?
-- The `OnGms` parse layout the client expects for `0x8C`/`0x8D`/`0xB7`/`0xB8` (resolves the 7- vs 56-byte ObjectivesInit question definitively).
+A Ghidra agent stalled on the 49k-function binary before completing, but its partial findings point strongly at the **objectives HUD**:
+- The crashing subview (reached from per-frame UI update `FUN_007ee9d0` via the subview manager at `[mgr+0xb8]`, `vtable[0x2c]→[0x30]`) is most likely **`cObjectivePopup`**. Its `+0x20` field (the `GFxMovieView*` movie handle) is **NOT initialized** in the common subview ctor `FUN_00423f60` (which zeroes +0x08/+0x0c/+0x18/+0x1c/+0x28/+0x2c but skips +0x20). cObjectivePopup also sets a secondary vtable `PTR_LAB_00fd4afc` at +0x30. So if the movie-load path for the objective popup never runs, `+0x20` stays uninitialized → the per-frame `MOV ECX,[ESI+0x20]; CALL 0x551f10` (GFx invoke) derefs garbage/null → crash `@0x551f47`.
+- This corroborates the wire finding: the objectives feed was malformed/absent (C# sent 56-byte ObjectivesInit + zero ObjectiveUpdated), so the objective-popup movie was never properly driven.
 
-_This section will be completed from the in-progress Ghidra analysis, then the confirmed fixes implemented (one commit each, golden-tested)._
+Still unconfirmed (Ghidra route too slow): the exact `OnGms` parse for 0xB7/0xB8 and precisely what gates the cObjectivePopup movie-load. We chose to act on the wire evidence (match the working binary) rather than fight the slow Ghidra sweep — the client run is the decisive arbiter.
 
 ---
 
 ## 4. C# divergence summary (→ DIVERGENCE_LEDGER D-009)
 - ✅ Hero ObjectCreate/ObjectUpdate field sets aligned (`35a64f8`, golden-tested).
-- 🔴 ObjectivesInit format: C# 56-byte/objective vs working-wire 7-byte/objective (pending client-parse confirm).
-- 🔴 ObjectiveUpdated (0xB8): C# sends none; C++ sends ~1/tick.
+- ✅ ObjectivesInit → 7-byte/objective + per-tick ObjectiveUpdated (`dd7bb02`, golden-tested). Awaiting client-verify gate.
 - 🔴 Level objects: C# spawns 3 (heroes) vs ~278 (full level) — needs level/markerset loader.
 - 🔴 Companions (0x98 InteractableData, 0x99 AgentBlackboard, 0x94 Locomotion, 0x90/0x91) not emitted by C#.
