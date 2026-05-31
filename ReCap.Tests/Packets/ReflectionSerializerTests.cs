@@ -17,24 +17,25 @@ public class ReflectionSerializerTests
     }
 
     [Fact]
-    public void MediumFieldCount_Uses_TwoByte_BitmapBE()
+    public void MediumFieldCount_Uses_TwoByte_BitmapLE()
     {
-        // 9-16 fields: 2-byte bitmap in Big Endian
+        // 9-16 fields: 2-byte bitmap, little-endian on wire.
+        // C++ reflection_serializer::end Write<u16>(mWriteBits) (Types.h:332); Write<T> wire = LE.
         var bytes = SerializeWithFields(fieldCount: 16, writeFields: new byte[] { 0 });
 
-        // First 2 bytes: bitmap BE with bit 0 set = 0x0001 → BE: 0x00, 0x01
-        Assert.Equal(0x00, bytes[0]);
-        Assert.Equal(0x01, bytes[1]);
+        // bit 0 set = 0x0001 → LE: 0x01, 0x00
+        Assert.Equal(0x01, bytes[0]);
+        Assert.Equal(0x00, bytes[1]);
     }
 
     [Fact]
-    public void MediumFieldCount_HighBit_IsBE()
+    public void MediumFieldCount_HighBit_IsLE()
     {
-        // Set bit 15 → 0x8000 in BE → 0x80, 0x00
+        // Set bit 15 → 0x8000 → LE: 0x00, 0x80
         var bytes = SerializeWithFields(fieldCount: 16, writeFields: new byte[] { 15 });
 
-        Assert.Equal(0x80, bytes[0]);
-        Assert.Equal(0x00, bytes[1]);
+        Assert.Equal(0x00, bytes[0]);
+        Assert.Equal(0x80, bytes[1]);
     }
 
     [Fact]

@@ -59,7 +59,7 @@ public class LabsPlayerUpdateTests
     }
 
     [Fact]
-    public void WriteTo_Header_Is_PlayerId_Then_UpdateBitsBE()
+    public void WriteTo_Header_Is_PlayerId_Then_UpdateBitsLE()
     {
         var packet = new LabsPlayerUpdatePacket
         {
@@ -72,9 +72,10 @@ public class LabsPlayerUpdateTests
 
         // Byte 0: PlayerId
         Assert.Equal(0x02, bytes[0]);
-        // Bytes 1-2: UpdateBits in Big Endian (0x1000 → 0x10, 0x00)
-        Assert.Equal(0x10, bytes[1]);
-        Assert.Equal(0x00, bytes[2]);
+        // Bytes 1-2: UpdateBits little-endian (0x1000 → 0x00, 0x10).
+        // C++ Write<u16> at Server.cpp:1395; wire is LE (VERIFIED_FACTS: Write<T> double-swap).
+        Assert.Equal(0x00, bytes[1]);
+        Assert.Equal(0x10, bytes[2]);
     }
 
     [Fact]
@@ -156,15 +157,15 @@ public class LabsPlayerUpdateTests
 
         var bytes = ms.ToArray();
 
-        // NounId BE: 0x02FB89EB
-        Assert.Equal(0x02, bytes[0]);
-        Assert.Equal(0xFB, bytes[1]);
-        Assert.Equal(0x89, bytes[2]);
-        Assert.Equal(0xEB, bytes[3]);
+        // NounId LE: 0x02FB89EB -> EB 89 FB 02 (Write<u32> wire = LE)
+        Assert.Equal(0xEB, bytes[0]);
+        Assert.Equal(0x89, bytes[1]);
+        Assert.Equal(0xFB, bytes[2]);
+        Assert.Equal(0x02, bytes[3]);
 
-        // Rarity BE: 0x0002
-        Assert.Equal(0x00, bytes[4]);
-        Assert.Equal(0x02, bytes[5]);
+        // Rarity LE: 0x0002 -> 02 00
+        Assert.Equal(0x02, bytes[4]);
+        Assert.Equal(0x00, bytes[5]);
 
         // 10 bytes padding
         for (int i = 6; i < 16; i++)
@@ -206,11 +207,11 @@ public class LabsPlayerUpdateTests
 
         var bytes = ms.ToArray();
 
-        // NounId BE at offset 0x0B4
-        Assert.Equal(0x30, bytes[0x0B4]);
-        Assert.Equal(0x39, bytes[0x0B5]);
-        Assert.Equal(0xC5, bytes[0x0B6]);
-        Assert.Equal(0x38, bytes[0x0B7]);
+        // NounId LE at offset 0x0B4: 0x3039C538 -> 38 C5 39 30 (Write<u32> wire = LE)
+        Assert.Equal(0x38, bytes[0x0B4]);
+        Assert.Equal(0xC5, bytes[0x0B5]);
+        Assert.Equal(0x39, bytes[0x0B6]);
+        Assert.Equal(0x30, bytes[0x0B7]);
     }
 
     private static LabsPlayerData CreateMinimalPlayerData()

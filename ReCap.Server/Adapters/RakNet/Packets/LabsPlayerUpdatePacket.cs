@@ -208,10 +208,10 @@ public class LabsCharacterData
         bw.Write(CreatureType); // mCreatureType @ 0x3B8
 
         ms.Position = 0x3C0;
-        bw.Write(DeployCooldown); // uint64 BE at 0x3C0
-        bw.Write(AbilityPoints);  // uint32 BE at 0x3C8
+        bw.Write(DeployCooldown); // uint64 LE at 0x3C0
+        bw.Write(AbilityPoints);  // uint32 LE at 0x3C8
         foreach (var rank in AbilityRanks)
-            bw.Write(rank);       // uint32 BE each, 9 ranks starting at 0x3CC
+            bw.Write(rank);       // uint32 LE each, 9 ranks starting at 0x3CC
 
         ms.Position = 0x3F0;
         bw.Write(Health);
@@ -259,8 +259,8 @@ public class LabsCatalystData
     // Writes a 16-byte fixed-size block matching Catalyst::WriteTo in C++
     public void WriteTo(BinaryWriter writer)
     {
-        writer.Write(NounId);           // uint32 BE (4 bytes)
-        writer.Write(Rarity);           // uint16 BE (2 bytes)
+        writer.Write(NounId);           // uint32 LE (4 bytes)
+        writer.Write(Rarity);           // uint16 LE (2 bytes)
         writer.Write(new byte[10]);       // 10 bytes padding (zeros)
     }
 
