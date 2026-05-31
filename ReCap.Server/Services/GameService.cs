@@ -1,6 +1,7 @@
 using ReCap.Server.Domain.Gameplay;
 using ReCap.Server.Adapters.Blaze.Component.GameManager;
 using ReCap.Server.Models;
+using ReCap.Server.Services.Assets;
 
 namespace ReCap.Server.Services;
 
@@ -12,6 +13,60 @@ public class GameService : IGameHandler
     public ulong GameCounter { get; private set; } = 0x0080000000000001;
 
     public AssetDatabase? Assets { get; set; }
+    public DeckService? Decks { get; set; }
+    public CreatureService? Creatures { get; set; }
+
+    // Resolve the player's chosen squad (1-based squadId) into the creatures they own
+    // and saved in that deck slot. Mirrors C++ Player::SetSquad. Falls back to the
+    // account's first owned creatures if the deck slot is empty, so the squad is always
+    // real data — never the old hardcoded nouns.
+    public IReadOnlyList<SquadCreature> ResolveSquad(AccountModel account, int squadId)
+    {
+        if (Decks is null || Creatures is null)
+            return Array.Empty<SquadCreature>();
+
+        var deck = Decks.getDecksByAccount(account).FirstOrDefault(d => d.Slot == squadId);
+        var creatureIds = deck?.CreatureIds ?? new List<ulong>();
+
+        var resolved = creatureIds
+            .Select(id => Creatures.getCreatureById(id))
+            .Where(c => c is not null)
+            .ToList();
+
+        if (resolved.Count == 0)
+            resolved = Creatures.getCreaturesByAccount(account).Take(3).ToList();
+
+        return resolved.Select(ToSquadCreature).ToList();
+    }
+
+    private SquadCreature ToSquadCreature(CreatureModel creature)
+    {
+        var noun = (uint)creature.TemplateID;
+
+        float maxHealth = 200f;
+        float maxMana = 200f;
+        var attrs = Assets?.ResolveClassAttributesForCreature(noun);
+        if (attrs is not null)
+        {
+            var h = attrs.FindByName("maxHealth").AsFloat();
+            var m = attrs.FindByName("maxMana").AsFloat();
+            if (h > 0f) maxHealth = h;
+            if (m > 0f) maxMana = m;
+        }
+
+        var gearScore = (float)creature.GearScore;
+        var template = Creatures?.getCreatureTemplateById(creature.TemplateID);
+        var creatureType = CreatureElement.ToWireType(template?.elementType);
+
+        return new SquadCreature(
+            Noun: noun,
+            Version: creature.Version,
+            CreatureType: creatureType,
+            GearScore: gearScore,
+            GearScoreFlattened: gearScore,
+            MaxHealth: maxHealth,
+            MaxMana: maxMana);
+    }
 
     // ── IGameHandler ──────────────────────────────────────────────────────────
 
@@ -29,7 +84,10 @@ public class GameService : IGameHandler
 
     public Game CreateGame()
     {
-        var game = new Game(GameCounter++, GameType.Matched, Assets);
+        var game = new Game(GameCounter++, GameType.Matched, Assets)
+        {
+            SquadResolver = ResolveSquad
+        };
         Games.Add(game.Id, game);
         return game;
     }

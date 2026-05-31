@@ -25,13 +25,13 @@ public class CreatureMapper
         return mapper.Map<CreatureModel>(creature);
     }
 
-    // The client only fetches png urls that resolve to an actual .png file (it ignores
-    // /recap/api?... query urls). C++ serves /template_png/<templateId>_thumb.png and the
-    // client requests exactly that at login to build the creature cards; without it the
-    // in-game deck HUD never binds its cards and crashes. We ship those thumbnails under
-    // resources/static/template_png/, served at /template_png/.
+    // C++ stores png_thumb_url empty (profile XML has no such node); the client itself builds
+    // /template_png/<id>_thumb.png from the creature and fetches it via its registered content
+    // route. Injecting an absolute http://localhost/... url (as a prior attempt did) overrides
+    // that and the client never fetches. We emit the exact root-relative path the client requests
+    // in the C++ log, served from resources/static/template_png/ at /template_png/.
     public static string CreaturePngUrl(ulong templateId)
-        => $"http://{ServerConfig.HostName}/template_png/{templateId}_thumb.png";
+        => $"/template_png/{templateId}_thumb.png";
 
     public CreatureContract toContract(CreatureModel creature) {
         var contract = mapper.Map<CreatureContract>(creature);

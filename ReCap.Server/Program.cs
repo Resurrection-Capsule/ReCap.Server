@@ -118,13 +118,18 @@ public static class Program
             _ = assetDatabase.WarmUpAsync();
         }
 
-        var gameService = new GameService { Assets = assetDatabase };
-
         CancellationTokenSource source = new CancellationTokenSource();
         CancellationToken token = source.Token;
 
         var dbConfig = new SqliteConfig();
         dbConfig.Start();
+
+        var gameService = new GameService
+        {
+            Assets = assetDatabase,
+            Decks = new DeckService(dbConfig),
+            Creatures = new CreatureService(dbConfig)
+        };
 
 
 #pragma warning disable CS4014

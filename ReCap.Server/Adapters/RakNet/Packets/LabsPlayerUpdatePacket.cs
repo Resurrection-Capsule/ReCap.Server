@@ -92,7 +92,13 @@ public class LabsPlayerData
 
     public void SetInitialDataBits()
     {
-        byte[] initialBits = { 0, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22 };
+        // C++ Player ctor sets dataBit 3 (CharacterData) so the FIRST hello LPU already ships the
+        // 3 (default/zero) Character blocks inside the player reflection (~5KB). The in-game deck
+        // HUD (cPlayerDeck::UpdateHud) reads creatures from live game state and binds a Scaleform
+        // movie from them; with no characters at hello the HUD movie stays null -> deck-HUD GFx
+        // invoke on null -> client crash. The old "bit 3 breaks chain vote" (CLAUDE.md FROZEN) was
+        // a malformed-Character-block artifact; offsets now verified 1:1 vs C++ Character::WriteTo.
+        byte[] initialBits = { 0, 3, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22 };
         foreach (var b in initialBits) _dataBits.Add(b);
     }
 
@@ -176,15 +182,16 @@ public class LabsCharacterData
         using var ms = new MemoryStream(buffer, writable: true);
         using var bw = new BinaryWriter(ms, Encoding.UTF8, true);
 
-        // Offsets per AssetData.Parser catalog `labsCharacter` (0x620). LE on wire.
-        ms.Position = 0x004;
-        bw.Write(NounId);    // staticData.nounDef @ 0x004
-
+        // Wire offsets per C++ Character::WriteTo (ground truth), NOT the AssetData catalog
+        // in-memory struct layout. The catalog's `staticData.nounDef @ 0x4` is the in-memory
+        // nounDef pointer; the serialized block carries the noun-id HASH at 0x0B4. Writing it
+        // at 0x004 makes the client read noun=0 -> squad creatures fail to load (black screen).
         ms.Position = 0x008;
         bw.Write(AssetId);   // staticData.assetID (u64) @ 0x008
-
-        ms.Position = 0x010;
         bw.Write(Version);   // staticData.version @ 0x010
+
+        ms.Position = 0x0B4;
+        bw.Write(NounId);    // mNounId @ 0x0B4
 
         // staticData.partsAttributes[] (float per AttributeType index). Leaving these zero
         // gives AttackSpeedScale/CooldownScale = 0, which the client divides by when setting

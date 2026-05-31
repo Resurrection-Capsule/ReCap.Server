@@ -30,6 +30,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     public ChainData Chain { get; } = new();
     public ObjectManager Objects { get; } = new(assetDatabase);
 
+    // Resolves the player's chosen squad (account, 1-based squadId) into the creatures
+    // they own and saved in that deck. Set by GameService; mirrors C++ user->GetSquadById.
+    public Func<AccountModel, int, IReadOnlyList<SquadCreature>>? SquadResolver { get; set; }
+
     private DateTime _lastTick = DateTime.UtcNow;
 
     private int PlayersConnected = 0;
@@ -37,6 +41,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
     private readonly Dictionary<byte, uint[]> _deckObjectIds = new();
+    private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
 
     public IEnumerable<ulong> GetPlayerIds() => Players.Where(p => !p.Value.IsBot).Select(p => p.Value.Id);
@@ -202,52 +207,63 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         player.ResetUpdateBits();
     }
 
-    // TODO(robust): squad creatures are hardcoded; should come from the player's
-    // saved deck/squad (Blaze) instead of fixed nouns. Tracked separately.
-    private static readonly uint[] SquadCreatureNouns = { 1667741389u, 749013658u, 3591937345u };
-    private static readonly uint[] SquadCreatureTypes = { 2u, 0u, 3u };
-
     // C++ Server::OnDebugPing Dungeon → mGame.SwapCharacter(player, 1): deck index 1 is deployed.
     private const int DeployedDeckIndex = 1;
 
-    // Marker-based NPC spawn is too greedy (spawns non-object design markers) and crashes
-    // the client. Off until we filter by real spawnable noun types like C++ does.
-    private const bool SpawnLevelMarkers = false;
+    // Marker NPC/prop spawn — now noun-name filtered (obelisks + director enemies only),
+    // so it no longer spawns the design markers that crashed the client. Toggle off to
+    // isolate the deck-HUD path during crash testing.
+    private const bool SpawnLevelMarkers = true;
 
-    private void FillSquadCharacters(LabsPlayerData playerData)
+    // Resolve the player's selected squad from their persisted deck (never hardcoded).
+    private IReadOnlyList<SquadCreature> ResolveSquadForPlayer(Player player, int squadId)
     {
-        uint[] creatureNouns = SquadCreatureNouns;
-        uint[] creatureTypes = SquadCreatureTypes;
+        if (SquadResolver != null && Clients.TryGetValue(player.Id, out var account))
+        {
+            var squad = SquadResolver(account, squadId);
+            if (squad.Count > 0)
+                return squad;
+            Log.Game.Warn($"Squad {squadId} resolved empty for account {player.Id}");
+        }
+        return Array.Empty<SquadCreature>();
+    }
+
+    private static void FillSquadCharacters(LabsPlayerData playerData, IReadOnlyList<SquadCreature> squad)
+    {
         for (int i = 0; i < 3; i++)
         {
-            float maxHealth = 200f;
-            float maxMana = 200f;
-
-            var attrs = Assets?.ResolveClassAttributesForCreature(creatureNouns[i]);
-            if (attrs is not null)
+            if (i < squad.Count)
             {
-                var h = attrs.FindByName("maxHealth").AsFloat();
-                var m = attrs.FindByName("maxMana").AsFloat();
-                if (h > 0f) maxHealth = h;
-                if (m > 0f) maxMana = m;
+                var c = squad[i];
+                playerData.Characters[i] = new LabsCharacterData
+                {
+                    Version = c.Version,
+                    NounId = c.Noun,
+                    AssetId = 0,
+                    CreatureType = c.CreatureType,
+                    DeployCooldown = 0,
+                    AbilityPoints = 10,
+                    AbilityRanks = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                    Health = c.MaxHealth,
+                    MaxHealth = c.MaxHealth,
+                    Mana = c.MaxMana,
+                    MaxMana = c.MaxMana,
+                    GearScore = c.GearScore,
+                    GearScoreFlattened = c.GearScoreFlattened
+                };
             }
-
-            playerData.Characters[i] = new LabsCharacterData
+            else
             {
-                Version = 1,
-                NounId = creatureNouns[i],
-                AssetId = 0,
-                CreatureType = creatureTypes[i],
-                DeployCooldown = 0,
-                AbilityPoints = 10,
-                AbilityRanks = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-                Health = maxHealth,
-                MaxHealth = maxHealth,
-                Mana = maxMana,
-                MaxMana = maxMana,
-                GearScore = 300f,
-                GearScoreFlattened = 300f
-            };
+                // Empty squad slot: noun 0, mirrors C++ SetSquad when a creature is missing.
+                playerData.Characters[i] = new LabsCharacterData
+                {
+                    Version = 0,
+                    NounId = 0,
+                    AssetId = 0,
+                    CreatureType = 0,
+                    AbilityRanks = new uint[] { 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+                };
+            }
         }
     }
 
@@ -372,9 +388,15 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             var player = GetPlayerByClient(sender);
             if (player != null)
             {
+                // C++ PrepareGameStart -> Player::SetSquad(user->GetSquadById(squadId)):
+                // resolve the chosen squad from the player's persisted deck.
+                var squad = ResolveSquadForPlayer(player, (int)packet.SquadId);
+                _playerSquads[player.Slot] = squad;
+                Log.Game.Info($"Resolved squad {packet.SquadId}: [{string.Join(", ", squad.Select(c => $"0x{c.Noun:X8} gs={c.GearScore:F0}"))}]");
+
                 if (player.PlayerData != null)
                 {
-                    FillSquadCharacters(player.PlayerData);
+                    FillSquadCharacters(player.PlayerData, squad);
                     player.PlayerData.SetDataBit(1);
                     player.PlayerData.SetDataBit(2);
                     player.PlayerData.SetDataBit(3);
@@ -443,6 +465,44 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         return null;
     }
 
+    // Create + broadcast a single non-player level object (obelisk / enemy). Mirrors the
+    // C++ ObjectManager::Create + SendObjectCreate path. Per C++: team/playerControlled stay
+    // at their defaults (0 / false); only marker-created objects (obelisks) carry the marker
+    // scale, enemies created from a bare noun keep scale 1.
+    private void SpawnLevelNoun(RakNetClient client, uint noun, Vector3 pos, float scale)
+    {
+        var objId = _nextObjectId++;
+        Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
+
+        var objData = new SporelabsObject
+        {
+            Position = pos,
+            Team = 0,
+            PlayerControlled = false,
+            Visible = true,
+            HasCollision = true,
+            Scale = scale,
+            MarkerScale = scale
+        };
+        // C++ marker object block = {Team, Visible, HasCollision} → 59B ObjectCreate.
+        foreach (byte bit in new byte[] { 0, 16, 17 }) objData.SetDataBit(bit);
+
+        client.SendPacket(new ObjectCreatePacket
+        {
+            ObjectId = objId,
+            CreateData = new GameObjectCreateData
+            {
+                Noun = noun,
+                Position = pos,
+                Scale = scale,
+                Team = 0,
+                HasCollision = true,
+                PlayerControlled = false
+            },
+            ObjectData = objData
+        });
+    }
+
     private void OnPlayerStart(RakNetClient client)
     {
         var player = GetPlayerByClient(client);
@@ -450,85 +510,42 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         client.SendPacket(ObjectivesInitForLevelPacket.CreateDefault());
 
-        // DISABLED: the marker loop spawns EVERY marker with a nounDef as a team-2 object,
-        // including non-spawnable design markers (lights, cameras, decals, water, triggers).
-        // Those create invalid objects the client dereferences each frame -> null-deref crash
-        // (Exception Report: ACCESS_VIOLATION read 0x0 in per-frame object loop). C++ only
-        // spawns specific noun types (obelisks/enemies). Re-enable with proper type filtering.
-        if (SpawnLevelMarkers && Assets != null)
+        var squad = _playerSquads.TryGetValue(player.Slot, out var s) ? s : Array.Empty<SquadCreature>();
+        if (squad.Count == 0)
         {
-            var markers = Assets.GetLevelMarkers(Chain.LevelName);
-            foreach (var marker in markers)
-            {
-                // nounDef is a DataType.Asset -> parsed as the noun NAME string.
-                var nounName = marker.FindByName("nounDef").AsString();
-                if (string.IsNullOrEmpty(nounName)) continue;
-                if (string.Equals(nounName, "CameraSpawnPoint.Noun", StringComparison.OrdinalIgnoreCase)) continue;
-                var nounDef = ChainData.FnvHash(nounName);
-
-                var markerPos = marker.FindByName("pos").AsVector3();
-                var markerScale = marker.FindByName("scale").AsFloat();
-                if (markerScale == 0f) markerScale = 1.0f;
-
-                var markerObjId = _nextObjectId++;
-                Objects.Spawn(markerObjId, nounDef, markerPos, markerScale, team: 2, playerControlled: false);
-                var npcPacket = new ObjectCreatePacket
-                {
-                    ObjectId = markerObjId,
-                    CreateData = new GameObjectCreateData
-                    {
-                        Noun = nounDef,
-                        Position = markerPos,
-                        Scale = markerScale,
-                        Team = 2,
-                        HasCollision = true,
-                        PlayerControlled = false
-                    },
-                    ObjectData = new SporelabsObject
-                    {
-                        Position = markerPos,
-                        Team = 2,
-                        PlayerControlled = false,
-                        Visible = true,
-                        HasCollision = true,
-                        Scale = markerScale,
-                        MarkerScale = markerScale
-                    }
-                };
-                client.SendPacket(npcPacket);
-            }
+            Log.Game.Warn($"Player slot {player.Slot} has no resolved squad; nothing to deploy");
+            return;
         }
 
-        var resolvedSpawn = ResolveSpawnPosition();
-        if (resolvedSpawn == null)
-            Log.Game.Warn($"No CameraSpawnPoint marker for {Chain.LevelName}; using fallback spawn");
-        var spawnPos = resolvedSpawn ?? new Vector3(44.0f, 0.47f, 17.5f);
+        var spawnPos = ResolveSpawnPosition() ?? new Vector3(44.0f, 0.47f, 17.5f);
 
-        // C++ OnPlayerStart force-creates ALL squad character objects so the client
-        // can find them on swap; only then is one deployed via SwapCharacter.
-        var deckObjectIds = new uint[SquadCreatureNouns.Length];
-        for (int i = 0; i < SquadCreatureNouns.Length; i++)
+        // C++ Instance::OnPlayerStart force-creates ALL squad character objects (the GetActiveObjects
+        // ObjectCreate loop) BEFORE one is deployed via SwapCharacter. PlayerCharacterDeploy references
+        // a hero objId; with no preceding ObjectCreate the client binds the deck-HUD to a nonexistent
+        // object and null-derefs. Per hero C++ sends ObjectCreate -> ObjectUpdate -> CombatantData ->
+        // AttributeData. Hero object dataBits {0,1,3,6,7,16,17} make ObjectCreate 93B, matching C++.
+        var deckObjectIds = new uint[squad.Count];
+        for (int i = 0; i < squad.Count; i++)
         {
             var charObjId = _nextObjectId++;
             deckObjectIds[i] = charObjId;
-            var noun = SquadCreatureNouns[i];
+            var noun = squad[i].Noun;
             Objects.Spawn(charObjId, noun, spawnPos, 1.0f, team: 1, playerControlled: true);
 
             var objData = new SporelabsObject
             {
-                Position = spawnPos,
                 Team = 1,
                 PlayerControlled = true,
                 PlayerIdx = player.Slot,
+                Position = spawnPos,
+                Orientation = Quaternion.Identity,
                 Visible = true,
                 HasCollision = true,
                 Scale = 1.0f,
                 MarkerScale = 1.0f
             };
+            foreach (byte bit in new byte[] { 0, 1, 3, 6, 7, 16, 17 }) objData.SetDataBit(bit);
 
-            // C++ SendObjectUpdate sequence for a creature: ObjectCreate -> ObjectUpdate
-            // -> CombatantData -> AttributeData. The player hero needs all four or the
-            // client fades out / crashes on deploy.
             client.SendPacket(new ObjectCreatePacket
             {
                 ObjectId = charObjId,
@@ -545,10 +562,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             });
             client.SendPacket(new ObjectUpdatePacket { ObjectId = charObjId, ObjectData = objData });
 
-            var charData = player.PlayerData?.Characters[i];
-            float maxHp = charData?.MaxHealth ?? 200f;
-            float maxMp = charData?.MaxMana ?? 200f;
-
+            float maxHp = squad[i].MaxHealth > 0 ? squad[i].MaxHealth : 200f;
+            float maxMp = squad[i].MaxMana > 0 ? squad[i].MaxMana : 200f;
             client.SendPacket(new CombatantDataUpdatePacket { ObjectId = charObjId, HitPoints = maxHp, ManaPoints = maxMp });
 
             var attrs = new AttributeDataUpdatePacket { ObjectId = charObjId };
@@ -562,11 +577,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             client.SendPacket(attrs);
         }
         _deckObjectIds[player.Slot] = deckObjectIds;
-        _playerCharacterObjectIds[player.Slot] = deckObjectIds[DeployedDeckIndex];
 
-        Log.Game.Info($"Spawned squad ({deckObjectIds.Length} chars) at ({spawnPos.X:F1},{spawnPos.Y:F1},{spawnPos.Z:F1}); deploying deck={DeployedDeckIndex}");
+        // C++ deploys deck index 1; clamp for squads smaller than that.
+        var deployIndex = Math.Min(DeployedDeckIndex, deckObjectIds.Length - 1);
+        _playerCharacterObjectIds[player.Slot] = deckObjectIds[deployIndex];
 
-        SwapCharacter(client, player, DeployedDeckIndex, deckObjectIds[DeployedDeckIndex]);
+        Log.Game.Info($"OnPlayerStart: spawned {squad.Count} hero objects; deploying deck={deployIndex} objId={deckObjectIds[deployIndex]}");
+
+        SwapCharacter(client, player, deployIndex, deckObjectIds[deployIndex]);
     }
 
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,

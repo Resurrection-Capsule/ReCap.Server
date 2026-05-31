@@ -110,7 +110,9 @@ public class GameRestController
             context.Response.Headers.Add("Set-Cookie", $"token={authToken}");
         }
 
-        return XmlHelper.Serialize(response);
+        var xml = XmlHelper.Serialize(response);
+        ReCap.Server.Util.Logging.Log.Rest.Debug($"[AUTH-DUMP] creatures={response.Creatures?.Count ?? -1} bytes={xml.Length}\n{System.Text.Encoding.UTF8.GetString(xml)}");
+        return xml;
     }
 
     [RequestMapping(Name="api.account.getAccount")]
