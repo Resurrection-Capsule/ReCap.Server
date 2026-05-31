@@ -67,8 +67,26 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             player.Client.SendPacket(gameState);
 
             SendLabsPlayerUpdate(player.Client);
+
+            // C++ Instance::Update (50ms tick) sends ObjectiveUpdated for objective 0
+            // (FinishLevelQuickly) every tick with value = elapsed seconds. The objectives HUD
+            // popup (cObjectivePopup) appears to need this per-frame feed. Medal=Gold(4).
+            if (State == GameState.Dungeon)
+            {
+                player.Client.SendPacket(new ObjectiveUpdatedPacket
+                {
+                    ObjectiveId = ObjectivesInitForLevelPacket.ObjectiveIds[0],
+                    ClientId = player.Slot,
+                    Medal = 4,
+                    Voiceover = _objectiveVoiceover,
+                    Value = (uint)Math.Max(0, (now - StartTime).TotalSeconds)
+                });
+            }
         }
     }
+
+    private static readonly uint _objectiveVoiceover =
+        ObjectivesInitForLevelPacket.FnvHash("vo_ship_obelisk_accessed");
 
     public void SelectLevel(uint levelIndex)
     {
@@ -509,6 +527,19 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         if (player == null) return;
 
         client.SendPacket(ObjectivesInitForLevelPacket.CreateDefault());
+
+        // C++ Instance::OnPlayerStart sends an ObjectiveUpdated (0xB8) for each objective right
+        // after the init (Instance.cpp:399-401). The per-tick obj-0 update is in Update().
+        // Medal = Gold(4) per the hardcoded objective set; clientId = player slot.
+        for (uint i = 0; i < ObjectivesInitForLevelPacket.ObjectiveIds.Length; i++)
+            client.SendPacket(new ObjectiveUpdatedPacket
+            {
+                ObjectiveId = ObjectivesInitForLevelPacket.ObjectiveIds[i],
+                ClientId = player.Slot,
+                Medal = 4,
+                Voiceover = 0,
+                Value = 1
+            });
 
         var squad = _playerSquads.TryGetValue(player.Slot, out var s) ? s : Array.Empty<SquadCreature>();
         if (squad.Count == 0)

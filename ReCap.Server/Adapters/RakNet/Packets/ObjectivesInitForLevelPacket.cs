@@ -1,14 +1,16 @@
-﻿using ReCap.Server.Util;
+using System;
+using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
 /// <summary>
-/// ObjectivesInitForLevel (0xB7) â€” sends the list of level objectives to the client.
-/// C++: SendObjectivesInitForLevel â†’ [u8 count] [for each: Objective::WriteTo]
-///
-/// Objective::WriteTo format:
-///   [u32 id] [u32 value] [0x40 bytes padding/debug data]
-///   Total per objective: 8 + 64 = 72 bytes
+/// ObjectivesInitForLevel (0xB7) — sends the list of level objectives to the client.
+/// WIRE-VERIFIED against the working C++ binary capture (cpp_loopback, DIVERGENCE_LEDGER D-009):
+///   [u8 count] [for each: u32 id + u24 value]  -> 7 bytes/objective, 37B for the 5 objectives.
+/// The 5 ids are the FNV-1 hashes of the objective names (confirmed exact). The client looks up
+/// the display text locally by id hash, so NO description is sent on the wire. The ReCapCpp SOURCE
+/// tree drifted to a 56-byte (id+value+0x30 desc) layout, but the binary that actually drives the
+/// client uses the 7-byte form — the capture is the ground truth. See OBJECTS_OBJECTIVES_SYSTEM.md.
 /// </summary>
 public class ObjectivesInitForLevelPacket : IRakNetPacket
 {
@@ -25,30 +27,25 @@ public class ObjectivesInitForLevelPacket : IRakNetPacket
             obj.WriteTo(stream);
     }
 
-    /// <summary>
-    /// Create the default 5-objective set matching C++ Instance constructor.
-    /// </summary>
+    // The 5 hardcoded Dungeon objectives (C++ Instance ctor). Ids are FNV-1 of the names.
+    public static readonly string[] ObjectiveNames =
+    {
+        "FinishLevelQuickly", "DoDamageOften", "TouchAllObelisks", "DefeatAllMonsters", "HugeDamage"
+    };
+
+    public static readonly uint[] ObjectiveIds = Array.ConvertAll(ObjectiveNames, FnvHash);
+
+    /// <summary>Create the default 5-objective set matching the C++ Instance constructor.</summary>
     public static ObjectivesInitForLevelPacket CreateDefault()
     {
         var packet = new ObjectivesInitForLevelPacket();
-
-        uint[] ids =
-        {
-            FnvHash("FinishLevelQuickly"),
-            FnvHash("DoDamageOften"),
-            FnvHash("TouchAllObelisks"),
-            FnvHash("DefeatAllMonsters"),
-            FnvHash("HugeDamage"),
-        };
-
-        foreach (var id in ids)
+        foreach (var id in ObjectiveIds)
             packet.Objectives.Add(new ObjectiveData { Id = id, Value = 1 });
-
         return packet;
     }
 
     // FNV-1 matching C++ utils::hash_id (multiply THEN xor, lowercase)
-    private static uint FnvHash(string s)
+    public static uint FnvHash(string s)
     {
         uint h = 0x811C9DC5;
         foreach (var c in s) { h *= 0x01000193; h ^= (byte)char.ToLower(c); }
@@ -56,25 +53,19 @@ public class ObjectivesInitForLevelPacket : IRakNetPacket
     }
 }
 
-/// <summary>
-/// Per-objective data. Mirrors C++ Objective::WriteTo.
-/// </summary>
+/// <summary>Per-objective entry on the wire: u32 id + u24 value (7 bytes). No description.</summary>
 public class ObjectiveData
 {
     public uint Id    { get; set; }
     public uint Value { get; set; }
 
-    // C++ Objective::WriteTo (Types.cpp): [u32 id][u32 value][char[0x30] description, null-padded].
-    // Total = 0x38 (56) bytes per objective. Description left empty (zeroed). The previous
-    // 0x40 garbage-pattern padding mis-sized every objective and desynced the client read,
-    // crashing on Dungeon entry.
-    private const int DescriptionSize = 0x30;
-
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
         writer.Write(Id);
-        writer.Write(Value);
-        stream.Write(new byte[DescriptionSize], 0, DescriptionSize);
+        // u24 LE value (the working wire's 3-byte value field; 3rd byte is value, not medal)
+        stream.WriteByte((byte)(Value & 0xFF));
+        stream.WriteByte((byte)((Value >> 8) & 0xFF));
+        stream.WriteByte((byte)((Value >> 16) & 0xFF));
     }
 }
