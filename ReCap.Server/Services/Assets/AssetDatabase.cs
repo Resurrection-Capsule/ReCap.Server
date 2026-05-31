@@ -107,7 +107,10 @@ public sealed class AssetDatabase : IDisposable
             var refPath = (msRef.FindByName("markersetAsset") as StringValue)?.Value;
             if (string.IsNullOrEmpty(refPath)) continue;
 
-            var ms = GetMarkerSetByName(refPath);
+            // Resolve the markerset reference through the parser's native name registry
+            // (DbpfReader.Resolve), NOT a hand-hashed name — the package keys assets by the
+            // file registry's hash, which is not our wire FnvHash.
+            var ms = GetAssetByName(refPath);
             if (ms?.FindByName("markers") is not ArrayValue markers) continue;
 
             foreach (var marker in markers.Items)
