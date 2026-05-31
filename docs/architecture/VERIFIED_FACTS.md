@@ -41,6 +41,12 @@ Fixed **0x620** (1568) byte block, all fields via `Write<T>` → LE. Verified of
 - The in-game deck HUD `cPlayerDeck::UpdateHud` (@0x51b860, runs every frame via the UI update `FUN_007ee9d0`) reads creatures from the **live game-state singleton** `DAT_0143ffd8+0x710` (creature vector begin@+0x10/end@+0x14, stride 0x40), pushing per-creature fields (e.g. "gearScore") to Scaleform. It is **game-state/LPU-driven, NOT REST** (REST account data is menu/editor-side).
 - **Open crash (not yet fixed):** `MOV ECX,[ESI+0x20]; CALL 0x551f10` — `this = cPlayerDeck+0x20` (the Scaleform GFx movie handle) is NULL → ACCESS_VIOLATION read 0x0 @ 0x00551f47. The deck HUD movie never binds. Insensitive to the gameplay-packet changes tried so far (ObjectCreate, hello-chars). FUN_00551f10 = GFx invoke helper.
 
+## Capture build ≠ source tree (CRITICAL methodology note, 2026-05-31)
+
+The working C++ server is a **prebuilt binary** (`…/Darkspore/DarksporeBin/Server/`) that does NOT necessarily match the `ReCapCpp` **source tree** — they have drifted. Proven by the objectives packet: the `cpp_loopback` capture's `ObjectivesInitForLevel` (0xB7) is **37 bytes** = `u8 count(5) + 5×(u32 id + u24 value)` (**7 bytes/objective**), whereas `ReCapCpp` source `Objective::WriteTo` (Types.cpp:1335) writes **56 bytes/objective** (id + u32 value + 0x30 description). The 5 capture ids match the FNV-1 hashes of the 5 hardcoded objective names exactly (FinishLevelQuickly=0xFF9733EE, DoDamageOften=0xAC4273F3, TouchAllObelisks=0x61C07561, DefeatAllMonsters=0xA28485CC, HugeDamage=0x0478FACB), so it IS the objectives packet — just a different wire format.
+- **Consequence:** for wire-format fidelity, the **capture is the ground truth**, not the source tree (the binary that actually drives the client is what matters). The source is a guide that may have regressed. Formats that did NOT drift (Character/LPU block, hero ObjectCreate {0,1,3,17}) matched both; objectives drifted.
+- **C# bug (high crash suspicion):** C# `ObjectiveData.WriteTo` emits 56-byte entries (id + u32 value + 48-byte description) → 282B ObjectivesInit, but the client (per the working capture) expects **7-byte entries (u32 id + u24 value)** → 37B. The 282B desyncs the client's per-objective read. Pending exact client-parse confirmation (Ghidra OnGms 0xB7 handler).
+
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)
 
 These were asserted by old docs; keep until verified, then move up with a cite or kill:
