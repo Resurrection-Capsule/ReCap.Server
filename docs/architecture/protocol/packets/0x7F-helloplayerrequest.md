@@ -12,7 +12,7 @@ First gameplay-wire packet from the client after RakNet handshake. Carries the B
 
 | Offset | Field | Type | Endian | Notes |
 |---|---|---|---|---|
-| `0x00` | `UserId` | u64 | **LE** | Blaze account ID. See [ENDIANNESS.md](../ENDIANNESS.md). |
+| `0x00` | `UserId` | u64 | **LE** | Blaze account ID. See [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md). |
 | `0x08` | `PlaygroupId` | u64 | LE | Optional. C# reads only if 8 more bytes available. |
 
 > 🔒 **Frozen rule:** `UserId` is LE. C# uses `BinaryReader.ReadUInt64()` (LE default). Mirrored in `feedback_endianness.md` and CLAUDE.md.
@@ -70,4 +70,4 @@ Dispatched by `RakNetServer.OnSessionReceiveRaw` (`RakNetServer.cs:86-100`): att
 ## Related
 
 - [Phase 06 Spaceship](../../flow/phases/06-spaceship.md) — flow context
-- [ENDIANNESS.md](../ENDIANNESS.md#known-intentional-le-fields)
+- [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md)

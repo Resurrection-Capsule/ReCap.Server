@@ -223,7 +223,9 @@ Client sends `HelloPlayerRequest` (0x7F). Server:
      - `0x45`: u32 voiceover, u32 completionFlag
    - `SendChainVoteMessages(client, 1)` → value=1, `f32 secondsUntilDeployment = 30.0`. **8 B total.**
 
-> **FROZEN:** the buffer is encoded **LE** even though the rest of the wire is BE. Do not flip (see `CLAUDE.md`).
+> **Note:** the buffer is encoded **LE**. The wire is LE throughout (Write&lt;T&gt; produces LE). Do not flip (confirmed LE in `VERIFIED_FACTS.md`).
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (old "rest of wire is BE" claim was wrong; all wire is LE)
 >
 > **Deep-dive:** [`phases/07-chainvote.md`](phases/07-chainvote.md) (TODO)
 

@@ -30,3 +30,6 @@ Thumbs.db
 output.txt
 parse_raknet.py
 logs/
+
+# Wire captures (large pcapng, not source)
+captures/

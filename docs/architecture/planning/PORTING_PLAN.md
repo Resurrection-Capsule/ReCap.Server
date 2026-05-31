@@ -12,9 +12,13 @@ Sequenced plan for porting Darkspore C++ gameplay server to ReCap C#. Born **202
 
 1. **Gameplay-driven sequencing.** Each P must work end-to-end before moving on. Don't open a later P until current P's verify gate passes. Otherwise bugs stack and the cause is unobservable.
 2. **Phase doc + protocol-bugs are the source of truth.** Every code change cites a phase doc section or a Tier-A/B/C/D entry. If neither exists, write the doc first.
-3. **Frozen rules are inviolable.** See "Frozen rules — never realign" in `PARITY.md`. Past sessions broke them by aligning to C++ and lost a week each time.
+3. **Frozen rules are inviolable.** ~~See "Frozen rules — never realign" in `PARITY.md`.~~ See `VERIFIED_FACTS.md`. Past sessions broke them by aligning to C++ and lost a week each time. Note: bit 3 in `SetInitialDataBits` is no longer frozen — see `VERIFIED_FACTS.md`.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (PARITY.md deleted; bit-3 FROZEN rule disproved)
 4. **Verify gate before commit.** Each P closes with a runtime check (output.log capture + manual client run) AND a logged observation in this file under the relevant P. Code that "builds" is not closed.
-5. **C++ Write&lt;T&gt;() = WriteBE in C#.** All numeric game data uses `Write<T>()` in C++ (bswap wrapper). Use `writer.WriteBE()` in C#. Use `writer.Write()` only for byte/bool. Endianness exceptions are documented per-field in `ENDIANNESS.md`.
+5. **C++ Write&lt;T&gt;() = WriteLE in C#.** ~~WriteBE~~ All numeric game data uses `Write<T>()` in C++ (bswap wrapper) which produces **little-endian** on the wire (double-swap on x86). Use `writer.Write()` (LE) in C#. Endianness details in `VERIFIED_FACTS.md`. ~~ENDIANNESS.md deleted.~~
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (Write&lt;T&gt; is LE on wire, not BE; ENDIANNESS.md deleted)
 6. **One commit per Tier-A fix** so bisect works when something regresses.
 
 ---
@@ -46,7 +50,9 @@ Goal: client passes the Spaceship loading screen and renders the catalyst UI.
 
 ### Notes / past divergences
 
-- 🔒 Initial LPU `dataBits = {0,4,5,6,7,8,12,15,16,18,21,22}` (12 bits). Never add `{3,13,14,17}` — breaks Phase 07. See [feedback-initial-lpu-divergence].
+- Initial LPU `dataBits = {0,3,4,5,6,7,8,12,15,16,18,21,22}` (13 bits — bit 3 re-added 2026-05-31, confirmed safe). Adding `{13,14,17}` not yet tested. See `VERIFIED_FACTS.md`.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (bit 3 is safe, vote still fires)
 - 🔒 `DataSetup = false` always.
 - 🔒 `GameType = 0` in 50 ms tick.
 - C# server attaches Game on first `HelloPlayerRequest`; before that, no Game exists for the session.
@@ -287,7 +293,9 @@ These intentionally diverge from C++. Past sessions broke them by "aligning to C
 
 | Rule | Where |
 |---|---|
-| Initial LPU `dataBits = {0,4,5,6,7,8,12,15,16,18,21,22}` (12 bits) — never add `{3,13,14,17}` | `feedback_initial_lpu_divergence.md`, `phases/06-spaceship.md` |
+| Initial LPU `dataBits = {0,3,4,5,6,7,8,12,15,16,18,21,22}` (13 bits) — bit 3 safe (verified 2026-05-31); `{13,14,17}` not yet tested | `VERIFIED_FACTS.md`, `phases/06-spaceship.md` |
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (bit 3 no longer frozen)
 | `ChainVoteMsgs` 0x151 buffer = LE | `feedback_chainvote_le.md`, `phases/07-chainvote.md` |
 | `GameType = 0` inside 50 ms tick | `feedback_gamestate_type.md` |
 | `LabsPlayerData.DataSetup = false` always | `CLAUDE.md` |

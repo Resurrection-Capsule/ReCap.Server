@@ -14,11 +14,13 @@ The C# writer passes both `GameTime` and `TimeElapsed` as the same `TotalMillise
 
 | Offset | Field | Type | Endian | Notes |
 |---|---|---|---|---|
-| `0x00` | `gameTime` | u64 | **BE** | `mGame.GetTime()` — milliseconds since instance start. |
-| `0x08` | `timeElapsed` | u64 | **BE** | `mGame.GetTimeElapsed()` — objective completion timer. May differ from `gameTime`. |
+| `0x00` | `gameTime` | u64 | **LE** | `mGame.GetTime()` — milliseconds since instance start. |
+| `0x08` | `timeElapsed` | u64 | **LE** | `mGame.GetTimeElapsed()` — objective completion timer. May differ from `gameTime`. |
 | `0x10` | `state` | u8 | — | Wire state byte. Spaceship=`0x02`, ChainVoting=`0x0B`, PreDungeon=`0x05`, Dungeon=`0x06`, ChainCashOut=`0x0C`. |
-| `0x11` | `type` | u32 | **BE** | `GameType`. Frozen `0` in loop. See [FROZEN VALUES](../../../../CLAUDE.md). |
-| `0x15` | `fixed1` | u32 | **BE** | Always `1`. C++ comment: `mov [simulator+3B41Ch], value (default: 0)`. |
+| `0x11` | `type` | u32 | **LE** | `GameType`. Hardcoded `0` in loop (C++ `mStateData` zero-initialized). |
+| `0x15` | `fixed1` | u32 | **LE** | Always `1`. C++ comment: `mov [simulator+3B41Ch], value (default: 0)`. |
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (fields corrected to LE; Write&lt;T&gt; is LE on wire)
 
 Total: 1 byte opcode + 8 + 8 + 1 + 4 + 4 = **26 bytes**.
 
@@ -89,7 +91,7 @@ public void WriteTo(Stream stream)
 
 Called from `Game.Update()` (`Domain/Gameplay/Game.cs:43-50`). Both `GameTime` and `TimeElapsed` are set to `(DateTime.UtcNow - StartTime).TotalMilliseconds` — single source, no separate objective timer.
 
-`GameType = 0` is hardcoded at the call site. Per [CLAUDE.md](../../../../CLAUDE.md) FROZEN VALUES: do not change.
+`GameType = 0` is hardcoded at the call site. C++ `mStateData` is zero-initialized; do not change.
 
 The `WireState` map at lines 16–24 covers all Tier-1 states. See [STATE_MACHINE.md](../STATE_MACHINE.md).
 

@@ -15,7 +15,8 @@ architecture/
 ├── flow/              C++ vs C# event flow + phases/ byte-level deep-dives
 ├── research/          reverse-engineering notes + primary-source dev testimony
 ├── data-model/        SporeNet ↔ C# entity sheets (self-contained)
-└── assetdata-system/  Asset/AssetData runtime (self-contained)
+├── assetdata-system/  Asset/AssetData runtime (self-contained)
+└── deck-system/       Deck/squad map: server→client HUD + Dungeon crash (self-contained)
 ```
 
 ## planning/ — what to do next
@@ -32,7 +33,7 @@ architecture/
 
 | Document | Purpose |
 |---|---|
-| [`ENDIANNESS.md`](protocol/ENDIANNESS.md) | BE/LE rules, `Write<T>` wrapper vs raw `BitStream::Write`, per-field truth table. |
+| [`VERIFIED_FACTS.md`](VERIFIED_FACTS.md) | BE/LE rules, `Write<T>` wrapper vs raw `BitStream::Write`, per-field truth table. Replaces deleted `ENDIANNESS.md`. |
 | [`REFLECTION_SERIALIZER.md`](protocol/REFLECTION_SERIALIZER.md) | bm1 / bm2 / bmID regimes, C++ `reflection_serializer<N>` + C# mirror, worked examples. |
 | [`STATE_MACHINE.md`](protocol/STATE_MACHINE.md) | All 21 `GameState` values, `IsValidStateChange` graph, C# enum divergence. |
 | [`BLAZE_TDF.md`](protocol/BLAZE_TDF.md) | Blaze frame header, tag compression, TDF type codes, varint, Map/List/Union framing. |
@@ -46,7 +47,7 @@ architecture/
 |---|---|
 | [`FLOW_CPP.md`](flow/FLOW_CPP.md) | Authoritative C++ flow. Event sequence from boot to gameplay loop, with mermaid diagrams and `file:line` citations into `recap_server_develop/`. |
 | [`FLOW_CSHARP.md`](flow/FLOW_CSHARP.md) | Current C# flow (`ReCap.Server/`). Same phase structure; gaps and deviations annotated. |
-| [`PARITY.md`](flow/PARITY.md) | 1-row-per-phase summary index. Phase docs are the source of truth; this is the fast lookup + frozen-rules table + audit log. Collapsed from 79-row format on 2026-05-24. |
+| [`PORTING_MATRIX.md`](planning/PORTING_MATRIX.md) | 1-row-per-phase summary index + macro parity. Replaces deleted `PARITY.md`. |
 | [`phases/NN-*.md`](flow/phases/00-boot.md) | Byte-level deep-dive per phase. Mermaid sequence, packet layout, BE/LE, bitmap sizes, file:line on both sides. |
 
 ## research/ — reverse-engineering & testimony
@@ -65,6 +66,7 @@ architecture/
 |---|---|
 | [`data-model/`](data-model/README.md) | SporeNet ↔ C# entity sheets (11). Field-level parity + persistence (EF Core/SQLite). |
 | [`assetdata-system/`](assetdata-system/) | Asset/AssetData runtime: `ASSET_SYSTEM.md` (C# redesign plan), `GHIDRA_GROUND_TRUTH.md` (client runtime reverse-engineered from `Darkspore.exe`), `FORMAT_COVERAGE.md` (per-format C++↔C# porting matrix). |
+| [`deck-system/`](deck-system/DECK_SQUAD_SYSTEM.md) | Deck/squad end-to-end: persistence → REST → C# runtime → C++ reference → client deck HUD (`cPlayerDeck`) + the post-deploy Dungeon GFx-bind crash, with [V]/[?] provenance tags. |
 
 ## Glossary
 
@@ -104,7 +106,7 @@ architecture/
 
 Two Tier-A stall-grade bugs identified via M1–M5 docs + M4-4 Ghidra static analysis, now resolved (verified against C++ `Server.cpp` `SendHelloPlayer`/`SendGameStart`/`SendDebugPing` + a real packet capture):
 
-1. **HelloPlayer (0x80) body** — ✅ already 8 B (`u8 type, u8 gameplayIndex, u32 IPv4, u16 Port`). Port write aligned to BE to match C++ `Write<uint16>`. `HelloPlayerPacket.cs`.
+1. **HelloPlayer (0x80) body** — ✅ already 8 B (`u8 type, u8 gameplayIndex, u32 IPv4, u16 Port`). Port write aligned to LE to match C++ `Write<uint16>` (which is LE on wire). `HelloPlayerPacket.cs`.
 2. **PreDungeon stall (status=4)** — ✅ `GameStart (0xB1)` now writes `u32 BE LevelIndex` (`Chain.LevelIndex`, was 1-byte stub); `DebugPing (0xCC)` now writes `u64 BE` unix time (was empty `WriteTo`). `GameStartPacket.cs`, `DebugPingPacket.cs`, `Game.cs` status=8 path.
 
 Remaining P1 item: `UpdateCatalystBonuses` after `SetCatalyst×8` (not a stall blocker). Fix sequence + verify gates: see [`PORTING_PLAN.md`](planning/PORTING_PLAN.md) P1 and P2.
@@ -113,5 +115,7 @@ Remaining P1 item: `UpdateCatalystBonuses` after `SetCatalyst×8` (not a stall b
 
 - C++: `Server.cpp:596` resolves to `C:\CodingProjects\Personal\ReCapCpp\darkspore_server\source\RakNet\Server.cpp` line 596.
 - C#: `RakNetServer.cs:NN` resolves to `ReCap.Server/Adapters/RakNet/RakNetServer.cs` line NN.
-- Endianness: **BE** = big-endian (network / `bswap` wrapper), **LE** = little-endian (`BitStream::Write<T>` raw).
+- Endianness: **BE** = big-endian, **LE** = little-endian. `Write<T>` wrapper produces **LE** on the wire (double-bswap on x86). See `VERIFIED_FACTS.md`.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md
 - Bitmap notation: `bm1` = 1 byte, `bm2` = 2 bytes BE, `bmID` = byte-per-field + `0xFF` terminator.

@@ -1,35 +1,44 @@
 # Blaze TDF (Tagged Data Format)
 
-EA Blaze's wire format for all Login/Lobby/UserSessions/GameManager payloads. Used by Phases 01 (Redirector), 02 (Auth), 04 (GameManager). Independent of the gameplay-wire (RakNet/UDP) format documented in [ENDIANNESS.md](ENDIANNESS.md).
+EA Blaze's wire format for all Login/Lobby/UserSessions/GameManager payloads. Used by Phases 01 (Redirector), 02 (Auth), 04 (GameManager). Independent of the gameplay-wire (RakNet/UDP) format documented in [VERIFIED_FACTS.md](../VERIFIED_FACTS.md).
 
 This page is the single source of truth for TDF encoding. Phase docs link here.
 
+Audit pass 2026-05-30: every claim below re-verified against the **actual C# implementation** (`Adapters/Blaze/Packet.cs`, `Tdf.cs`, `TdfEncoder.cs`, `TdfDecoder.cs`, `TdfMap.cs`, `TdfVector.cs`), which is authoritative for our server (the retail client connects to it and the login flow works). The previous revision's frame-header section ("8× u16 little-endian, 14-byte header") was **wrong** and has been replaced — see the correction note at the end of the frame section. `[V]` = read in cited C# source this pass.
+
 ---
 
-## Frame on the wire
+## Frame on the wire `[V]`
 
-Every Blaze message:
+Every Blaze message is a **12-byte base header** (optionally +2/+4/+8) followed by the TDF body. Source of truth: `Packet.WriteTo` (`Adapters/Blaze/Packet.cs:103-136`) and `Packet.Parse` (`:138-201`). **All multi-byte header fields are BIG-ENDIAN** (`BinaryWriter.WriteBigEndian`). `SmallestValidHeaderSize = 12` (`Packet.cs:27`).
 
 ```
-+------+------+------+------+------+------+--------+------------------+
-|len16 |comp16|cmd16 | err16|qtype |  id  |ext16?  |  TDF body…       |
-+------+------+------+------+------+------+--------+------------------+
-   2B    2B    2B    2B    2B    2B    2B?         len bytes
+byte:  0      1      2      3      4      5      6      7      8     9     10     11
+     +------+------+------+------+------+------+------+------+-----+-----+------+------+
+     |   len (BE)  | component   |  command    | errorHi(BE) | b8  | b9  |  id-lo (BE) |
+     +------+------+------+------+------+------+------+------+-----+-----+------+------+
+                                                              │     │
+  b8 = (PacketType << 4) | (UserIndex & 0x0F)  ───────────────┘     │
+  b9 = (PacketOptions << 4) | ((Id >> 16) & 0x0F)  ─────────────────┘
+
+  [+2 if Jumbo]      lenHi (BE u16)      → total length = (lenHi << 16) | len
+  [+4 if HasContext] context (BE i32)
+  [+4 more if Unk8]  unk8 (BE i32)
 ```
 
-Header is **8× u16 little-endian** (always — `DataBuffer::read_u16_le` in `Blaze/Packet.cpp:75-85`). Optional `ext16` (`mExtLength`) is present iff `qtype & 0x10`. Field meanings:
+| Field | Width | Encoding | Notes |
+|---|---|---|---|
+| `len` | u16 | **BE** | Low 16 bits of TDF body length. High 16 bits go in the optional Jumbo word. |
+| `component` | u16 | **BE** | `0x0001` Auth, `0x0004` GameManager, `0x0005` Redirector, `0x0015` Rooms, `0x7802` UserSessions, … |
+| `command` | u16 | **BE** | Method ordinal within the component (e.g. `Auth::login = 0x28`). |
+| `errorHi` | u16 | **BE** | `(ushort)(Error >> 16)`. On parse: `error = readBE16 << 16; if (error != 0 && (error & 0x40000000) == 0) error \|= component`. `0` on success. |
+| `b8` | u8 | packed | High nibble = `PacketType` (`Message=0, Reply=1, Notification=2, ErrorReply=3`); low nibble = `UserIndex`. |
+| `b9` | u8 | packed | High nibble = `PacketOptions` flags; low nibble = bits 16-19 of `Id`. |
+| `id` | u16 | **BE** | Low 16 bits of round-trip ID; replies/error-replies echo the request's `Id`. Full Id = `(b9_lownibble << 16) \| id`. |
 
-| Field | Width | Notes |
-|---|---|---|
-| `len` | u16 LE | TDF body length (excluding header). |
-| `component` | u16 LE | Component ID (`0x0001` Auth, `0x0004` GameManager, `0x0007` Redirector, …). See [FLOW_CPP.md](../flow/FLOW_CPP.md) for the table. |
-| `command` | u16 LE | Method ordinal within the component (e.g. `Auth::login = 0x28`). |
-| `error` | u16 LE | Reply error code; `0` on success. |
-| `qtype` | u16 LE | Bit field: bit `0x10` = "has ext length"; other bits = request/reply/notify discriminator. |
-| `id` | u16 LE | Round-trip ID — replies echo the request's `id`. |
-| `extLength` | u16 LE | Optional; total body length is `(extLength << 16) | len` when present. |
+`PacketOptions` (`Packet.cs:15-23`): `None=0, Jumbo=0x1, HasContext=0x2, Immediate=0x4, Unk8=0x8`. **Jumbo is set automatically when `ContentLength >= 0x10000`** (`Packet.cs:109-110`) — it is NOT a request-supplied "has ext length" flag. The TDF body follows immediately; **no framing inside the body** — fields self-describe via tags and type codes.
 
-The TDF body follows immediately. **No framing inside the body** — fields self-describe via tags and type codes.
+> **CORRECTION (2026-05-30).** The prior revision claimed the header was "8× u16 little-endian (always)" with a "14-byte"/"16-byte" size and a `qtype` word whose `0x10` bit meant "has ext length". That is incorrect for this server. The real header is **big-endian, 12-byte base**, with `Type`/`UserIndex` packed into byte 8 and `Options`/`Id-high` into byte 9; the extended length word is gated by the auto-set `Jumbo` option (content ≥ 64 KiB), not a client `qtype` bit. The Blaze frame header is network-order (BE); only varint integers (endian-neutral) and the varint-free Float (BE) live in the body. If you see a doc or capture asserting LE header, distrust it and re-derive from `Packet.cs`.
 
 ---
 
@@ -264,7 +273,7 @@ ObjectId:   <varint component> <varint type> <varint instance>  // (u16, u16, u6
 <tag 3B> <type=0x0A>  <4 bytes IEEE-754 BE>
 ```
 
-> Note: **Float is big-endian** even though the surrounding Blaze frame header is LE. The TDF body endian mix mirrors the gameplay wire — see [ENDIANNESS.md](ENDIANNESS.md).
+> Note: **Float is big-endian** even though the surrounding Blaze frame header is LE. The TDF body endian mix is separate from the gameplay wire — see [VERIFIED_FACTS.md](../VERIFIED_FACTS.md).
 
 ### TimeValue (`0xB`)
 
@@ -273,6 +282,34 @@ ObjectId:   <varint component> <varint type> <varint instance>  // (u16, u16, u6
 ```
 
 64-bit (Blaze-defined epoch — confirm semantics from a real capture).
+
+---
+
+## Field ordering — NOT significant for correctness `[V]`
+
+This is the single most important thing to know before hand-authoring a reply struct.
+
+- **Encode writes fields in C# property *declaration* order.** `Tdf.Encode` (`Tdf.cs:77-187`) iterates `GetType().GetProperties()` and emits each `[TdfField]` in reflection order. There is **no sort step** — the wire order equals the order you declare the properties.
+- **Decode is tag-based and order-independent.** `Tdf.Decode` (`Tdf.cs:189-312`) loops: `PeekNextTag` reads the next element's tag *without consuming*, then scans all `[TdfField]` properties for the one whose label matches, decodes it, and `ValidateHeader` (`TdfDecoder.cs:504-522`) asserts the tag it re-reads equals the expected one. Unknown tags are logged and skipped (`SkipNextElement`). So the C# reader accepts any field order and tolerates extra fields.
+- **The retail client's heat2 decoder is likewise tag-based.** Empirical proof: the C++ reference's `RoomsComponent::JoinRoom` writes its wrapper as `CRIT, VERS, CDAT, RDAT, VDAT, MDAT` (`RoomsComponent.cpp:378-399`) — **not** ascending tag order — and the client parses it fine.
+
+**Convention to follow:** declare `[TdfField]` properties in **ascending tag order**, which for ASCII labels means **alphabetical by label** (the tag is the label packed MSB-first, so lexical label order == numeric tag order). Every struct in the codebase does this (see `ReplicatedGameData` `GameManagerComponent.cs:519-625`: `ADMN, ATTR, CAP, CRIT, GID, GNAM, …`). It is a readability/consistency convention, **not** a correctness requirement — but match it so diffs against other components stay legible. When porting a C++ `WriteTo`, you may freely reorder its `put_*` calls into ascending-tag order in the C# class.
+
+---
+
+## Default-value omission — fields can vanish from the wire `[V]`
+
+Blaze's "skip default" optimization is implemented and **changes which fields actually appear on the wire** based on their values. Know this or you will chase phantom "missing field" bugs.
+
+- **Primitives** (`int/uint/long/ulong/short/ushort/byte/sbyte/bool/float/string`): when encoding with a header and `value == declaredDefault`, the field is **omitted entirely** — no tag, no payload (`TdfEncoder.cs`: e.g. `EncodeUInt32:297-298`, `EncodeString:138-139`, `EncodeFloat:164-165`, `EncodeBool:369`). The default comes from the second `[TdfField("TAG", default)]` argument; if you pass no default, `defaultValue` is null and the field is **always** written.
+- **Maps and Lists**: omitted when empty (`Size == 0`) — `EncodeMap:381`, `EncodeVector:403`. An empty `TdfPrimitiveMap`/`TdfStructVector` produces nothing on the wire.
+- **Enums are the exception — effectively NEVER omitted.** Enum fields route through `EncodeEnumRaw` (`Tdf.cs:104-106` → `TdfEncoder.cs:178-221`), whose guard is `if (EncodeHeader && value == defaultValue) return;` comparing two **boxed `object`s by reference**. The boxed property value and the boxed `attr.DefaultValue` are different instances, so the comparison is essentially always false → the enum is **always emitted**, even when equal to its declared default. (Primitive encoders avoid this because they compare via nullable value types, e.g. `uint == uint?`.)
+- **Structs, Unions, Blobs, BlazeObjectId/Type, TimeValue, Variable**: no default check — always written when present.
+
+Consequences:
+1. A reply that "should have `GID=0`" will simply **not contain `GID`** if its default is `0`. The peer fills in the default. This is correct Blaze behavior, but it means a hexdump won't show every declared field.
+2. To **force** a field onto the wire (e.g. an explicit `0`/`""`), declare it **without** a default argument: `[TdfField("GID")]` instead of `[TdfField("GID", 0)]`.
+3. Top-level struct framing: `EncodeTopLevelStruct` (`TdfEncoder.cs:36-44`) emits members with headers but **no trailing `0x00`** terminator (the body length bounds it). A *nested* struct (`EncodeStruct:108-122`) does append the `0x00` terminator.
 
 ---
 
@@ -287,7 +324,7 @@ ObjectId:   <varint component> <varint type> <varint instance>  // (u16, u16, u6
 | `TdfDecoder.cs` | Mirror reader. |
 | `TdfMap.cs` | Generic `TdfMap<K, V>` collection. |
 | `TdfVector.cs` | Generic `TdfVector<T>` for typed lists (`TdfPrimitiveVector<T>`, `TdfStructVector<T>`). |
-| `Packet.cs` | The 14-byte (or 16-byte w/ ext) Blaze frame header reader/writer. |
+| `Packet.cs` | The 12-byte base (BE) Blaze frame header reader/writer; +2 Jumbo, +4 Context, +4 Unk8. |
 
 Typical Blaze message class:
 
@@ -320,14 +357,18 @@ See [Phase 01](../flow/phases/01-redirector.md), [Phase 02](../flow/phases/02-bl
 
 ## Common pitfalls
 
-1. **LE header, BE-ish body.** Frame header (`len`, `component`, `command`, …) is u16 LE. Floats inside the body are BE. Integers are varint (sign- and length-aware). String length is varint, *not* a fixed u16. Easy to mix up.
+1. **BE header, varint body.** The frame header (`len`, `component`, `command`, `errorHi`, `id`) is **big-endian** (`Packet.cs:103-136`), NOT little-endian. `Type`/`UserIndex` and `Options`/`Id-high` are packed nibbles (bytes 8-9). Inside the body: floats are BE, integers are varint (sign- and length-aware), string length is varint `(len+1)` *not* a fixed u16. Easy to mix up.
 2. **String length includes NUL.** Encode `"hi"` (2 chars) as varint `3` followed by `hi\0`. Off-by-one bugs here silently corrupt the next field.
 3. **Struct terminator vs field-tag confusion.** A struct ends on a single `0x00` byte. If you forget to emit it, the parent struct keeps reading into the next sibling. If you emit it twice, the parent stops short. The encoder API hides this — `EncodeStruct` writes the terminator on close — but hand-crafted bytes will trip.
 4. **Variable type discriminator.** `0x01` followed by `<typeCode><payload>` for "set"; `0x00` for "null." Not a regular type code in the outer header position.
 5. **Negative integers via 0x40 sign bit.** C++ decoder doesn't honor it. C# does. Avoid signed varints across the wire until both sides agree.
 6. **`LabelToTag` only accepts `' '` (0x20) through `'_'` (0x5F).** Lowercase letters throw `ArgumentOutOfRangeException`. All Blaze labels are uppercase + digits + `_`.
 7. **Tag is `(label << 8) | typeCode`** packed into one u32, written big-endian first 3 bytes + 1 byte type. C# `PutHeader` (`TdfEncoder.cs:421-427`) emits in the order `byte0..byte2` of the shifted-left tag, then `type & 0x1F`.
-8. **`extLength` for big payloads.** If body > 64 KiB, `qtype |= 0x10` and an extra u16 length appears at byte offset 14. Most Darkspore payloads stay below 64 KiB; the path is rarely exercised. Verify before relying.
+8. **Jumbo length for big payloads.** If `ContentLength >= 0x10000`, the encoder sets the `Jumbo` option bit (options nibble of byte 9) and appends a BE u16 length-high word at byte offset **12**; total length = `(lenHi << 16) | len` (`Packet.cs:109-124`). Most Darkspore payloads stay below 64 KiB; the path is rarely exercised. (This is auto-derived from content size, not a client-supplied flag.)
+
+9. **Default-equal fields disappear; enums don't.** See "Default-value omission" above. A primitive/string equal to its `[TdfField]` default is omitted; an empty map/list is omitted; an enum is always written. Drop the default argument to force a field onto the wire.
+
+10. **Field order is free.** Decode is tag-based (see "Field ordering"). Declare properties in ascending-tag (alphabetical) order by convention, but the wire accepts any order.
 
 ---
 
@@ -335,8 +376,10 @@ See [Phase 01](../flow/phases/01-redirector.md), [Phase 02](../flow/phases/02-bl
 
 | Item | C++ | C# | Status |
 |---|---|---|---|
-| Frame header (8× u16 LE) | `Packet::Packet` (`Packet.cpp:71-86`) | `Adapters/Blaze/Packet.cs` | ✅ |
-| `extLength` for >64 KiB | `Packet.cpp:81-85` | confirm wired | ❓ |
+| Frame header (**12-byte base, BE**, packed Type/Opts nibbles) | `Packet::Packet` (`Packet.cpp:71-86`) | `Packet.WriteTo/Parse` (`Packet.cs:103-201`) | ✅ C# authoritative |
+| Jumbo ext length, auto when content ≥ 64 KiB | `Packet.cpp:81-85` | `Packet.cs:109-124` | ✅ |
+| Field order independence (tag-based decode) | client heat2 + `RoomsComponent.cpp:378` | `Tdf.Decode` (`Tdf.cs:189-312`) | ✅ |
+| Default-value omission (primitives/empty collections) | Blaze heat2 | `TdfEncoder` per-type guards | ✅ |
 | Label compression (24-bit, 6 bits/char, ' ' base) | `CompressLabel` (`Packet.cpp:48-54`) | `LabelToTag` (`Tdf.cs:486-499`) | ✅ |
 | `TagToLabel` reverse | `DecompressLabel` (`Packet.cpp:56-68`) | `TagToLabel` (`Tdf.cs:503-518`) | ✅ |
 | Varint encode | `encode_integer` (`Packet.cpp:146-160`) | `EncodeVarsizeInteger` (`TdfEncoder.cs:429-455`) | ⚠️ |

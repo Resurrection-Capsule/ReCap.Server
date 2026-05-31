@@ -2,7 +2,7 @@
 
 | Direction | Size | Phase | Status |
 |---|---|---|---|
-| C→S | 9 B (1 opcode + 4 status + 4 progress) | [08 PreDungeon](../../flow/phases/08-predungeon.md), [11 ChainCashOut](../../flow/phases/11-chaincashout.md) | ⚠️ C# reads LE, C++ reads BE |
+| C→S | 9 B (1 opcode + 4 status + 4 progress) | [08 PreDungeon](../../flow/phases/08-predungeon.md), [11 ChainCashOut](../../flow/phases/11-chaincashout.md) | ⚠️ endian divergence (verify against VERIFIED_FACTS.md — C++ Write&lt;T&gt; is LE, not BE) |
 | S→C | 2 B (1 opcode + 1 playerState) | [08 PreDungeon](../../flow/phases/08-predungeon.md) | ❓ C# WriteTo emits 8 bytes wrong shape |
 
 Bidirectional status sync packet. **The two directions have completely different shapes** — C→S carries a u32 status code and f32 progress; S→C carries a single u8 `playerState` byte. The server reacts to incoming status to drive the phase state machine (Dungeon transition on `status=0x08`, BeamOut on `status=0x20`), then always fires `SendLabsPlayerUpdate` immediately after.

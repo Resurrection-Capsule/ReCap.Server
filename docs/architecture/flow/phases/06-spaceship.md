@@ -38,7 +38,7 @@ sequenceDiagram
 
 Body: `u64 LE` BlazeId. The whole packet is `1 (type) + 8 (id) = 9 B`.
 
-> **FROZEN (CLAUDE.md):** the UserId is **LE**, parsed via plain `BinaryReader` on C# (`BinaryReader.ReadUInt64`). C++ uses `Read<uint64_t>(stream, blazeId)` which for `BitStream::Read<T>` is LE too. ✅
+> **Confirmed:** UserId is **LE**, parsed via plain `BinaryReader` on C# (`BinaryReader.ReadUInt64`). C++ uses `Read<uint64_t>(stream, blazeId)` which for `BitStream::Read<T>` is LE too. ✅
 
 ### C++ (`Server.cpp:596-641`)
 
@@ -101,7 +101,7 @@ Differences worth flagging:
 |---|---|---|
 | Slot allocation | `mPlayerIndex` set in Player ctor by caller | `byte slot` resolved from `ExpectedPlayers[account.Id]` |
 | Catalyst contents | random AoE 0..3 rarity for slots 0..6, slot 7 = Health/Rare | populated later in `CreatePlayerData`: 8 slots × {NounId=0x02FB89EB, Rarity=2} hardcoded (`Game.cs:230-237`) |
-| Catalyst data bit (`CrystalData=13`) | not set on the wire here (set only inside `Player::WriteReflection` if dataBit 13 happens to be set) | C# leaves bit 13 out of the initial set (FROZEN) |
+| Catalyst data bit (`CrystalData=13`) | not set on the wire here (set only inside `Player::WriteReflection` if dataBit 13 happens to be set) | C# leaves bit 13 out of the initial set (not yet tested safe) |
 | `CrystalBonuses` (`UpdateCatalystBonuses`) | runs after each `SetCatalyst`, sets dataBit 14 + PlayerBits | not invoked; CatalystBonuses array stays all-false |
 | Wire state | set to `0x02 Spaceship` immediately | C# state machine starts at `GameState.Initializing` and flips to `Spaceship` only after `HandleDebugPing` (`Game.cs:270-272`) | 
 
@@ -194,15 +194,17 @@ In Spaceship the only bits set are `PlayerBits | (CrystalBits << 0..7)` = 0x17F8
 | 22 | mLockedDeckIndexMin | `u32` | 4 | 505 | 149 | ✅ |
 | 23 | mDeckScore | `u32` | 4 | 506 | 150 | ✅ |
 
-### Initial dataBits — the FROZEN divergence
+### Initial dataBits — updated 2026-05-31
 
 | Source | dataBits set when first LPU goes out |
 |---|---|
 | **C++** | `{0, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 17, 18, 21, 22}` — 16 bits |
-| **C#** | `{0, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22}` — 12 bits |
-| **Δ** | C# drops `{3, 13, 14, 17}` (CharacterData, CrystalData, CrystalBonuses, ChainProgression) |
+| **C#** | `{0, 3, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22}` — 13 bits (bit 3 re-added 2026-05-31) |
+| **Δ** | C# still drops `{13, 14, 17}` (CrystalData, CrystalBonuses, ChainProgression) — not yet tested |
 
-🔒 **FROZEN** — see `feedback_initial_lpu_divergence.md` and the warning in `CLAUDE.md`. Adding `{3, 13, 14, 17}` "to match C++" empirically breaks chain vote (the client never sends `ChainPlayerMsgs(byteCount=6)`).
+**Bit 3 is safe** — adding it does not break chain vote (tested 2026-05-31, client still sends `ChainPlayerMsgs(byteCount=6)`). See `VERIFIED_FACTS.md`.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (FROZEN bit-3 rule disproved; bit 3 ships chars at hello like C++)
 
 ### Initial updateBits
 

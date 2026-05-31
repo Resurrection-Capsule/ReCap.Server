@@ -224,7 +224,9 @@ Audit candidates here: RakNexus framing parity vs upstream RakNet 3.92, reliabil
 3. `HelloPlayer` (0x80), `PartyMergeComplete` (0x85) sent.
 4. Game loop's next tick → `LabsPlayerUpdate` (0xA1) with the 12 initial bits + catalysts.
 
-> 🔒 **FROZEN divergence** versus C++: C# emits 12 bits where C++ emits 16. Adding `{3, 13, 14, 17}` "to match C++" empirically breaks chain vote (the client never sends `ChainPlayerMsgs(byteCount=6)`). Documented in `CLAUDE.md` and `feedback_initial_lpu_divergence.md`.
+> **Updated 2026-05-31:** C# now emits 13 bits (added bit 3). Bit 3 is safe — chain vote still fires. Adding `{13, 14, 17}` not yet tested. See `VERIFIED_FACTS.md`.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (bit-3 FROZEN rule disproved)
 >
 > **Deep-dive:** [`phases/06-spaceship.md`](phases/06-spaceship.md) (TODO)
 
@@ -237,7 +239,7 @@ Implemented. `Game.HandleDebugPing` flips Spaceship → ChainVoting on `0xCC`. `
 - One with `ChainData` 0x151-byte LE blob
 - One with `value=1, secondsUntilDeployment=30.0`
 
-> 🔒 **FROZEN:** the buffer is LE. Documented under `feedback_chainvote_le.md`.
+> **Confirmed:** the buffer is LE. Verified 2026-05-31 — wire is LE throughout. Do not flip. See `VERIFIED_FACTS.md`.
 >
 > **Deep-dive:** [`phases/07-chainvote.md`](phases/07-chainvote.md) (TODO)
 

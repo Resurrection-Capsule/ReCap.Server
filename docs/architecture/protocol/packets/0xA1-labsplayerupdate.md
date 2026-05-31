@@ -2,11 +2,13 @@
 
 | Direction | Size | Phase | Status |
 |---|---|---|---|
-| S→C | variable | [06 Spaceship](../../flow/phases/06-spaceship.md), [08 PreDungeon](../../flow/phases/08-predungeon.md), [10 Dungeon loop](../../flow/phases/10-gameloop.md) | 🔒 dataBits frozen divergence; rest ✅ |
+| S→C | variable | [06 Spaceship](../../flow/phases/06-spaceship.md), [08 PreDungeon](../../flow/phases/08-predungeon.md), [10 Dungeon loop](../../flow/phases/10-gameloop.md) | ⚠️ dataBits updated 2026-05-31; rest ✅ |
 
 The central player-state synchronization packet. Sent by the server whenever `updateBits != 0`: on first join, after `SetSquad`, on every `PlayerStatusUpdate`, and every 50 ms tick if anything changed. The body is sparse — only fields with set bits are written. Size varies from ~5 bytes (header only, rare) to several kilobytes (full initial burst with all catalysts + characters).
 
-> 🔒 **Frozen divergence:** The initial `dataBits` set in C# is `{0,4,5,6,7,8,12,15,16,18,21,22}` (12 bits). C++ sets 16 bits including `{3,13,14,17}`. Adding any of the 4 missing bits breaks chain vote — the client never sends `ChainPlayerMsgs(byteCount=6)`. Do not touch. See CLAUDE.md and [Phase 06](../../flow/phases/06-spaceship.md).
+> **Updated 2026-05-31:** The initial `dataBits` set in C# is now `{0,3,4,5,6,7,8,12,15,16,18,21,22}` (13 bits — bit 3 re-added). C++ sets 16 bits including `{3,13,14,17}`. Bit 3 is safe — vote still fires. Adding `{13,14,17}` not yet tested. See [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md) and [Phase 06](../../flow/phases/06-spaceship.md).
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (FROZEN bit-3 rule disproved; bit 3 is safe)
 
 ---
 
@@ -82,11 +84,13 @@ Only fields whose `dataBit` is set are written:
 | 22 | `mLockedDeckIndexMin` | `LockedDeckIndexMin` | u32 | **BE** | Default `0xFF` |
 | 23 | `mDeckScore` | `DeckScore` | u32 | **BE** | |
 
-**C# initial dataBits (FROZEN):** `{0, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22}` — 12 fields.
+**C# initial dataBits (as of 2026-05-31):** `{0, 3, 4, 5, 6, 7, 8, 12, 15, 16, 18, 21, 22}` — 13 fields (bit 3 re-added).
 
 **C++ initial dataBits:** `{0, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 17, 18, 21, 22}` — 16 fields.
 
-Missing from C# initial set vs C++: `{3=CharacterData, 13=Catalysts, 14=CatalystBonuses, 17=ChainProgression}`.
+Still missing from C# vs C++: `{13=Catalysts, 14=CatalystBonuses, 17=ChainProgression}` — not yet tested safe.
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (FROZEN label removed; bit 3 now in C# initial set)
 
 ---
 
@@ -214,7 +218,7 @@ Sent from `Game.SendLabsPlayerUpdate` (`Game.cs:141-175`) and from the periodic 
 
 ## Related
 
-- [Phase 06 Spaceship](../../flow/phases/06-spaceship.md) — initial LPU burst: 12 frozen dataBits, updateBits=`0x17F8`
+- [Phase 06 Spaceship](../../flow/phases/06-spaceship.md) — initial LPU burst: 13 dataBits (bit 3 re-added 2026-05-31), updateBits=`0x17F8`
 - [Phase 08 PreDungeon](../../flow/phases/08-predungeon.md) — post-SetSquad LPU: updateBits=`0x1007`, 3× character reflections
 - [Phase 10 Dungeon loop](../../flow/phases/10-gameloop.md) — periodic LPU every 50 ms if any bits dirty
 - [REFLECTION_SERIALIZER.md](../REFLECTION_SERIALIZER.md) — bitmap encoding rules, WriteTo vs WriteReflection

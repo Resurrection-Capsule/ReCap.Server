@@ -49,7 +49,7 @@ sequenceDiagram
 | `Unknown` | u8 | n/a | `Server.cpp:1013` | `ChainPlayerMsgsPacket.cs:35` |
 | `SquadId` | u32 | **BE** | `Server.cpp:1016` (`Read<uint32_t>` → bswap) | `ChainPlayerMsgsPacket.cs:36` (`ReadUInt32BE`) |
 
-> 🔒 **FROZEN:** SquadId is BE. Documented in `feedback_chainplayermsgs_parse.md`. Both sides match.
+> **Confirmed:** SquadId is BE. Both sides match.
 
 Live log (`ReCap.Server/output.log:291`): wire bytes `AC-01-01-01-00-00-00`.
 

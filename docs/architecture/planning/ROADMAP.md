@@ -17,7 +17,7 @@ Persistent finishing plan. Tick boxes as work lands. Sessions resume from the lo
 | Phase 13 Disconnect | ✅ M1 (2026-05-23) |
 | Cross-cutting refs (TDF, Reflection, Endianness, StateMachine) | ✅ M2 (2026-05-23) |
 | `packets/` per-opcode sheets | ✅ Tier-1 (~33) done M3 (2026-05-23); Tier-2/3/4 deferred by design |
-| PARITY.md global table | ✅ collapsed to 1-row-per-phase (2026-05-24, M5) |
+| PARITY.md global table | ✅ collapsed to 1-row-per-phase (2026-05-24, M5) — *(PARITY.md since deleted; see PORTING_MATRIX.md)* |
 
 ### Per-phase gap count (❓ tokens in body)
 
@@ -46,7 +46,7 @@ Goal: every state transition the client can take has a doc.
 - [x] **`phases/13-disconnect.md`** — Goodbye (0x83) graceful, `ID_DISCONNECTION_NOTIFICATION` / `ID_CONNECTION_LOST` RakNet, PlayerDeparted, VoteKickStarted, session cleanup
 - [x] Update `README.md` table (rows 12, 13)
 - [x] Add Phase 12 + 13 sections to `FLOW_CPP.md` + `FLOW_CSHARP.md`
-- [x] Add Phase 12 + 13 parity tables to `PARITY.md`
+- [x] Add Phase 12 + 13 parity tables to `PARITY.md` *(PARITY.md since deleted — content lives in PORTING_MATRIX.md)*
 - [x] Correct `GameState.GameOver = 0x0D` (not 0x0E) across Phase 11 + index docs
 
 ## Milestone 2 — Cross-cutting reference docs ✅ (2026-05-23)
@@ -54,7 +54,7 @@ Goal: every state transition the client can take has a doc.
 Order: lowest dep first so later docs `[[link]]` instead of inlining.
 
 - [x] **`REFLECTION_SERIALIZER.md`** — bm1 / bm2 / bmID rules + worked examples (Player 24, Character 124, Catalyst). Resolves 06/08/10 cross-references.
-- [x] **`ENDIANNESS.md`** — extracted from CLAUDE.md w/ per-field truth table.
+- [x] **`ENDIANNESS.md`** — extracted from CLAUDE.md w/ per-field truth table. *(ENDIANNESS.md since deleted — superseded by VERIFIED_FACTS.md; Write&lt;T&gt; found to be LE not BE)*
 - [x] **`STATE_MACHINE.md`** — full `IsValidStateChange` graph (`Client.cpp:12-49`), all 21 GameStates, mermaid + transition matrix. Found: C# enum is incompatible — 7 states vs 21, wire codes mapped through `GameStatePacket.WireState` switch.
 - [x] **`BLAZE_TDF.md`** — TDF tag encoding, Map / List / Union framing, varint quirk, used by 01 / 02 / 04. Found: C++ decoder drops varint sign bit while C# encoder emits it — latent bug.
 
@@ -118,6 +118,8 @@ Order: lowest dep first so later docs `[[link]]` instead of inlining.
   - [ ] Whether the client survives missing PSS/Tick/Telemetry/QoS ports — runtime only.
 
 ## Milestone 5 — Sync PARITY.md ✅ (2026-05-24)
+
+*(PARITY.md deleted 2026-05-31 as part of Phase-0 reset — content migrated to PORTING_MATRIX.md)*
 
 - [x] Decision point resolved: **collapse to 1-row-per-phase summary**. Phase docs remain source of truth; top-level PARITY is now a fast index. 79 ❓ rows eliminated.
 - [x] Each phase row carries one-line key-divergences + link to phase doc. Frozen-rules section preserved. New "Audit log" + "How to keep this in sync" sections added.

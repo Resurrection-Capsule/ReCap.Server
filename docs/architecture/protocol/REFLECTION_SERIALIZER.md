@@ -66,9 +66,13 @@ public:
 Key consequences:
 
 - `bm1`: bitmap is **raw u8** — neither bswap'd nor wrapper-written. Bit `i` = `1 << i`.
-- `bm2`: bitmap is **written via `Write<uint16_t>`** which goes through `bswap` → **Big-Endian on the wire** (high byte first).
+- `bm2`: bitmap is **written via `Write<uint16_t>`** which goes through `bswap` → **Little-Endian on the wire** (Write&lt;T&gt; produces LE; see VERIFIED_FACTS.md).
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (bm2 is LE on wire, not BE)
 - `bmID`: each present field's index is written as a raw `u8` *before* its payload; absent fields contribute nothing; `0xFF` is the terminator.
-- Field bodies use the same `Write<T>` wrapper as everything else → primitives are BE (see [ENDIANNESS.md](ENDIANNESS.md)).
+- Field bodies use the same `Write<T>` wrapper as everything else → primitives are **LE** on the wire (see [VERIFIED_FACTS.md](../VERIFIED_FACTS.md)).
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (Write&lt;T&gt; is LE on wire, not BE; ENDIANNESS.md deleted)
 - **Class-typed fields** (`std::is_class_v<T>`) call `value.WriteTo(mStream)` instead of `Write<T>`. That `WriteTo` may itself recurse into a nested reflection serializer or emit a fixed-size raw block.
 - `std::array<T, S>` fields emit each element back-to-back without an outer length prefix. Array length is implicit (compile-time `S`).
 
@@ -173,7 +177,9 @@ Source: `Player.cpp:478-510`.
 +----+--------------------+
 ```
 
-Wire stream skeleton for `dataBits = {0,4,5,6,7,8,12,15,16,18,21,22}` (the C# **FROZEN** initial set, see [CLAUDE.md](../../../CLAUDE.md) and [Phase 06](../flow/phases/06-spaceship.md)):
+Wire stream skeleton for `dataBits = {0,3,4,5,6,7,8,12,15,16,18,21,22}` (C# initial set as of 2026-05-31 — bit 3 re-added, no longer frozen; see [VERIFIED_FACTS.md](../VERIFIED_FACTS.md) and [Phase 06](../flow/phases/06-spaceship.md)):
+
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md (bit-3 FROZEN rule disproved; example below omits bit 3 for historical reference only)
 
 ```
 00 [DataSetup byte]

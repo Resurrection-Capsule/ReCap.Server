@@ -86,7 +86,7 @@ byteCount=2 (C++ unused; C# reads but no handler)
 byteCount=6
   u8 Value
   u8 Unknown
-  u32 BE SquadId   // !! Big-endian (FROZEN), see CLAUDE.md
+  u32 BE SquadId   // !! Big-endian (confirmed), see phases/08-predungeon.md
 ```
 
 ---
@@ -125,19 +125,21 @@ case 2:
 
 `WriteChainData` uses **`BinaryPrimitives.WriteUInt32LittleEndian`** for every u32 (line 56) and writes float bits the same way (line 57). **The C# chain blob is therefore 0x151 bytes of LE 32-bit integers / floats.**
 
-### 🔒 FROZEN: LE wins
+### Confirmed: LE wins
 
 | Reality check | Result |
 |---|---|
-| C++ writes BE | matches the wrapper convention used everywhere else in the codebase |
+| C++ writes LE via Write&lt;T&gt; (which is LE on wire) | consistent with the rest of the wire format | 
 | C# writes LE | empirically what the client wants — flipping to BE breaks the level / enemies UI |
-| CLAUDE.md `feedback_chainvote_le.md` | confirms LE is correct |
+| `VERIFIED_FACTS.md` | confirms LE is correct throughout |
 
-This is the only known case where C# diverges from C++ for endianness and is **right**. Treat the C++ source here as a known bug-by-omission and keep C# LE.
+> ⚠️ SUPERSEDED 2026-05-31 — see VERIFIED_FACTS.md ("C++ writes BE" row was wrong; Write&lt;T&gt; is LE on wire, not BE)
+
+C# LE is correct. Do not flip.
 
 ### Buffer layout — per-offset C++ vs C# diff (M4-2 audit, 2026-05-24)
 
-Audit walked `Types.cpp:1176-1332` (`ChainVoteData::WriteTo`) alongside `ChainVoteMsgsPacket.cs:52-164` (`WriteChainData`) byte-by-byte. Both writers produce a `0x151`-byte payload after the leading `Value` byte. The endianness inversion (C++ BE / C# LE) is documented above and is **🔒 frozen** — C# is the correct wire form. The diff below reports **structural offset alignment**, not byte-for-byte equality of integer encodings.
+Audit walked `Types.cpp:1176-1332` (`ChainVoteData::WriteTo`) alongside `ChainVoteMsgsPacket.cs:52-164` (`WriteChainData`) byte-by-byte. Both writers produce a `0x151`-byte payload after the leading `Value` byte. Both sides use LE. C# is the correct wire form. The diff below reports **structural offset alignment**, not byte-for-byte equality of integer encodings.
 
 #### Branch A — `!mCompletedLevel` (normal vote, every gameplay session)
 

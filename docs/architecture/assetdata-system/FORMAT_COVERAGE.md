@@ -89,6 +89,6 @@ The 32% gap is not random — it is concentrated in the **typed gameplay defs** 
 
 ## Path to 100%
 
-1. Add the **Tier 1** stubs first — `Noun` + `PlayerClass`/`NonPlayerClass`/`ClassAttributes` + `ability` unlock real creature/combat loading. The `labs*` triad gives byte-level LPU ground truth (cross-check against the FROZEN LPU bits).
+1. Add the **Tier 1** stubs first — `Noun` + `PlayerClass`/`NonPlayerClass`/`ClassAttributes` + `ability` unlock real creature/combat loading. The `labs*` triad gives byte-level LPU ground truth (cross-check against current C# dataBits — see VERIFIED_FACTS.md).
 2. Each stub is mechanical: decompile `AssetData::Foo` (`0x00f…`) for the field-descriptor table, emit one `Structures/Foo.cs` mirroring field name/type/offset. No new parser code (the generic `DeserializeObject` already handles every wire shape).
 3. Tier 2/3 are lower-value scalar config — port on demand when a level/loot feature needs them.

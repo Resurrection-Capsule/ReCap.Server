@@ -2,7 +2,7 @@
 
 | Direction | Size | Phase | Status |
 |---|---|---|---|
-| S→C | 2 / 339 / 6 / 3 B (per `value`) | [07 ChainVoting](../../flow/phases/07-chainvote.md), [11 ChainCashOut](../../flow/phases/11-chaincashout.md) | 🔒 |
+| S→C | 2 / 339 / 6 / 3 B (per `value`) | [07 ChainVoting](../../flow/phases/07-chainvote.md), [11 ChainCashOut](../../flow/phases/11-chaincashout.md) | ✅ |
 
 Dispatched on the wire ID `0xA9` regardless of which logical content follows. Drives the planet-vote UI, the deployment countdown, and (per the C++ quirk in Phase 11) the cashout payload.
 
@@ -15,7 +15,7 @@ Dispatched on the wire ID `0xA9` regardless of which logical content follows. Dr
 | Offset | Field | Type | Endian | Notes |
 |---|---|---|---|---|
 | `0x00` | `value` | u8 | — | =0 |
-| `0x01..0x151` | `ChainData::WriteTo` 0x151 buffer | raw | **LE** 🔒 | Levels, enemies, cinematics, voiceovers, completionFlag. See [Phase 07](../../flow/phases/07-chainvote.md#chaindata-buffer-0x151-bytes) for the per-offset breakdown. |
+| `0x01..0x151` | `ChainData::WriteTo` 0x151 buffer | raw | **LE** | Levels, enemies, cinematics, voiceovers, completionFlag. See [Phase 07](../../flow/phases/07-chainvote.md#chaindata-buffer-0x151-bytes) for the per-offset breakdown. |
 
 ### `value = 1` — deployment countdown (6 B total)
 
@@ -31,7 +31,7 @@ Dispatched on the wire ID `0xA9` regardless of which logical content follows. Dr
 | `0x00` | `value` | u8 | — | =2 |
 | `0x01` | `stayInParty` | bool (u8) | — | C++ hardcodes `false`. |
 
-> 🔒 **FROZEN:** the 0x151 buffer is LE. Flipping to BE breaks levels/enemies UI display. Documented in [CLAUDE.md](../../../../CLAUDE.md) + `feedback_chainvote_le.md`.
+> **Confirmed:** the 0x151 buffer is LE. Flipping to BE breaks levels/enemies UI display. Documented in [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md).
 
 ---
 
@@ -127,4 +127,4 @@ public void WriteTo(Stream stream)
 - [Phase 11 ChainCashOut](../../flow/phases/11-chaincashout.md) — cashout reuse of this opcode
 - [0xAB ChainCashOutMsgs](0xAB-chaincashoutmsgs.md) — wire-ID quirk
 - [0xAC ChainPlayerMsgs](0xAC-chainplayermsgs.md) — client-side vote trigger
-- [ENDIANNESS.md](../ENDIANNESS.md#known-intentional-le-fields)
+- [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md)
