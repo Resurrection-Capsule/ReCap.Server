@@ -94,6 +94,15 @@ A Ghidra agent stalled on the 49k-function binary before completing, but its par
 
 Still unconfirmed (Ghidra route too slow): the exact `OnGms` parse for 0xB7/0xB8 and precisely what gates the cObjectivePopup movie-load. We chose to act on the wire evidence (match the working binary) rather than fight the slow Ghidra sweep — the client run is the decisive arbiter.
 
+### 3.1 Crash mechanism CONFIRMED (targeted Ghidra, 2026-05-31)
+`FUN_007ee9d0` (per-frame UI update; ends `param_1[0x70]++`) tail:
+```
+sv = (*(*param_1[0x2e] + 0x2c))();      // [0x2e] = subview manager (+0xb8); vtable[0x2c] -> the CURRENT subview
+if (sv) (*(*sv + 0x30))(local_2c, fVar2); // per-frame update of the current subview
+```
+The crashing `MOV ECX,[ESI+0x20]; CALL 0x551f10` is inside that `sv->vtable[0x30]` chain: `ESI = sv` (the current subview), `[sv+0x20] = GFxMovieView*` used as `this` for the GFx invoke (`FUN_00551f10`). So **the subview that is "current" at crash time has a NULL movie (+0x20)**. `FUN_00423f60` (common subview ctor) zeroes +0x08/0c/18/1c/28/2c but NOT +0x20 — the movie is bound by a separate LoadMovie path that, in the C# session, never runs for the current subview.
+- **Interpretation:** the client switches to / keeps "current" a HUD subview whose movie was never loaded, and the per-frame tick derefs it. This is consistent with the fall-back (the client leaving the live-game view for a menu/room view whose movie isn't ready, because the C# dungeon is an empty static world). We do NOT need to reverse the exact movie-load gate — the **working binary satisfies it by sending the full living world**, and we have the wire formats decoded. The capture is the confirmation oracle; replicate it.
+
 ---
 
 ## 5. Open questions — confirm BEFORE reimplementing (client is strict)
