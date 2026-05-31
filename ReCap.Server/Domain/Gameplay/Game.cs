@@ -612,6 +612,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         }
         _deckObjectIds[player.Slot] = deckObjectIds;
 
+        PopulateLevel(client);
+
         // C++ deploys deck index 1; clamp for squads smaller than that.
         var deployIndex = Math.Min(DeployedDeckIndex, deckObjectIds.Length - 1);
         _playerCharacterObjectIds[player.Slot] = deckObjectIds[deployIndex];
@@ -619,6 +621,72 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         Log.Game.Info($"OnPlayerStart: spawned {squad.Count} hero objects; deploying deck={deployIndex} objId={deckObjectIds[deployIndex]}");
 
         SwapCharacter(client, player, deployIndex, deckObjectIds[deployIndex]);
+    }
+
+    // Robust, data-driven level population: spawn the level's networked game objects from its
+    // markersets (via AssetDatabase.GetLevelMarkers) and send each an ObjectCreate. The working
+    // C++ binary populates the dungeon this way; with an empty world the client falls back to a
+    // menu view and crashes on a null HUD movie (DIVERGENCE_LEDGER D-009 / OBJECTS_OBJECTIVES_SYSTEM.md).
+    private void PopulateLevel(RakNetClient client)
+    {
+        if (Assets is null || string.IsNullOrEmpty(Chain.LevelName)) return;
+
+        int spawned = 0, skipped = 0;
+        foreach (var marker in Assets.GetLevelMarkers(Chain.LevelName))
+        {
+            var nounName = marker.FindByName("nounDef").AsString();
+            if (string.IsNullOrEmpty(nounName)) { skipped++; continue; }
+
+            // Classification: a marker becomes a networked object only if it has physical presence
+            // (collision) or a gameplay component (teleporter/interactable/spawn). Pure-visual
+            // markers (lights, VFX, decals, audio) carry neither and are skipped.
+            var collision = marker.FindByName("createWithCollision").AsBool();
+            var hasComponent = marker.FindByName("componentData") is not null;
+            if (!collision && !hasComponent) { skipped++; continue; }
+
+            var noun = DbpfReader.FnvHash(nounName);
+            var pos = marker.FindByName("pos").AsVector3();
+            var rot = marker.FindByName("rotDegrees").AsVector3();
+            var scale = marker.FindByName("scale").AsFloat();
+            if (scale <= 0f) scale = 1f;
+            var markerId = marker.FindByName("markerId").AsUInt32();
+
+            var objId = _nextObjectId++;
+            Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
+
+            // Wire-verified 93B object: createData all-10 + reflection {6,7,8,17,22}.
+            var objData = new SporelabsObject
+            {
+                Position = pos,
+                Orientation = Quaternion.Identity,
+                Scale = scale,
+                HasCollision = collision,
+                MarkerScale = 1f,
+                SourceMarkerKeyMarkerId = markerId
+            };
+            foreach (byte bit in new byte[] { 6, 7, 8, 17, 22 }) objData.SetDataBit(bit);
+
+            client.SendPacket(new ObjectCreatePacket
+            {
+                ObjectId = objId,
+                CreateData = new GameObjectCreateData
+                {
+                    Noun = noun,
+                    Position = pos,
+                    RotXDegrees = rot.X,
+                    RotYDegrees = rot.Y,
+                    RotZDegrees = rot.Z,
+                    Scale = scale,
+                    Team = 0,
+                    HasCollision = collision,
+                    PlayerControlled = false
+                },
+                ObjectData = objData
+            });
+            spawned++;
+        }
+
+        Log.Game.Info($"PopulateLevel({Chain.LevelName}): spawned {spawned} objects, skipped {skipped} visual-only markers");
     }
 
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,
