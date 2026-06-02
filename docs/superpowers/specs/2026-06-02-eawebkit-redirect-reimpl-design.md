@@ -1,5 +1,42 @@
 # EAWebKit redirect reimplementation — design
 
+> ⚠ **REVISION 2 (2026-06-02, same day) — ARCHITECTURE PIVOT.** The v1 approach below
+> (edit EAWebKit's *internal* DirtySDK: SocketLookupThread / _MapAddress / protossl) was
+> **built, deployed, and FAILED**: the client showed "server not connected" even with
+> ReCap running. **Root cause (confirmed):** EAWebKit's internal DirtySDK is used ONLY by
+> the web engine. The client's real server connections — Blaze redirector (42127), lobby
+> (10041→), QoS (17502), and the bootstrap HTTP — are made by **Darkspore.exe's own
+> sockets (nSporeNet)**, which never call into EAWebKit. Xackery's DLL worked because it
+> used **Microsoft Detours to hook the ws2_32 APIs PROCESS-WIDE** (catching the exe's
+> sockets too), plus inline-hooked the exe's ProtoSSL cert check. A source-edit to
+> EAWebKit's own copy cannot reach the exe's code.
+>
+> **The v1 DirtySDK source edits have been REVERTED** (tree is stock again). The
+> `recapredirect.{c,h}` config module is KEPT (reused by the hooks). New architecture:
+> **process-wide Detours hooks installed by EAWebKit.dll at load**, config-driven via
+> `recap.cfg`. Decision (user, 2026-06-02): replicate Xackery now (Detours 3.0), harden later.
+>
+> ### Revision-2 architecture
+> Hooks installed in `DLLInterface.c` DllMain (DLL_PROCESS_ATTACH → `platform_dll_start_func`),
+> detached on PROCESS_DETACH. Engine = **Microsoft Detours 3.0** (vendored; MIT;
+> github.com/microsoft/Detours; builds in VC9/x86). Targets:
+> - **ws2_32 `gethostbyname`** → return a hostent for `cfg->uHostAddr` (force config host; Xackery: addr=0x0100007F, h_addrtype=2, h_length=4). DetourAttach via the imported function pointer (process-wide).
+> - **ws2_32 `connect`** → if dest port 80, rewrite to `cfg->uHttpPort` (8033); other ports pass through (ReCap's redirector returns 127.0.0.1:42125 for the lobby, so no Blaze remap). DetourAttach via the imported pointer.
+> - **exe `_VerifyCertificate`** (DirtySDK ProtoSSL, static in the exe) → return 0. Inline-hook IN-MEMORY at runtime at **`0x00e4d4d0`** (retail 127; confirmed in Ghidra, renamed `ClientNet::ProtoSSL_VerifyCertificate`). NOT a file patch.
+> - **exe `_WildcardMatchNoCase`** → return 0 (host match). Inline-hook at **`0x00e4b9e0`** (`ClientNet::ProtoSSL_WildcardMatchNoCase`).
+>
+> Addresses located 2026-06-02: the demo-103 byte-sigs (DEV_TESTIMONY_XACKERY.md) matched UNIQUELY in retail 127 and the decompiled bodies confirm them. Detours = **runtime in-memory** hooking (the DLL shares the process address space once loaded); the `Darkspore.exe` file is never modified — same "drop-in DLL only" model as Xackery, NOT the static exe-patch that ReCap.Launcher does. Calling-convention note: `_VerifyCertificate` takes `iSelfSigned` at `[esp+4]` with `pCert` in EAX (compiler custom conv); the return-0 hook must preserve stack cleanup — verify at implementation.
+>
+> Target client = retail **5.3.0.127** (`Darkspore.exe` MD5 B11343EDB1087583AF9923F0FDC257BC),
+> which matches the Ghidra-loaded program. Cert-bypass = the working set (gethostbyname +
+> connect + VerifyCertificate + WildcardMatchNoCase); the "strip SSL / plaintext" track
+> Xackery chased later is NOT needed for connectivity. See
+> `DEV_TESTIMONY_XACKERY.md` → "Detours hook details" for the mined evidence.
+>
+> Everything below this banner is the SUPERSEDED v1 design, retained for history.
+
+---
+
 > Status: design, 2026-06-02. Reimplements Xackery's client-redirect mods in the
 > EAWebKit source we now build ourselves. Xackery never released his modded DLL's
 > source; we rebuild the redirect from the stock tree we compiled (VS2008, 0 errors,

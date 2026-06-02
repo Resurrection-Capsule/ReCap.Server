@@ -42,6 +42,33 @@ Connect called. Address: 127.0.0.1, Port: 80 / 42127 / 10041 / 17502 ...
 
 ---
 
+## Detours hook details (from the raw channel dump, 2026-06-02 mining)
+
+The working drop-in hooks **4 functions** + the two ws2_32 calls. Verbose log (working, on demo 103):
+```
+- Attaching hook ssl_ctx_set_verify
+- Attaching hook ssl_get_verify_result
+- Attaching hook WildcardMatchNoCase   <- returns 0 (treat as match)
+- Attaching hook VerifyCertificate      <- returns 0 (cert accepted)
+Gethostnamebyname set to: addr=16777343 (=0x0100007F=127.0.0.1), h_addrtype=2, h_length=4
+Connect called. Address: 127.0.0.1, Port: 80 / 42127 / 10041 / 17502
+```
+Effective working set for connectivity: **gethostbyname→127.0.0.1**, **connect: 80→8033** (others pass through; ReCap's redirector hands back 127.0.0.1:42125 so the lobby needs no remap), **VerifyCertificate→0**, **WildcardMatchNoCase→0**.
+
+**Byte-signatures (DEMO 5.3.0.103 ONLY — will NOT match retail 127):**
+- `ssl_ctx_set_verify`: `8B 44 24 04 8B 4C 24 08 8B 54 24 0C 89 88`
+- `ssl_get_verify_result`: `8B 44 24 04 8B 80 E0 00 00 00 C3`
+- `WildcardMatchNoCase`: `53 56 8B 74 24 10 57 8B 7C 24 10 EB 03`
+- `VerifyCertificate`: `83 7C 24 04 00 56 57 8B F0`
+
+Notes:
+- Detours = **downgraded to 3.0**; drop-in EAWebKit.dll; installs hooks at startup (DllMain-era), detaches on unload.
+- Signatures are version-specific; under Wine they didn't match → fallback to a **hard-coded pointer address** per version. Xackery "didn't bother supporting 127" in his demo build; the **Feb-2026 ReCap DLL Jean uses DOES run on retail 127** (`Darkspore.exe` 5.3.0.127, MD5 B11343EDB1087583AF9923F0FDC257BC).
+- The ReCap DLL "redirects 80→8033" and expects `SERVER_HTTP_PORT=8033` in config.xml. It bypasses the game's TOML config loader (values hardcoded in his build).
+- `ssl_ctx_set_verify`/`ssl_get_verify_result` are Xackery's labels; the two that actually fire in the working flow are **WildcardMatchNoCase + VerifyCertificate** (the DirtySDK ProtoSSL `_WildcardMatchNoCase` / `_VerifyCertificate`). Later (Aug-8) he was separately chasing "strip SSL / new ciphers" (RecvWithBufferFallback too low-level; plaintext.txt sentinel workaround) — that is an OPTIMIZATION beyond basic connectivity, not required for the cert-bypass path.
+
+**For OUR reimplementation (retail 127):** DetourAttach the ws2_32 `connect`/`gethostbyname` (process-wide via the imported function ptr), and inline-hook the exe's `_VerifyCertificate`→0 + `_WildcardMatchNoCase`→0 at retail-127 addresses found in Ghidra (image base 0x400000). Config-driven via `recap.cfg` (host/http_port) — improvement over Xackery's hardcoding.
+
 ## Client native port map (and redirect targets)
 
 The ports Darkspore's client dials by default, and Xackery's consolidated remap (msg 437). `ssl` = raw TCP with an SSL handshake; `udp` = raw UDP; `http` = HTTP.
