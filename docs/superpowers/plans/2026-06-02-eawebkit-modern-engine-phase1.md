@@ -2,34 +2,32 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make MiniBlink (a modern Blink engine) render a modern-CSS test page into Darkspore's in-game web surface, behind EAWebKit's real `View`/`ISurface` ABI — proving the engine coexists in-process and the pixel path works.
+**Goal:** Make MiniBlink (modern Blink, Chromium 132) render a modern-CSS page into Darkspore's in-game web surface, behind EAWebKit's real `View`/`ISurface` ABI — proving the engine coexists in-process and the pixel path works.
 
-**Architecture:** Inside the EAWebKit.dll we build, the real `View` keeps its ARGB `mpSurface` but its *renderer* is swapped from WebCore to MiniBlink (behind a `RECAP_MINIBLINK` compile flag). A small `recapwke` wrapper dynamically loads the MiniBlink runtime DLL (`GetProcAddress`) and drives an offscreen `wkeWebView` whose `wkeOnPaintBitUpdated` callback copies pixels into `mpSurface`.
+**Architecture:** Inside the EAWebKit.dll we build, the real `View` keeps its ARGB `mpSurface` but its renderer is swapped WebCore→MiniBlink (behind a `RECAP_MINIBLINK` compile flag). A small `recapmb` wrapper uses the **`mb` API** (release `miniblink132`, DLL `mb132_x32.dll`); `mb.h` self-loads the DLL (`mbSetMbMainDllPath` + `mbInit`), so there is no hand-written symbol resolver. An offscreen `mbWebView`'s `mbOnPaintBitUpdated` callback copies BGRA frames into `mpSurface`.
 
-**Tech Stack:** C++ (VC9 / EAWebKit), MiniBlink (`weolar/miniblink49`, prebuilt 32-bit runtime DLL + `wke.h`), Win32. Standalone smoke test compiled with MinGW gcc (`C:\Strawberry\c\bin\gcc.exe`).
+**Tech Stack:** C++ (VC9 / EAWebKit), MiniBlink `mb` API (`mb132_x32.dll` + `mb.h`, 32-bit, from the `miniblink132_251212` release), Win32. Standalone smoke test via VS2008 `cl` (the engine DLL is x86; build the test x86).
 
 **Spec:** `docs/superpowers/specs/2026-06-02-eawebkit-modern-engine-design.md`
 
-**Scope:** Phase 1 only (foundation + pixel path). Phases 2 (JS bridge), 3 (input), 4 (modern content) get their own plans after this phase's in-game gate passes.
+**Scope:** Phase 1 only (foundation + pixel path). Phases 2 (JS bridge), 3 (input), 4 (modern content) get their own plans after this phase's in-game gate.
 
-**Ground-truth paths:**
-- MiniBlink source clone (has `wke.h`): `C:\CodingProjects\Personal\miniblink49\wke\wke.h`
-- EAWebKit source: `C:\CodingProjects\Personal\eawebkit\source\`
-- EAWebKit DLL project: `C:\CodingProjects\Personal\eawebkit\projects\VS2008\EAWebKit\1.21.00.darkspore\EAWebkit.vcproj`
-- Built DLL: `C:\CodingProjects\Personal\eawebkit\Distribution\pc\9.0.21022\dev-opt\bin\EAWebkit.dll`
+**Downloaded SDK (confirmed):** `C:\Users\dell04\Downloads\miniblink132_251212\`
+- `mb132_x32.dll` — the runtime (verified **i386/x86**, exports `mbCreateWebView`/`mbInit`/`mbOnPaintBitUpdated`/`mbLoadURL`).
+- `demo_src\mb.h` — the header (self-contained; ships an inline loader). NOTE it defaults the DLL name to `mb108_x32.dll`; we override to `mb132_x32.dll` via `mbSetMbMainDllPath`.
 
-**Real wke API used (from `wke.h`):**
+**Real `mb` API used (from `mb.h`, all `__stdcall`; `mbWebView` is a handle):**
 ```c
-void        wkeInitialize();
-wkeWebView  wkeCreateWebView();
-void        wkeResize(wkeWebView, int w, int h);
-void        wkeSetTransparent(wkeWebView, bool);
-void        wkeLoadHTML(wkeWebView, const char* utf8);
-void        wkeLoadURL(wkeWebView, const char* utf8);
-typedef void(*wkePaintBitUpdatedCallback)(wkeWebView, void* param, const void* buffer, const wkeRect* r, int w, int h);
-void        wkeOnPaintBitUpdated(wkeWebView, wkePaintBitUpdatedCallback, void* param);
+void       mbInit(const mbSettings* settings);          // mb.h inline: LoadLibrary + fill fn ptrs
+void       mbSetMbMainDllPath(const WCHAR* dllPath);    // mb.h inline
+mbWebView  mbCreateWebView();
+void       mbResize(mbWebView, int w, int h);
+typedef void(__stdcall* mbPaintBitUpdatedCallback)(mbWebView, void* param, const void* buffer, const mbRect* r, int width, int height); // mbRect={x,y,w,h}; buffer=BGRA top-down, stride=w*4
+void       mbOnPaintBitUpdated(mbWebView, mbPaintBitUpdatedCallback, void* param);
+void       mbLoadURL(mbWebView, const utf8* url);
+void       mbLoadHtmlWithBaseUrl(mbWebView, const utf8* html, const utf8* baseUrl);
+void       mbDestroyWebView(mbWebView);
 ```
-(`wkeRect` = `{int x,y,w,h;}`. The paint buffer is 32-bit BGRA, top-down, stride = w*4.)
 
 ---
 
@@ -37,89 +35,83 @@ void        wkeOnPaintBitUpdated(wkeWebView, wkePaintBitUpdatedCallback, void* p
 
 | File | Responsibility |
 |---|---|
-| `eawebkit/source/recapwke.h` (NEW) | C++ API the View calls: `Available/Create/LoadHTML/LoadURL/Resize/SetPaintSink`. No wke types leak out. |
-| `eawebkit/source/recapwke.cpp` (NEW) | Dynamically loads the MiniBlink DLL, resolves wke entry points, owns the offscreen `wkeWebView`, routes the paint callback to a sink. |
-| `eawebkit/tests/recapwke_smoke.cpp` (NEW, dev-only) | Standalone exe: loads the DLL, renders test HTML offscreen, asserts the paint callback delivered a non-blank frame. Proves the engine works on this box before touching EAWebKit. |
-| `eawebkit/source/EAWebKitView.cpp` (EDIT) | Under `#ifdef RECAP_MINIBLINK`: `InitView`/`SetURI`/`SetSize`/`Tick` drive `recapwke` and copy frames into `mpSurface`; `GetSurface` unchanged. |
-| `EAWebkit.vcproj` (EDIT) | Compile `recapwke.cpp`; define `RECAP_MINIBLINK`; add `miniblink49\wke` to include dirs. |
-
-`mMiniblinkPaint` membership: the View needs a per-instance paint sink. We store the latest frame in the existing `mpSurface` directly from the callback (the callback param carries the `View*`).
-
----
-
-## Task 0: Obtain the MiniBlink runtime DLL (USER-RUN)
-
-**Files:** none (download)
-
-- [ ] **Step 1:** The cloned `miniblink49` repo is **source only** — it does not contain the prebuilt engine DLL. Download a prebuilt **32-bit** runtime from the project's GitHub *Releases* (e.g. `miniblink_x32.dll` / older `node.dll`). Place it at:
-  `C:\CodingProjects\Personal\miniblink49\bin\miniblink.dll` (rename to `miniblink.dll`).
-- [ ] **Step 2:** Confirm it is 32-bit:
-  Run: `dumpbin /headers "C:\CodingProjects\Personal\miniblink49\bin\miniblink.dll" | findstr machine`
-  Expected: `14C machine (x86)`.
-- [ ] **Step 3:** Confirm it exports the wke API:
-  Run: `dumpbin /exports "C:\CodingProjects\Personal\miniblink49\bin\miniblink.dll" | findstr wkeCreateWebView`
-  Expected: a line listing `wkeCreateWebView`.
-
-> The loader and smoke test use the path/name `miniblink.dll`. If you keep a different name, set `RECAP_MINIBLINK_DLL` accordingly in Task 1.
+| `eawebkit/source/mb.h` (NEW, copied) | The MiniBlink `mb` header (copied from the release `demo_src\mb.h`), so the project includes it locally. |
+| `eawebkit/source/recapmb.h` (NEW) | C++ API the View calls: `Available/Create/LoadHTML/LoadURL/Resize/Destroy`. No mb types leak out. |
+| `eawebkit/source/recapmb.cpp` (NEW) | `#include "mb.h"`; `mbInit` once (path → `mb132_x32.dll`); owns the offscreen `mbWebView`; routes `mbOnPaintBitUpdated` → a paint sink. |
+| `eawebkit/tests/recapmb_smoke.cpp` (NEW, dev-only) | Standalone exe: init mb, render test HTML offscreen, assert the paint callback delivered a non-blank frame. Proves the engine works on this box before touching EAWebKit. |
+| `eawebkit/source/EAWebKitView.cpp` (EDIT) | Under `#ifdef RECAP_MINIBLINK`: `InitView`/`SetURI`/`SetSize`/`Tick` drive `recapmb` + copy frames into `mpSurface`; `GetSurface` unchanged. |
+| `include/EAWebKit/EAWebKitView.h` (EDIT) | add `recap::MbView* mpRecapMb;` member under the flag. |
+| `EAWebkit.vcproj` (EDIT) | compile `recapmb.cpp`; define `RECAP_MINIBLINK`. |
 
 ---
 
-## Task 1: `recapwke.h` — the wrapper API
+## Task 0: Stage the SDK (USER-RUN)
+
+**Files:** copy only
+
+- [ ] **Step 1:** Copy the header into the project:
+  `copy "C:\Users\dell04\Downloads\miniblink132_251212\demo_src\mb.h" "C:\CodingProjects\Personal\eawebkit\source\mb.h"`
+- [ ] **Step 2:** Keep `mb132_x32.dll` reachable for the smoke test and (later) deploy. For the test, it will be copied next to the test exe. For the game, it ships next to `Darkspore.exe`.
+- [ ] **Step 3 (sanity):** `mb.h` is self-contained (the release demo includes only `mb.h` + `windows.h`). If the VS2008 compile later reports a missing include pulled in by `mb.h`, copy that header in too and report it.
+
+---
+
+## Task 1: `recapmb.h` — the wrapper API
 
 **Files:**
-- Create: `C:\CodingProjects\Personal\eawebkit\source\recapwke.h`
+- Create: `C:\CodingProjects\Personal\eawebkit\source\recapmb.h`
 
 - [ ] **Step 1: Write the header**
 
 ```cpp
-#ifndef RECAP_WKE_H
-#define RECAP_WKE_H
+#ifndef RECAP_MB_H
+#define RECAP_MB_H
 
-/* Modern-engine (MiniBlink) backend for the EAWebKit View. Hides all wke/DLL details.
-   A paint sink receives 32-bit BGRA frames; the View copies them into its ISurface. */
+/* Modern-engine (MiniBlink "mb" API) backend for the EAWebKit View.
+   Hides all mb/DLL details. A paint sink receives 32-bit BGRA frames; the View copies
+   them into its ISurface. */
 
 namespace recap {
 
-typedef void (*WkePaintSink)(void* user, const void* bgra, int srcStride,
-                             int x, int y, int w, int h);
+typedef void (*MbPaintSink)(void* user, const void* bgra, int srcStride,
+                            int x, int y, int w, int h);
 
-class WkeView; // opaque
+struct MbView; // opaque
 
-/* True if the MiniBlink runtime DLL loaded and the wke entry points resolved. */
-bool WkeAvailable();
+/* True once the MiniBlink DLL is loaded + mbInit succeeded. */
+bool MbAvailable();
 
-/* Create an offscreen view sized w x h; frames are delivered to sink(user, ...). */
-WkeView* WkeCreate(int w, int h, WkePaintSink sink, void* user);
-void     WkeLoadHTML(WkeView*, const char* utf8Html);
-void     WkeLoadURL(WkeView*, const char* utf8Url);
-void     WkeResize(WkeView*, int w, int h);
-void     WkeDestroy(WkeView*);
+/* Offscreen view sized w x h; frames delivered to sink(user, ...). */
+MbView* MbCreate(int w, int h, MbPaintSink sink, void* user);
+void    MbLoadHTML(MbView*, const char* utf8Html);
+void    MbLoadURL(MbView*, const char* utf8Url);
+void    MbResize(MbView*, int w, int h);
+void    MbDestroy(MbView*);
 
 } // namespace recap
 
-#endif /* RECAP_WKE_H */
+#endif /* RECAP_MB_H */
 ```
 
-- [ ] **Step 2: Commit** — none (eawebkit tree is not a git repo; record progress at end of plan).
+- [ ] **Step 2: Commit** — none (eawebkit tree is not a git repo).
 
 ---
 
-## Task 2: `recapwke.cpp` — dynamic loader + offscreen view + smoke test (TDD)
+## Task 2: `recapmb.cpp` — mb backend + smoke test (TDD)
 
 **Files:**
-- Create: `C:\CodingProjects\Personal\eawebkit\source\recapwke.cpp`
-- Test: `C:\CodingProjects\Personal\eawebkit\tests\recapwke_smoke.cpp`
+- Create: `C:\CodingProjects\Personal\eawebkit\source\recapmb.cpp`
+- Test: `C:\CodingProjects\Personal\eawebkit\tests\recapmb_smoke.cpp`
 
 - [ ] **Step 1: Write the smoke test FIRST**
 
-`tests/recapwke_smoke.cpp`:
+`tests/recapmb_smoke.cpp`:
 ```cpp
 #include <windows.h>
 #include <stdio.h>
-#include "../source/recapwke.h"
+#include "../source/recapmb.h"
 
-static volatile int g_painted = 0;
-static volatile int g_nonblank = 0;
+static volatile int g_painted = 0, g_nonblank = 0;
 
 static void onPaint(void* /*user*/, const void* bgra, int stride, int /*x*/, int /*y*/, int w, int h)
 {
@@ -127,30 +119,28 @@ static void onPaint(void* /*user*/, const void* bgra, int stride, int /*x*/, int
     const unsigned char* p = (const unsigned char*)bgra;
     for (int row = 0; row < h && !g_nonblank; ++row)
         for (int col = 0; col < w * 4; ++col)
-            if (p[row * stride + col] != 0) { g_nonblank = 1; break; }
+            if (p[(size_t)row * stride + col] != 0) { g_nonblank = 1; break; }
 }
 
 int main(void)
 {
-    if (!recap::WkeAvailable()) { printf("FAIL: MiniBlink DLL/symbols not available\n"); return 2; }
-    recap::WkeView* v = recap::WkeCreate(640, 480, onPaint, 0);
-    if (!v) { printf("FAIL: WkeCreate returned null\n"); return 3; }
-    recap::WkeLoadHTML(v,
+    if (!recap::MbAvailable()) { printf("FAIL: MiniBlink mb DLL not available\n"); return 2; }
+    recap::MbView* v = recap::MbCreate(640, 480, onPaint, 0);
+    if (!v) { printf("FAIL: MbCreate returned null\n"); return 3; }
+    recap::MbLoadHTML(v,
         "<html><body style='margin:0'>"
         "<div style='display:grid;grid-template-columns:1fr 1fr;width:640px;height:480px'>"
         "<div style='background:#f0f'></div><div style='background:#0ff'></div>"
         "<div style='background:#ff0'></div><div style='background:#0f0'></div>"
         "</div></body></html>");
 
-    /* offscreen MiniBlink paints via the host message loop — pump ~3s */
-    DWORD start = GetTickCount();
-    MSG msg;
-    while (GetTickCount() - start < 3000 && !g_nonblank)
+    DWORD start = GetTickCount(); MSG msg;
+    while (GetTickCount() - start < 4000 && !g_nonblank)
     {
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
         Sleep(10);
     }
-    recap::WkeDestroy(v);
+    recap::MbDestroy(v);
     if (g_painted && g_nonblank) { printf("ALL PASS (painted + non-blank)\n"); return 0; }
     printf("FAIL: painted=%d nonblank=%d\n", g_painted, g_nonblank);
     return 1;
@@ -159,121 +149,83 @@ int main(void)
 
 - [ ] **Step 2: Run the test — verify it fails (no implementation yet)**
 
-Run (from `C:\CodingProjects\Personal\eawebkit`):
+In a **VS2008 Command Prompt** (x86), from `C:\CodingProjects\Personal\eawebkit`:
 ```
-C:\Strawberry\c\bin\gcc.exe -m32 tests/recapwke_smoke.cpp source/recapwke.cpp -o tests/recapwke_smoke.exe -lstdc++
+cl /nologo /MT /EHsc tests\recapmb_smoke.cpp source\recapmb.cpp /Fetests\recapmb_smoke.exe
 ```
-Expected: compile/link error (recapwke.cpp not written yet) OR if it builds, `FAIL: ... not available`. Either way, not `ALL PASS`.
+Expected: link error (recapmb.cpp not written) or, once it builds, `FAIL: ... not available`. Not `ALL PASS`.
 
-> If MinGW gcc here is 64-bit only (no `-m32`), compile the test with the VS2008 `cl` instead:
-> `cl /nologo /MT tests\recapwke_smoke.cpp source\recapwke.cpp /Fetests\recapwke_smoke.exe`
-
-- [ ] **Step 3: Write `recapwke.cpp`**
+- [ ] **Step 3: Write `recapmb.cpp`**
 
 ```cpp
 #include <windows.h>
-#include "recapwke.h"
-
-/* ---- minimal wke surface we use (names/sigs from miniblink49/wke/wke.h) -------- */
-extern "C" {
-typedef void* wkeWebView;
-struct wkeRect { int x, y, w, h; };
-typedef void (*wkePaintBitUpdatedCallback)(wkeWebView, void* param, const void* buffer,
-                                           const wkeRect* r, int width, int height);
-}
-
-#ifndef RECAP_MINIBLINK_DLL
-#define RECAP_MINIBLINK_DLL "miniblink.dll"
-#endif
+#include "mb.h"          // copied from the release; self-loads mb132_x32.dll
+#include "recapmb.h"
 
 namespace recap {
 
-struct WkeApi {
-    void       (*Initialize)();
-    wkeWebView (*CreateWebView)();
-    void       (*Resize)(wkeWebView, int, int);
-    void       (*SetTransparent)(wkeWebView, bool);
-    void       (*LoadHTML)(wkeWebView, const char*);
-    void       (*LoadURL)(wkeWebView, const char*);
-    void       (*OnPaintBitUpdated)(wkeWebView, wkePaintBitUpdatedCallback, void*);
-    void       (*DestroyWebView)(wkeWebView);
-};
+static int s_state = 0;  // 0=unprobed, 1=ok, -1=unavailable
 
-static HMODULE s_dll = 0;
-static WkeApi  s_api;
-static int     s_state = 0; /* 0=unprobed, 1=ok, -1=unavailable */
-
-template <class T> static bool resolve(T& fn, const char* name) {
-    fn = (T)GetProcAddress(s_dll, name);
-    return fn != 0;
-}
-
-static bool ensureLoaded() {
+static bool ensureInit()
+{
     if (s_state) return s_state == 1;
     s_state = -1;
-    s_dll = LoadLibraryA(RECAP_MINIBLINK_DLL);
-    if (!s_dll) return false;
-    bool ok = true;
-    ok &= resolve(s_api.Initialize,        "wkeInitialize");
-    ok &= resolve(s_api.CreateWebView,     "wkeCreateWebView");
-    ok &= resolve(s_api.Resize,            "wkeResize");
-    ok &= resolve(s_api.SetTransparent,    "wkeSetTransparent");
-    ok &= resolve(s_api.LoadHTML,          "wkeLoadHTML");
-    ok &= resolve(s_api.LoadURL,           "wkeLoadURL");
-    ok &= resolve(s_api.OnPaintBitUpdated, "wkeOnPaintBitUpdated");
-    ok &= resolve(s_api.DestroyWebView,    "wkeDestroyWebView");
-    if (!ok) return false;
-    s_api.Initialize();
+    mbSetMbMainDllPath(L"mb132_x32.dll");   // override mb.h's mb108 default
+    mbSettings settings;
+    memset(&settings, 0, sizeof(settings));
+    mbInit(&settings);                       // mb.h inline: LoadLibrary + fill fn ptrs
+    if (!mbCreateWebView) return false;      // fn ptr stays null if the DLL didn't load
     s_state = 1;
     return true;
 }
 
-struct WkeView {
-    wkeWebView   wv;
-    WkePaintSink sink;
-    void*        user;
+struct MbView {
+    mbWebView   wv;
+    MbPaintSink sink;
+    void*       user;
 };
 
-bool WkeAvailable() { return ensureLoaded(); }
+bool MbAvailable() { return ensureInit(); }
 
-static void __cdecl paintThunk(wkeWebView, void* param, const void* buffer,
-                               const wkeRect* r, int width, int height) {
-    WkeView* self = (WkeView*)param;
+static void __stdcall paintThunk(mbWebView, void* param, const void* buffer,
+                                 const mbRect* r, int width, int height)
+{
+    MbView* self = (MbView*)param;
     if (self && self->sink && buffer && r)
         self->sink(self->user, buffer, width * 4, r->x, r->y, r->w, r->h);
     (void)height;
 }
 
-WkeView* WkeCreate(int w, int h, WkePaintSink sink, void* user) {
-    if (!ensureLoaded()) return 0;
-    WkeView* self = new WkeView();
+MbView* MbCreate(int w, int h, MbPaintSink sink, void* user)
+{
+    if (!ensureInit()) return 0;
+    MbView* self = new MbView();
     self->sink = sink; self->user = user;
-    self->wv = s_api.CreateWebView();
-    s_api.SetTransparent(self->wv, false);
-    s_api.Resize(self->wv, w, h);
-    s_api.OnPaintBitUpdated(self->wv, paintThunk, self);
+    self->wv = mbCreateWebView();
+    mbResize(self->wv, w, h);
+    mbOnPaintBitUpdated(self->wv, paintThunk, self);
     return self;
 }
 
-void WkeLoadHTML(WkeView* v, const char* html) { if (v) s_api.LoadHTML(v->wv, html); }
-void WkeLoadURL(WkeView* v, const char* url)   { if (v) s_api.LoadURL(v->wv, url); }
-void WkeResize(WkeView* v, int w, int h)       { if (v) s_api.Resize(v->wv, w, h); }
-void WkeDestroy(WkeView* v)                    { if (v) { s_api.DestroyWebView(v->wv); delete v; } }
+void MbLoadHTML(MbView* v, const char* html) { if (v) mbLoadHtmlWithBaseUrl(v->wv, html, "about:blank"); }
+void MbLoadURL(MbView* v, const char* url)   { if (v) mbLoadURL(v->wv, url); }
+void MbResize(MbView* v, int w, int h)       { if (v) mbResize(v->wv, w, h); }
+void MbDestroy(MbView* v)                    { if (v) { mbDestroyWebView(v->wv); delete v; } }
 
 } // namespace recap
 ```
 
 - [ ] **Step 4: Run the test — verify it passes**
 
-Ensure `miniblink.dll` (from Task 0) is on the test's DLL search path (copy it next to `recapwke_smoke.exe`, i.e. into `tests\`). Rebuild and run:
 ```
-C:\Strawberry\c\bin\gcc.exe -m32 tests/recapwke_smoke.cpp source/recapwke.cpp -o tests/recapwke_smoke.exe -lstdc++
-copy C:\CodingProjects\Personal\miniblink49\bin\miniblink.dll tests\
-tests\recapwke_smoke.exe
+copy "C:\Users\dell04\Downloads\miniblink132_251212\mb132_x32.dll" tests\
+cl /nologo /MT /EHsc tests\recapmb_smoke.cpp source\recapmb.cpp /Fetests\recapmb_smoke.exe
+tests\recapmb_smoke.exe
 ```
 Expected: `ALL PASS (painted + non-blank)`, exit 0.
-- If it prints `not available` → check the DLL name/bitness/exports (Task 0).
-- If it paints but `nonblank=0` → the buffer may be delivered with a different stride; log `width`/`r` and adjust (still informative — engine works).
+- `not available` → check `mb132_x32.dll` is next to the exe + 32-bit.
+- paints but `nonblank=0` → log `width`/`r`; the buffer/stride may differ — informative, engine still works.
+- If `mb.h` won't compile under `cl` (macro/clang guards), report the exact error — `mb.h` has `#if`/`#else` branches keyed on `ENABLE_MB`/`__clang__`; we want the non-`ENABLE_MB`, non-clang inline-loader branch (default for a normal `cl` include).
 
 - [ ] **Step 5: Commit** — none (eawebkit tree).
 
@@ -283,38 +235,42 @@ Expected: `ALL PASS (painted + non-blank)`, exit 0.
 
 **Files:**
 - Modify: `C:\CodingProjects\Personal\eawebkit\source\EAWebKitView.cpp`
+- Modify: `C:\CodingProjects\Personal\eawebkit\include\EAWebKit\EAWebKitView.h`
 
-Context: `View` has `mpSurface` (ARGB `EA::Raster::ISurface`) and `mpWebView` (WebCore). We keep `mpSurface` and, under the flag, drive MiniBlink instead of WebCore. Add a `recap::WkeView* mpRecapWke;` member.
+Context: `View` has `mpSurface` (ARGB `EA::Raster::ISurface`) + `mpWebView` (WebCore). Keep `mpSurface`; under the flag drive MiniBlink and skip WebCore.
 
-- [ ] **Step 1: Add the include + member**
+- [ ] **Step 1: Add the member (header)**
 
-At the top of `EAWebKitView.cpp` includes, add:
+In `include/EAWebKit/EAWebKitView.h`, in `View`'s private members near `mpSurface`, add:
 ```cpp
 #ifdef RECAP_MINIBLINK
-#include "recapwke.h"
-#endif
-```
-In the `View` class definition (header `include/EAWebKit/EAWebKitView.h`, in the private members near `mpSurface`/`mpWebView`), add:
-```cpp
-#ifdef RECAP_MINIBLINK
-    recap::WkeView* mpRecapWke;
-#endif
-```
-And initialize it in the `View` ctor initializer list (where `mpSurface(0)` is, `EAWebKitView.cpp:359`):
-```cpp
-#ifdef RECAP_MINIBLINK
-    , mpRecapWke(0)
+    void* mpRecapMb;   /* recap::MbView* (opaque here to avoid leaking mb into the public header) */
 #endif
 ```
 
-- [ ] **Step 2: Add the paint sink (copies BGRA frame into `mpSurface`)**
+- [ ] **Step 2: Add include + ctor init (EAWebKitView.cpp)**
 
-Add this file-static function near the top of `EAWebKitView.cpp` (after includes):
+At the top includes of `EAWebKitView.cpp`:
+```cpp
+#ifdef RECAP_MINIBLINK
+#include "recapmb.h"
+#endif
+```
+In the `View` ctor initializer list (where `mpSurface(0)` is, ~line 359):
+```cpp
+#ifdef RECAP_MINIBLINK
+    , mpRecapMb(0)
+#endif
+```
+
+- [ ] **Step 3: Add the paint sink (copies BGRA frame into `mpSurface`)**
+
+Near the top of `EAWebKitView.cpp` after includes:
 ```cpp
 #ifdef RECAP_MINIBLINK
 namespace {
-void RecapWkePaintSink(void* user, const void* bgra, int srcStride,
-                       int x, int y, int w, int h)
+void RecapMbPaintSink(void* user, const void* bgra, int srcStride,
+                      int x, int y, int w, int h)
 {
     EA::WebKit::View* view = (EA::WebKit::View*)user;
     EA::Raster::ISurface* s = view ? view->GetSurface() : 0;
@@ -322,8 +278,7 @@ void RecapWkePaintSink(void* user, const void* bgra, int srcStride,
     unsigned char* dst = (unsigned char*)s->GetData();
     int dstStride = s->GetStride();
     if (!dst) return;
-    /* EA kPixelFormatTypeARGB == 0xAARRGGBB == BGRA byte order on LE; wke buffer is BGRA.
-       Direct row copy of the dirty rect. */
+    /* EA kPixelFormatTypeARGB == 0xAARRGGBB == BGRA byte order on LE; mb buffer is BGRA. */
     for (int row = 0; row < h; ++row)
     {
         const unsigned char* sp = (const unsigned char*)bgra + (size_t)(y + row) * srcStride + (size_t)x * 4;
@@ -335,55 +290,55 @@ void RecapWkePaintSink(void* user, const void* bgra, int srcStride,
 #endif
 ```
 
-- [ ] **Step 3: `InitView` — create the MiniBlink view instead of WebCore**
+- [ ] **Step 4: `InitView` — create the MiniBlink view instead of WebCore**
 
-In `View::InitView` (`EAWebKitView.cpp:414`), AFTER `mpSurface` is created (the block around line 454-466) and BEFORE the WebCore `mpWebView` bring-up, add:
+In `View::InitView` (~line 414), AFTER `mpSurface` is created (~454-466) and BEFORE the WebCore `mpWebView` bring-up, add:
 ```cpp
 #ifdef RECAP_MINIBLINK
-    if (mpSurface && recap::WkeAvailable())
+    if (mpSurface && recap::MbAvailable())
     {
         int w = mpSurface->GetWidth(), h = mpSurface->GetHeight();
-        mpRecapWke = recap::WkeCreate(w, h, RecapWkePaintSink, this);
-        if (mpRecapWke)
-            return (mpSurface != NULL);   /* skip WebCore init; engine is MiniBlink */
+        mpRecapMb = recap::MbCreate(w, h, RecapMbPaintSink, this);
+        if (mpRecapMb)
+            return (mpSurface != NULL);   /* engine is MiniBlink; skip WebCore */
     }
 #endif
 ```
-(If MiniBlink is unavailable, control falls through to the stock WebCore path — graceful fallback.)
+(If MiniBlink is unavailable, control falls through to stock WebCore — graceful fallback.)
 
-- [ ] **Step 4: `SetURI` / `SetSize` / `Tick` — route to MiniBlink when active**
+- [ ] **Step 5: `SetURI` / `SetSize` / `Tick`**
 
-In `View::SetURI` (`:600`), at the very top of the body:
+`View::SetURI` (~600), top of body:
 ```cpp
 #ifdef RECAP_MINIBLINK
-    if (mpRecapWke) { recap::WkeLoadURL(mpRecapWke, pURI); return true; }
+    if (mpRecapMb) { recap::MbLoadURL((recap::MbView*)mpRecapMb, pURI); return true; }
 #endif
 ```
-In `View::SetSize` (`:567`), after `mpSurface` is resized (around `:577-582`):
+`View::SetSize` (~567), after `mpSurface` is resized (~577-582):
 ```cpp
 #ifdef RECAP_MINIBLINK
-    if (mpRecapWke) { recap::WkeResize(mpRecapWke, w, h); return true; }
+    if (mpRecapMb) { recap::MbResize((recap::MbView*)mpRecapMb, w, h); return true; }
 #endif
 ```
-In `View::Tick` (`:941`), at the top of the body:
+`View::Tick` (~941), top of body:
 ```cpp
 #ifdef RECAP_MINIBLINK
-    if (mpRecapWke) return true;  /* MiniBlink paints async via the sink on the msg loop */
-#endif
-```
-
-- [ ] **Step 5: Destroy in the View teardown**
-
-In the View shutdown path that frees `mpSurface` (around `:542-547`), before freeing the surface add:
-```cpp
-#ifdef RECAP_MINIBLINK
-    if (mpRecapWke) { recap::WkeDestroy(mpRecapWke); mpRecapWke = 0; }
+    if (mpRecapMb) return true;  /* MiniBlink paints async via the sink on the msg loop */
 #endif
 ```
 
-- [ ] **Step 6: Verify (deferred to Task 5 build)** — no standalone compile here (needs the full EAWebKit graph). Visually confirm each `#ifdef RECAP_MINIBLINK` block is balanced and the member/ctor-init/include are present.
+- [ ] **Step 6: Destroy in teardown**
 
-- [ ] **Step 7: Commit** — none (eawebkit tree).
+In the View shutdown that frees `mpSurface` (~542-547), before freeing the surface:
+```cpp
+#ifdef RECAP_MINIBLINK
+    if (mpRecapMb) { recap::MbDestroy((recap::MbView*)mpRecapMb); mpRecapMb = 0; }
+#endif
+```
+
+- [ ] **Step 7: Verify** — deferred to Task 5 build. Visually confirm each `#ifdef RECAP_MINIBLINK` block is balanced; member/ctor-init/include present; casts `(recap::MbView*)mpRecapMb` consistent.
+
+- [ ] **Step 8: Commit** — none (eawebkit tree).
 
 ---
 
@@ -392,36 +347,30 @@ In the View shutdown path that frees `mpSurface` (around `:542-547`), before fre
 **Files:**
 - Modify: `C:\CodingProjects\Personal\eawebkit\projects\VS2008\EAWebKit\1.21.00.darkspore\EAWebkit.vcproj`
 
-- [ ] **Step 1: Add `recapwke.cpp` to the file list**
+- [ ] **Step 1: Add `recapmb.cpp` to the file list**
 
-Find the `<File RelativePath="..\..\..\..\source\recaphooks.cpp">` block (added by the redirect work) and insert a sibling immediately before it:
+Find the `<File RelativePath="..\..\..\..\source\recaphooks.cpp">` block (from the redirect work) and insert a sibling immediately before it:
 ```xml
-      <File RelativePath="..\..\..\..\source\recapwke.cpp">
+      <File RelativePath="..\..\..\..\source\recapmb.cpp">
         <FileConfiguration Name="pc-vc-dev-debug|Win32">
-          <Tool Name="VCCLCompilerTool" ObjectFile="pc-vc-dev-debug\build\EAWebkit\vcproj\source\recapwke.cpp.obj" />
+          <Tool Name="VCCLCompilerTool" ObjectFile="pc-vc-dev-debug\build\EAWebkit\vcproj\source\recapmb.cpp.obj" />
         </FileConfiguration>
         <FileConfiguration Name="pc-vc-dev-opt|Win32">
-          <Tool Name="VCCLCompilerTool" ObjectFile="pc-vc-dev-opt\build\EAWebkit\vcproj\source\recapwke.cpp.obj" />
+          <Tool Name="VCCLCompilerTool" ObjectFile="pc-vc-dev-opt\build\EAWebkit\vcproj\source\recapmb.cpp.obj" />
         </FileConfiguration>
       </File>
 ```
 
-- [ ] **Step 2: Define `RECAP_MINIBLINK` + add the wke include dir**
+- [ ] **Step 2: Define `RECAP_MINIBLINK`**
 
-In the `pc-vc-dev-opt|Win32` configuration's `VCCLCompilerTool`, append to `PreprocessorDefinitions` the token `RECAP_MINIBLINK`, and append to `AdditionalIncludeDirectories` the path `C:\CodingProjects\Personal\miniblink49\wke` (so `#include "wke.h"` would resolve — though `recapwke.cpp` declares the minimal wke surface itself and does not include `wke.h`; the include dir is harmless and future-proof).
-Read the existing `VCCLCompilerTool` line for `pc-vc-dev-opt|Win32`, then add the two tokens to the respective semicolon-separated attributes. Example shape (your existing line will have more values — append, don't replace):
-```
-PreprocessorDefinitions="...existing...;RECAP_MINIBLINK"
-AdditionalIncludeDirectories="...existing...;C:\CodingProjects\Personal\miniblink49\wke"
-```
+Read the `pc-vc-dev-opt|Win32` configuration's `VCCLCompilerTool` line and append `;RECAP_MINIBLINK` to its `PreprocessorDefinitions` attribute (append a token — do not replace the existing list). `mb.h`/`recapmb.h` are included via the source dir (already on the project's include path, alongside the other `source/*.cpp`); no extra include dir needed since `mb.h` is copied into `source/`.
 
 - [ ] **Step 3: Verify XML well-formedness**
 
-Run:
 ```
 C:\Strawberry\c\bin\perl.exe -MXML::Simple -e "XMLin('C:/CodingProjects/Personal/eawebkit/projects/VS2008/EAWebKit/1.21.00.darkspore/EAWebkit.vcproj'); print qq{OK\n}"
 ```
-Expected: `OK`. (If `XML::Simple` is absent, visually confirm the new `<File>` block + edited attributes are balanced.)
+Expected: `OK` (or visually confirm balance if `XML::Simple` absent).
 
 - [ ] **Step 4: Commit** — none (eawebkit tree).
 
@@ -429,37 +378,34 @@ Expected: `OK`. (If `XML::Simple` is absent, visually confirm the new `<File>` b
 
 ## Task 5: Build, deploy, in-game gate (USER-RUN)
 
-**Files:** none
-
-- [ ] **Step 1: Build** the `EAWebKit.sln` `pc-vc-dev-opt|Win32` config in VS2008.
-  Expected: `0 failed`. `recapwke.cpp` compiles; `EAWebKitView.cpp` compiles with `RECAP_MINIBLINK` defined.
-  - If `recap::WkeView` is undefined in `EAWebKitView.cpp` → confirm `#include "recapwke.h"` under the flag (Task 3 Step 1).
-  - If `GetStride`/`GetData`/`GetWidth` aren't on `ISurface` → they are (used elsewhere in this file); check the `EA::Raster::ISurface` include is in scope.
+- [ ] **Step 1: Build** `EAWebKit.sln` `pc-vc-dev-opt|Win32` in VS2008. Expect `0 failed`; `recapmb.cpp` + `EAWebKitView.cpp` (with `RECAP_MINIBLINK`) compile.
+  - `recap::MbView` undefined in `EAWebKitView.cpp` → confirm `#include "recapmb.h"` under the flag.
+  - `mb.h` compile errors → see Task 2 Step 4 note (the inline-loader branch).
 
 - [ ] **Step 2: Deploy**
   1. Back up the working `EAWebkit.dll` next to `Darkspore.exe`.
   2. Copy the new `Distribution\pc\9.0.21022\dev-opt\bin\EAWebkit.dll` over it.
-  3. Copy `C:\CodingProjects\Personal\miniblink49\bin\miniblink.dll` next to `Darkspore.exe`.
-  4. Keep `recap.cfg` in place (the redirect still applies).
+  3. Copy `mb132_x32.dll` next to `Darkspore.exe`.
+  4. Keep `recap.cfg` in place (redirect still applies).
 
 - [ ] **Step 3: In-game gate**
   Launch Darkspore.
-  - **PASS:** where the web UI normally is, the MiniBlink-rendered page appears. For a pure pixel-path check before wiring real pages, temporarily point `View::InitView` at a test page via `recap::WkeLoadHTML` (the grid from the smoke test) — a 2×2 magenta/cyan/yellow/green grid in-game proves modern CSS + the pixel path end-to-end.
-  - **FAIL (blank/black where the UI was):** MiniBlink loaded but didn't paint into `mpSurface` — check the sink stride/format and that `Tick` isn't required to pump (try calling a wke pump if the release needs one).
-  - **FAIL (crash on load):** likely `miniblink.dll` missing/ò wrong bitness, or in-proc conflict — check it's next to the exe and 32-bit; capture the crash address (image base 0x400000).
-  - **Fallback intact:** building WITHOUT `RECAP_MINIBLINK`, or with `miniblink.dll` absent, must still run on stock WebCore (graceful path).
+  - For a pure pixel-path proof, temporarily make `InitView` call `recap::MbLoadHTML(mpRecapMb, <the grid HTML from the smoke test>)` right after create. **PASS:** a 2×2 magenta/cyan/yellow/green grid appears where the web UI is → modern CSS + pixel path proven end-to-end.
+  - **FAIL (blank/black):** MiniBlink loaded but didn't paint into `mpSurface` — check the sink stride/format; if mb needs pumping, try calling `mbWake` from `View::Tick`.
+  - **FAIL (crash on load):** `mb132_x32.dll` missing/wrong-bitness or in-proc conflict — confirm it's next to the exe + x86; capture the crash address (base 0x400000).
+  - **Fallback intact:** a build WITHOUT `RECAP_MINIBLINK` (or with the DLL absent) must still run on stock WebCore.
 
 - [ ] **Step 4: Record the milestone (ReCap repo)**
-  Update `memory/` with the Phase-1 result (works / the paint-format finding / any pump requirement), then commit the spec/plan/memory notes:
+  Update `memory/` with the Phase-1 result (works / paint-format finding / whether `mbWake` was needed), then:
   ```bash
   git add docs/superpowers memory MEMORY.md
-  git commit -m "docs(eawebkit): modern-engine Phase 1 (MiniBlink pixel path) result"
+  git commit -m "docs(eawebkit): modern-engine Phase 1 (MiniBlink mb pixel path) result"
   ```
 
 ---
 
 ## Self-review notes
-- Spec coverage: engine choice (MiniBlink) + dynamic load (T1/T2), swap-the-painter-keep-mpSurface (T3), compile flag + vcproj (T4), pixel path + BGRA→ARGB + stride (T2 sink, T3 Step 2), graceful WebCore fallback (T3 Step 3), in-game gate (T5). JS bridge/input/modern-content are explicitly out of Phase 1 (spec phases 2-4).
-- Placeholder scan: every code step shows full code; wke signatures are the real ones from `wke.h`. Open verification points (paint stride, whether a wke pump is needed) are framed as runtime checks with concrete fallbacks, not TODOs.
-- Type consistency: `recap::WkeView`, `WkePaintSink(user,bgra,srcStride,x,y,w,h)`, `WkeAvailable/Create/LoadHTML/LoadURL/Resize/Destroy` used identically across T1/T2/T3. Paint thunk passes `width*4` as `srcStride`, matching the sink's `srcStride` param and the View sink's row math.
-- Risk carried from spec: whether offscreen MiniBlink needs an explicit pump (no `wke` pump in the API list — assumed message-loop driven); T2/T5 gates surface this early.
+- Spec coverage: engine (MiniBlink mb) + self-load (T0/T2), swap-painter-keep-mpSurface (T3), compile flag + vcproj (T4), pixel path + BGRA→ARGB + stride (T2 sink/T3 Step 3), graceful WebCore fallback (T3 Step 4), in-game gate (T5). JS bridge/input/content are out of Phase 1.
+- Placeholder scan: every code step is complete; mb signatures are the real ones from `mb.h`. Open verification points (paint stride; whether `mbWake` pumping is needed) are concrete runtime checks with fallbacks, not TODOs.
+- Type consistency: `recap::MbView`, `MbPaintSink(user,bgra,srcStride,x,y,w,h)`, `MbAvailable/Create/LoadHTML/LoadURL/Resize/Destroy` identical across T1/T2/T3. Paint thunk passes `width*4` as `srcStride`, matching the sink + the View row math. `mpRecapMb` is `void*` in the header, cast to `recap::MbView*` at every use in T3.
+- API correction: this revises the earlier wke-based draft — the downloaded release exposes the `mb` API only (no `wke*` exports), and `mb.h` self-loads the DLL (no manual resolver needed).

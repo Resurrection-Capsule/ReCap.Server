@@ -38,10 +38,18 @@ Rejected: clean-room `ReCap.WebShim` (ABI risk, redundant now); exe-Detour of
 
 ## Engine — MiniBlink
 
-`weolar/miniblink49` — Blink ~2016, 32-bit single DLL (matches the x86 EAWebKit.dll),
-pure-offscreen paint via `wkeOnPaintBitUpdated`. **Prebuilt** (`node.dll` + `wke.h`) — we
-consume it, no VC9 recompile of the engine. Runs typical modern CSS/HTML. CEF rejected
-(heavy ~150MB, dated 32-bit builds); Ultralight rejected (x64-only).
+`weolar/miniblink49` — modern Blink, 32-bit single DLL (matches the x86 EAWebKit.dll),
+pure-offscreen paint via a BGRA bit-buffer callback. **Prebuilt** — we consume it, no VC9
+recompile. Runs modern CSS/HTML. CEF rejected (heavy ~150MB, dated 32-bit builds);
+Ultralight rejected (x64-only).
+
+> API CORRECTION (2026-06-02): the release we use is **`miniblink132` (Chromium 132)**,
+> which exposes the modern **`mb` API** (`mb132_x32.dll` + `mb.h`), NOT the legacy `wke`
+> API. `mb.h` self-loads the DLL (`mbSetMbMainDllPath` + `mbInit`), so no hand-written
+> symbol resolver is needed. The offscreen callback is `mbOnPaintBitUpdated`
+> (`mbPaintBitUpdatedCallback(view, param, buffer, mbRect*, w, h)`, BGRA) — same shape as
+> the old `wke` one, so the architecture (swap the painter, copy into `mpSurface`) is
+> unchanged. Plan: `docs/superpowers/plans/2026-06-02-eawebkit-modern-engine-phase1.md`.
 
 ## Build toggle & loading (decided)
 
