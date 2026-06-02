@@ -4,8 +4,10 @@ How ReCap makes Darkspore's retail client (a) talk to ReCap and (b) render its i
 UI with a **modern** engine (MiniBlink / Chromium 132) — all by **replacing one DLL**
 (`EAWebKit.dll`), with **zero changes to `Darkspore.exe` on disk**.
 
-> Status 2026-06-02: redirect ✅, launcher renders ✅ + interactive (input fix pending
-> retest), JS action-dispatch ✅. In-game composited web + synchronous JS getters = TODO.
+> Status 2026-06-02: redirect ✅, launcher renders ✅ + **fully interactive ✅ — clicking
+> Play dispatches `Client.playCurrentApp` and the game OPENS (reached in-game)**. Remaining:
+> perf polish (laggy paint / slow on-demand hover-sprite loads / unreliable clicks under
+> load), in-game composited web (cWebView/D3D9), synchronous JS getters (Phase 2b).
 > History/decisions: `WEBVIEW_MODERNIZATION.md`, `WEBVIEW_SHIM_DESIGN.md`,
 > `DEV_TESTIMONY_XACKERY.md`, specs `2026-06-02-eawebkit-{redirect-reimpl,modern-engine}-*`.
 
@@ -123,7 +125,7 @@ sequenceDiagram
         V->>MB: MbWake (pump)
         mb-->>MB: mbOnPaintUpdated(HDC, dirtyRect)
         MB->>MB: BitBlt HDC→DIB, force alpha=0xFF
-        MB->>Surf: copy BGRA into mpSurface (paintSink); mark dirty
+        MB->>Surf: copy BGRA into mpSurface (paintSink) mark dirty
         V->>VN: if dirty → ONE DrawEvent+ViewUpdate (coalesced, UI thread)
         VN->>Surf: host blits surface → launcher window
     end
@@ -166,7 +168,7 @@ sequenceDiagram
     mbq->>CB: mbOnJsQuery(es, queryId, request=JSON)
     CB->>CB: parse {m,a} → JsVal[]
     CB->>V: sink(method, args, &ret)
-    V->>VN: JavascriptMethodInvoked(info) ; ret = info.mReturn
+    V->>VN: JavascriptMethodInvoked(info) ret = info.mReturn
     CB-->>mbq: mbResponseQuery(queryId, JSON(ret))  // async → JS cb (limited)
 ```
 
@@ -197,9 +199,10 @@ flowchart LR
 | Network redirect | ✅ done | client reaches ReCap; cert bypass; `recap.cfg` local/remote |
 | Build / ABI | ✅ done | stock `EAWebKit.dll` builds; ReCap layer compiles `/W4 /WX` |
 | Launcher render | ✅ done | modern CSS/HTML renders in the launcher window in-game |
-| JS action dispatch | ✅ done | `Client.*(args)` → `JavascriptMethodInvoked` with real args |
-| Input (mouse/keys) | 🔧 wired, retest | coalesce fix applied for lag/click/drag; verify in-game |
-| JS sync return (getters) | ⏳ todo | mb132 query channel is async; `var x=Client.getX()` returns undefined |
+| JS action dispatch | ✅ done | `Client.*` → `JavascriptMethodInvoked` (BARE name); **Play opens the game** |
+| Input (mouse/keys) | ✅ works | On*Event → mb; captured-up forwarded from the hidden window; clicks complete |
+| Perf / experience | 🔧 rough | laggy paint, on-demand hover-sprite loads leave the button empty briefly, clicks unreliable under load — polish, not a blocker |
+| JS sync return (getters) | ⏳ todo | mb132 query channel is async; `var x=Client.getX()` returns undefined (Phase 2b) |
 | In-game composited web | ❓ untested | login/store inside the game use cWebView→D3D9 (`WebView_UpdateTexture@0x00CA4E90`); reached only after Play works |
 | Polish | ⏳ todo | trim debug logging, `recap.cfg` engine toggle, ship `mb132_x32.dll`, multi-view |
 
