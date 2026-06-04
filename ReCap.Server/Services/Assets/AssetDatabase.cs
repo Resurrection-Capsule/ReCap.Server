@@ -97,27 +97,6 @@ public sealed class AssetDatabase : IDisposable
         return GetAssetByName(attrsRef);
     }
 
-    public IEnumerable<AssetValue> GetLevelMarkers(string levelName)
-    {
-        if (GetLevel(levelName) is not StructValue level) yield break;
-        if (level.FindByName("markersets") is not ArrayValue msArr) yield break;
-
-        foreach (var msRef in msArr.Items.OfType<StructValue>())
-        {
-            var refPath = (msRef.FindByName("markersetAsset") as StringValue)?.Value;
-            if (string.IsNullOrEmpty(refPath)) continue;
-
-            // Resolve the markerset reference through the parser's native name registry
-            // (DbpfReader.Resolve), NOT a hand-hashed name — the package keys assets by the
-            // file registry's hash, which is not our wire FnvHash.
-            var ms = GetAssetByName(refPath);
-            if (ms?.FindByName("markers") is not ArrayValue markers) continue;
-
-            foreach (var marker in markers.Items)
-                yield return marker;
-        }
-    }
-
     public Task WarmUpAsync(CancellationToken ct = default) => Task.Run(() =>
     {
         try

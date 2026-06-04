@@ -52,6 +52,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         var delta = (now - _lastTick).TotalSeconds;
         _lastTick = now;
         Objects.Update(delta);
+        FlushObjectUpdates();
 
         foreach (var player in Players.Values)
         {
@@ -62,7 +63,9 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 GameTime = (ulong)(DateTime.UtcNow - StartTime).TotalMilliseconds,
                 TimeElapsed = (ulong)(DateTime.UtcNow - StartTime).TotalMilliseconds,
                 State = State,
-                GameType = 0
+                // C++ Server.cpp:1369 sends Blaze::GameType::Chain here every tick; 0 is invalid
+                // (enum starts at 1) and misdirects the client UI state machine.
+                GameType = (uint)LabsGameType.Chain
             };
             player.Client.SendPacket(gameState);
 
@@ -225,13 +228,35 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         player.ResetUpdateBits();
     }
 
+    private void BroadcastToAllPlayers(IRakNetPacket packet)
+    {
+        foreach (var player in Players.Values)
+            player.Client?.SendPacket(packet);
+    }
+
+    // Flush per-object dirty flags accumulated since the last tick. Mirrors C++ ObjectManager::Update
+    // → Instance::SendObjectUpdate: routes via GoalFlags to ObjectTeleport (0x020 bit) or
+    // LocomotionDataUpdate, then clears flags. Called once per 50ms tick after Objects.Update().
+    private void FlushObjectUpdates()
+    {
+        foreach (var obj in Objects.Objects.Values)
+        {
+            if (obj.DirtyFlags == ObjectDirtyFlags.None) continue;
+
+            if ((obj.DirtyFlags & ObjectDirtyFlags.Locomotion) != 0 && !obj.PlayerControlled)
+            {
+                IRakNetPacket locomotionPacket = (obj.GoalFlags & 0x020) != 0
+                    ? new ObjectTeleportPacket { ObjectId = obj.ObjectId, Position = obj.Position, Orientation = obj.Orientation }
+                    : new LocomotionDataUpdatePacket { ObjectId = obj.ObjectId, Locomotion = new LocomotionData { GoalFlags = obj.GoalFlags } };
+                BroadcastToAllPlayers(locomotionPacket);
+            }
+
+            obj.DirtyFlags = ObjectDirtyFlags.None;
+        }
+    }
+
     // C++ Server::OnDebugPing Dungeon → mGame.SwapCharacter(player, 1): deck index 1 is deployed.
     private const int DeployedDeckIndex = 1;
-
-    // Marker NPC/prop spawn — now noun-name filtered (obelisks + director enemies only),
-    // so it no longer spawns the design markers that crashed the client. Toggle off to
-    // isolate the deck-HUD path during crash testing.
-    private const bool SpawnLevelMarkers = true;
 
     // Resolve the player's selected squad from their persisted deck (never hardcoded).
     private IReadOnlyList<SquadCreature> ResolveSquadForPlayer(Player player, int squadId)
@@ -483,27 +508,28 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         return null;
     }
 
-    // Create + broadcast a single non-player level object (obelisk / enemy). Mirrors the
-    // C++ ObjectManager::Create + SendObjectCreate path. Per C++: team/playerControlled stay
-    // at their defaults (0 / false); only marker-created objects (obelisks) carry the marker
-    // scale, enemies created from a bare noun keep scale 1.
-    private void SpawnLevelNoun(RakNetClient client, uint noun, Vector3 pos, float scale)
+    // C++ ObjectManager::Create(marker) + SendObjectCreate: the object carries the marker
+    // transform and markerId (ObjectManager.cpp:206-212). Wire-verified 93B shape:
+    // createData all-10 + object-reflection {6,7,8,17,22}.
+    private void SpawnWorldObject(RakNetClient client, uint noun, AssetValue marker, float scale, bool hasCollision)
     {
+        var pos = marker.FindByName("pos").AsVector3();
+        var rot = marker.FindByName("rotDegrees").AsVector3();
+        var markerId = marker.FindByName("markerId").AsUInt32();
+
         var objId = _nextObjectId++;
         Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
 
         var objData = new SporelabsObject
         {
             Position = pos,
-            Team = 0,
-            PlayerControlled = false,
-            Visible = true,
-            HasCollision = true,
+            Orientation = Quaternion.Identity,
             Scale = scale,
-            MarkerScale = scale
+            HasCollision = hasCollision,
+            MarkerScale = 1f,
+            SourceMarkerKeyMarkerId = markerId
         };
-        // C++ marker object block = {Team, Visible, HasCollision} → 59B ObjectCreate.
-        foreach (byte bit in new byte[] { 0, 16, 17 }) objData.SetDataBit(bit);
+        foreach (byte bit in new byte[] { 6, 7, 8, 17, 22 }) objData.SetDataBit(bit);
 
         client.SendPacket(new ObjectCreatePacket
         {
@@ -512,9 +538,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             {
                 Noun = noun,
                 Position = pos,
+                RotXDegrees = rot.X,
+                RotYDegrees = rot.Y,
+                RotZDegrees = rot.Z,
                 Scale = scale,
                 Team = 0,
-                HasCollision = true,
+                HasCollision = hasCollision,
                 PlayerControlled = false
             },
             ObjectData = objData
@@ -623,75 +652,90 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         SwapCharacter(client, player, deployIndex, deckObjectIds[deployIndex]);
     }
 
-    // Robust, data-driven level population: spawn the level's networked game objects from its
-    // markersets (via AssetDatabase.GetLevelMarkers) and send each an ObjectCreate. The working
-    // C++ binary populates the dungeon this way; with an empty world the client falls back to a
-    // menu view and crashes on a null HUD movie (DIVERGENCE_LEDGER D-009 / OBJECTS_OBJECTIVES_SYSTEM.md).
+    // C++ Instance::OnPlayerStart populates the world in three name-filtered passes
+    // (Instance.cpp:318-391); every other marker (design blocks, spawn points, lights, VFX,
+    // paths) stays server-side and is never sent to the client. No InteractableDataUpdate at
+    // load — C++ sends 0x98 only on runtime loot drops (Instance.cpp:403-410 vs 663-667).
+    private static readonly uint HealthObeliskNoun = DbpfReader.FnvHash("prefab_health_obelisk.Noun");
+    private static readonly uint BossObeliskNoun = DbpfReader.FnvHash("prefab_boss_obelisk.Noun");
+    // C++ TriggerVolume ctor (ObjectManager.cpp:13): teleporter markers reach the client as a
+    // hidden SecurityTeleporter — scale 0, no collision — not as the marker's own noun.
+    private static readonly uint SecurityTeleporterNoun = DbpfReader.FnvHash("SecurityTeleporter.noun");
+    private static readonly uint[] DirectorSpawnPointNouns =
+    {
+        DbpfReader.FnvHash("SpawnPoint_Director.Noun"),
+        DbpfReader.FnvHash("SpawnPoint_DirectorA.Noun"),
+        DbpfReader.FnvHash("SpawnPoint_DirectorB.Noun"),
+        DbpfReader.FnvHash("SpawnPoint_DirectorWanderer.Noun")
+    };
+
+    private IEnumerable<AssetValue> MarkersOf(string markersetName)
+    {
+        if (Assets?.GetMarkerSetByName(markersetName)?.FindByName("markers") is not ArrayValue markers)
+            yield break;
+        foreach (var marker in markers.Items)
+            yield return marker;
+    }
+
     private void PopulateLevel(RakNetClient client)
     {
         if (Assets is null || string.IsNullOrEmpty(Chain.LevelName)) return;
+        var level = Chain.LevelName;
 
-        int spawned = 0, skipped = 0;
-        foreach (var marker in Assets.GetLevelMarkers(Chain.LevelName))
+        int obelisks = 0, teleporters = 0, enemies = 0;
+
+        // Obelisks: "<level>_obelisk_1" markers carrying exactly the two obelisk nouns (Instance.cpp:318-329).
+        foreach (var marker in MarkersOf($"{level}_obelisk_1"))
         {
-            var nounName = marker.FindByName("nounDef").AsString();
-            if (string.IsNullOrEmpty(nounName)) { skipped++; continue; }
+            var noun = DbpfReader.FnvHash(marker.FindByName("nounDef").AsString());
+            if (noun != HealthObeliskNoun && noun != BossObeliskNoun) continue;
 
-            // Classification: a marker becomes a networked object only if it has physical presence
-            // (collision) or a gameplay component (teleporter/interactable/spawn). Pure-visual
-            // markers (lights, VFX, decals, audio) carry neither and are skipped.
-            var collision = marker.FindByName("createWithCollision").AsBool();
-            var hasComponent = marker.FindByName("componentData") is not null;
-            if (!collision && !hasComponent) { skipped++; continue; }
-
-            var noun = DbpfReader.FnvHash(nounName);
-            var pos = marker.FindByName("pos").AsVector3();
-            var rot = marker.FindByName("rotDegrees").AsVector3();
             var scale = marker.FindByName("scale").AsFloat();
-            if (scale <= 0f) scale = 1f;
-            var markerId = marker.FindByName("markerId").AsUInt32();
-
-            var objId = _nextObjectId++;
-            Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
-
-            // Wire-verified 93B object: createData all-10 + reflection {6,7,8,17,22}.
-            var objData = new SporelabsObject
-            {
-                Position = pos,
-                Orientation = Quaternion.Identity,
-                Scale = scale,
-                HasCollision = collision,
-                MarkerScale = 1f,
-                SourceMarkerKeyMarkerId = markerId
-            };
-            foreach (byte bit in new byte[] { 6, 7, 8, 17, 22 }) objData.SetDataBit(bit);
-
-            client.SendPacket(new ObjectCreatePacket
-            {
-                ObjectId = objId,
-                CreateData = new GameObjectCreateData
-                {
-                    Noun = noun,
-                    Position = pos,
-                    RotXDegrees = rot.X,
-                    RotYDegrees = rot.Y,
-                    RotZDegrees = rot.Z,
-                    Scale = scale,
-                    Team = 0,
-                    HasCollision = collision,
-                    PlayerControlled = false
-                },
-                ObjectData = objData
-            });
-
-            // C++ pairs every ObjectCreate with an InteractableDataUpdate (0x98) companion
-            // (wire: 0x98 ×N matching ObjectCreate ×N). Send a zeroed-blob companion per object.
-            client.SendPacket(new InteractableDataUpdatePacket { ObjectId = objId });
-
-            spawned++;
+            SpawnWorldObject(client, noun, marker, scale <= 0f ? 1f : scale, hasCollision: true);
+            obelisks++;
         }
 
-        Log.Game.Info($"PopulateLevel({Chain.LevelName}): spawned {spawned} objects (+0x98 each), skipped {skipped} visual-only markers");
+        // Teleporters: only "_design"/"_design_spawners" markers with real teleporter component
+        // data (Instance.cpp:331-343). Binary markersets serialize componentData on every marker,
+        // so presence means a non-empty teleporter node — never the node itself.
+        foreach (var setName in new[] { $"{level}_design", $"{level}_design_spawners" })
+        {
+            foreach (var marker in MarkersOf(setName))
+            {
+                var teleporter = marker.FindByName("componentData").FindByName("teleporter");
+                if (teleporter is null || teleporter.Children.Count == 0) continue;
+
+                SpawnWorldObject(client, SecurityTeleporterNoun, marker, scale: 0f, hasCollision: false);
+                teleporters++;
+            }
+        }
+
+        // Director enemies: one per AI-wander markerset, noun drawn from the level's enemy bank —
+        // never the SpawnPoint marker's own noun (Instance.cpp:345-391, including the one-per-set cap).
+        var enemyBank = Chain.EnemyNouns.Where(n => n != 0).ToArray();
+        string[][] wanderSetNames =
+        {
+            new[] { $"{level}_AI_Wander" },
+            new[] { $"{level}_AI_WandererA", $"{level}_AI_Wanderers_A" },
+            new[] { $"{level}_AI_WandererB", $"{level}_AI_Wanderers_B" },
+            new[] { $"{level}_AI_WandererC", $"{level}_AI_Wanderers_C" }
+        };
+        foreach (var candidates in wanderSetNames)
+        {
+            if (enemyBank.Length == 0) break;
+            foreach (var marker in candidates.SelectMany(MarkersOf))
+            {
+                var markerNoun = DbpfReader.FnvHash(marker.FindByName("nounDef").AsString());
+                if (!DirectorSpawnPointNouns.Contains(markerNoun)) continue;
+
+                var enemyNoun = enemyBank[Random.Shared.Next(enemyBank.Length)];
+                SpawnWorldObject(client, enemyNoun, marker, scale: 1f, hasCollision: true);
+                enemies++;
+                break;
+            }
+        }
+
+        Log.Game.Info($"PopulateLevel({level}): {obelisks} obelisks, {teleporters} teleporter triggers, {enemies} director enemies");
     }
 
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,

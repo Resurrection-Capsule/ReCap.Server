@@ -4,6 +4,22 @@ using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.RakNet.Packets;
 
+// RakNet GameState game-mode field (client stores at simulator+0x3B420, default 0xFFFFFFFF).
+// Mirrors C++ Blaze::GameType (Types.h:158-166); distinct from the Blaze matchmaking
+// GameType enum (Managed/Matched/Solo). C++ Server.cpp:1369 sends Chain for the campaign;
+// 0 is not a valid member (enum starts at Tutorial=1) and misdirects the client UI state
+// machine (matchmaking/map-room path → cMapRoomUI null-movie crash @0x551f47).
+public enum LabsGameType : uint
+{
+    Tutorial = 1,
+    Chain = 2,
+    Arena = 3,
+    KillRace = 4,
+    Juggernaut = 5,
+    Quickplay = 6,
+    DirectEntry = 7
+}
+
 public class GameStatePacket : IRakNetPacket
 {
     public PacketType Type => PacketType.GameState;
