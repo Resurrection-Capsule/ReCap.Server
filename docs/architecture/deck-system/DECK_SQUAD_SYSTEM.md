@@ -1,5 +1,9 @@
 # Deck & Squad System — Client/Server Map
 
+> **2026-06-04:** The deck/squad server behavior was rebuilt to the verified C++ contract —
+> see `docs/superpowers/specs/2026-06-04-deck-system-design.md` (authoritative) and
+> DIVERGENCE_LEDGER D-014. Historical content below may describe the older implementation.
+
 > Scope: how a player's **creatures → parts → deck (squad) → in-game deployment** flow works
 > end-to-end, C++ reference vs C# port, plus the **client-side deck HUD** that crashes on Dungeon
 > entry. The "map it 100%" reference requested 2026-05-28. Single source of truth across all four
