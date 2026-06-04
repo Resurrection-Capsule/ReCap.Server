@@ -41,21 +41,23 @@ public class DeckService
         return slots;
     }
 
-    public List<Deck> createDecksForAccount(AccountModel account, List<CreatureModel> creatures) {
+    // Mirrors C++ ResetSquads (User.cpp:247-258): 3 unlocked squads "Slot 1..3" with all
+    // creature slots EMPTY ({0,0,0}). The SignUp slot-0 creature fill (API.cpp:808-814)
+    // is a "TODO: remove" test hack in C++ and is deliberately not ported — decks are
+    // player-built (spec 2026-06-04-deck-system-design).
+    public List<Deck> createDecksForAccount(ulong accountId)
+    {
         List<Deck> decks = [];
-        for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {
-            // C++ API.cpp:808-814: ResetSquads then fills slot 0 of each of the 3 squads with
-            // the first 3 creatures. Empty decks left the client with no deployable default squad.
-            var creatureIds = new List<ulong>();
-            int idx = (int)squadSlot - 1;
-            if (idx < creatures.Count) creatureIds.Add(creatures[idx].ID);
-
-            var deck = new Deck{
-                Name = "Slot " + squadSlot.ToString(),
-                Slot = (int)squadSlot,
+        for (int squadSlot = 1; squadSlot <= 3; squadSlot++)
+        {
+            var deck = new Deck
+            {
+                Name = "Slot " + squadSlot,
+                Slot = squadSlot,
                 Category = "pve",
-                AccountID = account.Id,
-                CreatureIds = creatureIds
+                AccountID = accountId,
+                Locked = false,
+                CreatureIds = [0, 0, 0]
             };
             deckRepository.insertDeck(deck);
             decks.Add(deck);
