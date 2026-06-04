@@ -22,6 +22,12 @@ public class SqliteConfig : DbContext
         DbPath = ServerConfig.ServerDatabasePath;
     }
 
+    // Test/diagnostic ctor: point the context at an explicit database file.
+    public SqliteConfig(string dbPath)
+    {
+        DbPath = dbPath;
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder options)
         => options.UseSqlite($"Data Source={DbPath}");
 
