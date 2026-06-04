@@ -50,8 +50,8 @@ public class ReCapRestController
         var account = accountService.createAccount(email, name, password, avatar, isTest);
 
 		if (isTest) {
-            creatureService.addAllCreatures(account);
-            deckService.createDecksForAccount(account);
+            var creatures = creatureService.addAllCreatures(account);
+            deckService.createDecksForAccount(account, creatures);
             creaturePartService.addAllCreatureParts(account);
 
             accountService.updateAccount(account);

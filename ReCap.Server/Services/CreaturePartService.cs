@@ -30,13 +30,11 @@ public class CreaturePartService
         List<CreaturePartModel> parts = [];
         var allTemplates = creaturePartTemplateRepository.getAllTemplates();
         foreach (var template in allTemplates) {
-            var part1 = creaturePartMapper.toCreaturePartModel(template, false);
-            part1.AccountId = account.Id;
-            parts.Add(part1);
-
-            var part2 = creaturePartMapper.toCreaturePartModel(template, true);
-            part2.AccountId = account.Id;
-            parts.Add(part2);
+            // C++ API.cpp:765-768 seeds exactly ONE part per template entry (user->AddPart).
+            // The extra IsFlair=true duplicate doubled the inventory count (demo-account symptom).
+            var part = creaturePartMapper.toCreaturePartModel(template, false);
+            part.AccountId = account.Id;
+            parts.Add(part);
         }
         creaturePartRepository.insertCreatureParts(parts);
         return parts;

@@ -25,15 +25,21 @@ public class DeckService
         deckRepository.updateDeck(deck);
     }
 
-    public List<Deck> createDecksForAccount(AccountModel account) {
+    public List<Deck> createDecksForAccount(AccountModel account, List<CreatureModel> creatures) {
         List<Deck> decks = [];
         for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {
+            // C++ API.cpp:808-814: ResetSquads then fills slot 0 of each of the 3 squads with
+            // the first 3 creatures. Empty decks left the client with no deployable default squad.
+            var creatureIds = new List<ulong>();
+            int idx = (int)squadSlot - 1;
+            if (idx < creatures.Count) creatureIds.Add(creatures[idx].ID);
+
             var deck = new Deck{
                 Name = "Slot " + squadSlot.ToString(),
                 Slot = (int)squadSlot,
                 Category = "pve",
                 AccountID = account.Id,
-                CreatureIds = []
+                CreatureIds = creatureIds
             };
             deckRepository.insertDeck(deck);
             decks.Add(deck);

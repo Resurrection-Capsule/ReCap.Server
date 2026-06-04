@@ -46,7 +46,8 @@ public class CreatureService
             ItemPoints = 300
         };
         var creatureModel = creatureRepository.insertCreature(creature);
-        account.creatureRewards++;
+        // C++ API.cpp:783 leaves creatureRewards = 100 (a flat seed); it does NOT add one per
+        // creature. The per-creature ++ inflated it to 100+N (demo-account count drift).
         return creatureModel;
     }
 

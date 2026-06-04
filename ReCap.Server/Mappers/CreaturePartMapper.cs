@@ -29,15 +29,15 @@ public class CreaturePartMapper
     }
 
     private ulong fnv1aHashOfString(string val) {
-        ulong h = 0x811c9dc5u;
-
-        int size = val.Length;
-        for (int i = 0; i < size; i++)
+        // C++ utils::hash_id (Functions.h:167) is 32-bit: uint32_t wraps at 2^32. The previous
+        // ulong arithmetic never wrapped, so every hash diverged from the client's 32-bit value
+        // (asset lookups failed). Compute in uint, zero-extend to the ulong wire field.
+        uint h = 0x811C9DC5;
+        foreach (char c in val)
         {
-            h *= 0x01000193u;
-            h ^= val[i];
+            h *= 0x01000193;
+            h ^= c;
         }
-    
         return h;
     }
 
