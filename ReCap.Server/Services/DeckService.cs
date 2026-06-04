@@ -25,6 +25,22 @@ public class DeckService
         deckRepository.updateDeck(deck);
     }
 
+    // Mirrors C++ User::UpdateSquad (User.cpp:260-289): each non-zero id must belong to
+    // the account; valid ids are compacted into the 3 positional slots (index++), the
+    // remainder stays 0. A deck always holds exactly 3 positional values (Squad.h:34).
+    public static List<ulong> BuildSlots(IEnumerable<ulong> requestedIds, IReadOnlySet<ulong> ownedCreatureIds)
+    {
+        var slots = new List<ulong> { 0, 0, 0 };
+        int index = 0;
+        foreach (var id in requestedIds)
+        {
+            if (index >= slots.Count) break;
+            if (id == 0 || !ownedCreatureIds.Contains(id)) continue;
+            slots[index++] = id;
+        }
+        return slots;
+    }
+
     public List<Deck> createDecksForAccount(AccountModel account, List<CreatureModel> creatures) {
         List<Deck> decks = [];
         for (ulong squadSlot = 1; squadSlot <= 3; squadSlot++) {
