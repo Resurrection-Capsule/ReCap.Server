@@ -13,15 +13,12 @@ public class QuickGameMsgsPacket : IRakNetPacket
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
-        
-        // C++ Server:
-        // This packet contains setup messages for Quick Game
-        // For now, sending an empty payload or minimal payload
-        // C++ implementation in QuickGameMsgs just writes the Packet ID in many cases,
-        // or a default value.
-        // I will write a 0 byte to signify no extended messages, or just nothing.
-        // Let's check Darkspore decomp: QuickGameMsgs usually has a message type byte.
-        // Send a 0 type (None).
-        writer.Write((byte)0);
+
+        // C++ Server::SendQuickGame (Server.cpp:2346) writes `Write<bool>(reset=true)` → 0x01,
+        // on the Dungeon path (Server.cpp:1199, right after DirectorState, before OnPlayerStart).
+        // The C++ source comment "if true: set state Spaceship" is the author's own unsure guess
+        // ("not 100% sure, ignore all") — empirically C++ sends 0x01 here and the client plays the
+        // dungeon, so 0x01 is the correct dungeon-entry value. C# was sending 0x00.
+        writer.Write((byte)1);
     }
 }
