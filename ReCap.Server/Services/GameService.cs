@@ -16,27 +16,26 @@ public class GameService : IGameHandler
     public DeckService? Decks { get; set; }
     public CreatureService? Creatures { get; set; }
 
-    // Resolve the player's chosen squad (1-based squadId) into the creatures they own
-    // and saved in that deck slot. Mirrors C++ Player::SetSquad. Falls back to the
-    // account's first owned creatures if the deck slot is empty, so the squad is always
-    // real data — never the old hardcoded nouns.
+    // Mirrors C++ PrepareGameStart + Player::SetSquad (Server.cpp:1210-1241,
+    // Player.cpp:267-313): the squad is EXACTLY the persisted deck. Missing deck or
+    // empty slots resolve to an empty/partial squad — the server never injects
+    // creatures (spec 2026-06-04-deck-system-design). Empty slots become noun=0
+    // characters downstream in FillSquadCharacters, matching C++ null characters.
     public IReadOnlyList<SquadCreature> ResolveSquad(AccountModel account, int squadId)
     {
         if (Decks is null || Creatures is null)
             return Array.Empty<SquadCreature>();
 
         var deck = Decks.getDecksByAccount(account).FirstOrDefault(d => d.Slot == squadId);
-        var creatureIds = deck?.CreatureIds ?? new List<ulong>();
+        if (deck is null)
+            return Array.Empty<SquadCreature>();
 
-        var resolved = creatureIds
+        return deck.CreatureIds
+            .Where(id => id != 0)
             .Select(id => Creatures.getCreatureById(id))
             .Where(c => c is not null)
+            .Select(ToSquadCreature)
             .ToList();
-
-        if (resolved.Count == 0)
-            resolved = Creatures.getCreaturesByAccount(account).Take(3).ToList();
-
-        return resolved.Select(ToSquadCreature).ToList();
     }
 
     private SquadCreature ToSquadCreature(CreatureModel creature)
