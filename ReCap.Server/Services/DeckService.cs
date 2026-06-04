@@ -17,11 +17,23 @@ public class DeckService
         return deckRepository.getDecksByAccountId(account.Id);
     }
 
-    // Persist a squad/deck edit (api.deck.updateDecks). slot is the 1-based squad id.
-    public void updateDeck(AccountModel account, int slot, List<ulong> creatureIds) {
-        var deck = deckRepository.getDecksByAccountId(account.Id).FirstOrDefault(d => d.Slot == slot);
+    public List<DeckModel> getDecksByAccountId(ulong accountId)
+    {
+        return deckRepository.getDecksByAccountId(accountId);
+    }
+
+    // Persist a squad/deck edit (api.deck.updateDecks). Mirrors C++ User::UpdateSquad
+    // (User.cpp:260-289): only the active slot's deck is touched; every id must belong
+    // to the account; valid ids are compacted, the deck always stores 3 positional
+    // values; category follows the pve/pvp channel. Unknown slot = silent no-op
+    // (C++ GetSquadById miss).
+    public void updateDeck(ulong accountId, int slot, List<ulong> requestedIds,
+                           IReadOnlySet<ulong> ownedCreatureIds, string category)
+    {
+        var deck = deckRepository.getDecksByAccountId(accountId).FirstOrDefault(d => d.Slot == slot);
         if (deck == null) return;
-        deck.CreatureIds = creatureIds;
+        deck.CreatureIds = BuildSlots(requestedIds, ownedCreatureIds);
+        deck.Category = category;
         deckRepository.updateDeck(deck);
     }
 

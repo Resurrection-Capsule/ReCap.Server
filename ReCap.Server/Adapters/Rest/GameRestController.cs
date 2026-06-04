@@ -395,25 +395,30 @@ public class GameRestController
     [RequestMapping(Name="api.deck.updateDecks")]
     public byte[] updateDecks(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        // C++ User::UpdateSquad: pve_active_slot + pve_creatures (CSV of creature ids), idem pvp.
+        // C++ game_deck_updateDecks (API.cpp:1866-1881): pve_active_slot + pve_creatures
+        // (CSV; the client sends all 9 slot values, zeros for empty), idem pvp.
         var account = accountService.getAccountByAuthToken(parameters["token"]);
-        ApplyDeckUpdate(account, parameters, "pve_active_slot", "pve_creatures");
-        ApplyDeckUpdate(account, parameters, "pvp_active_slot", "pvp_creatures");
+        var ownedIds = creatureService.getCreaturesByAccount(account).Select(c => c.ID).ToHashSet();
+
+        ApplyDeckUpdate(account.Id, ownedIds, parameters, "pve_active_slot", "pve_creatures", "pve");
+        ApplyDeckUpdate(account.Id, ownedIds, parameters, "pvp_active_slot", "pvp_creatures", "pvp");
 
         return XmlHelper.Serialize(new Contracts.ResponseContract { Stat = "ok", Code = 200, Result = 1 });
     }
 
-    private void ApplyDeckUpdate(AccountModel account, Dictionary<string,string> parameters, string slotKey, string creaturesKey)
+    private void ApplyDeckUpdate(ulong accountId, IReadOnlySet<ulong> ownedIds,
+                                 Dictionary<string,string> parameters,
+                                 string slotKey, string creaturesKey, string category)
     {
         if (!parameters.TryGetValue(slotKey, out var slotStr) || !int.TryParse(slotStr, out var slot))
             return;
 
-        var creatureIds = parameters.GetValueOrDefault(creaturesKey, "")
+        var requestedIds = parameters.GetValueOrDefault(creaturesKey, "")
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => (ulong)Convert.ToInt64(s.Trim()))
             .ToList();
 
-        deckService.updateDeck(account, slot, creatureIds);
+        deckService.updateDeck(accountId, slot, requestedIds, ownedIds, category);
     }
 
     [RequestMapping(Name="api.game.exitGame")]
