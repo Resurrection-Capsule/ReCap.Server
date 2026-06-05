@@ -45,6 +45,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
 
+    // Mirrors C++ teleportMovement (Server.cpp:76): true = movement replies snap the hero
+    // (0x90 + 0x91 flags 0x21, D-015 verified); false = smooth path (0x91 flags 0x001 only;
+    // the own-hero walk is client-side, D-017/D-017b). CLI: --no-teleport-movement.
+    public static bool TeleportMovement { get; set; } = true;
+
     public IEnumerable<ulong> GetPlayerIds() => Players.Where(p => !p.Value.IsBot).Select(p => p.Value.Id);
 
     public void Update()
@@ -771,20 +776,23 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType == 3)
         {
-            // Movement contract D-015 (client-verified): 0x90 teleport(pos=goal, quat=0) then
-            // 0x91 flags=0x21 per click — C++ teleportMovement (Server.cpp:76/722), wire ground
-            // truth cpp_loopback. D-016 (0xA8 type 8) was client-refuted for plain movement:
-            // type 8 only fires the deferred-ability approach stash (CLIENT_MOVEMENT_CONTRACT.md).
+            // Movement (C++ OnActionCommandMsgs Server.cpp:715-731). TeleportMovement=true:
+            // D-015 verified contract — 0x90 snap + 0x91 flags 0x21. False: smooth path —
+            // flags 0x001 only; the own-hero walk is client-side (CLIENT_MOVEMENT_CONTRACT.md).
             var (goalFlags, gx, gy, gz) = packet.ReadMovementData();
             var goal = new Vector3(gx, gy, gz);
             var locomotion = GetObjectLocomotion(packet.ObjectId);
             locomotion.SetGoalPosition(goal);
             locomotion.PartialGoalPosition = new Vector3(packet.PosX, packet.PosY, packet.PosZ);
-            locomotion.GoalFlags |= goalFlags | 0x020;
+            locomotion.GoalFlags |= goalFlags;
 
-            sender.SendPacket(new ObjectTeleportPacket { ObjectId = packet.ObjectId, Position = goal, Orientation = default });
+            if (TeleportMovement)
+            {
+                locomotion.GoalFlags |= 0x020;
+                sender.SendPacket(new ObjectTeleportPacket { ObjectId = packet.ObjectId, Position = goal, Orientation = default });
+            }
             sender.SendPacket(new ObjectPlayerMovePacket { ObjectId = packet.ObjectId, Locomotion = locomotion });
-            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{locomotion.GoalFlags:X}");
+            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{locomotion.GoalFlags:X}{(TeleportMovement ? "" : " (no teleport)")}");
         }
         else if (packet.CommandType == 4)
         {
@@ -796,7 +804,22 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         }
         else if (packet.CommandType == 5)
         {
-            Log.Game.Debug("Switch character requested");
+            // C++ SwitchCharacter: read u32 creatureIndex → Player::SwapCharacter (deck index +
+            // PlayerBits) → broadcast PlayerCharacterDeploy → LPU (Server.cpp:750-755,
+            // Instance.cpp:523-539, Player.cpp:234-241).
+            var player = GetPlayerByClient(sender);
+            if (player == null) return;
+
+            var creatureIndex = (int)packet.ReadSwitchIndex();
+            if (!_deckObjectIds.TryGetValue(player.Slot, out var deckIds) ||
+                creatureIndex < 0 || creatureIndex >= deckIds.Length)
+            {
+                Log.Game.Warn($"SwitchCharacter: invalid index {creatureIndex}");
+                return;
+            }
+
+            _playerCharacterObjectIds[player.Slot] = deckIds[creatureIndex];
+            SwapCharacter(sender, player, creatureIndex, deckIds[creatureIndex]);
         }
     }
 

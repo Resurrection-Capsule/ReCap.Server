@@ -29,6 +29,7 @@ public static class Program
     const string _RAKNET_VERBOSE_ARG = "--raknet-verbose";
     const string _VERBOSE_ARG = "--verbose";
     const string _LOG_LEVEL_ARG = "--log-level=";
+    const string _NO_TELEPORT_MOVEMENT_ARG = "--no-teleport-movement";
     static async Task Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -79,6 +80,11 @@ public static class Program
                     assetDataPath = gPath;
                 else
                     Log.Server.Error($"Game path not found: '{gPath}'");
+            }
+            else if (arg == _NO_TELEPORT_MOVEMENT_ARG)
+            {
+                Domain.Gameplay.Game.TeleportMovement = false;
+                Log.Server.Info("Movement mode: smooth (teleportMovement disabled)");
             }
         }
 
