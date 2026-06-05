@@ -87,20 +87,60 @@ local-hero gate, the 3s deadline expired, nothing moved. The working binary's
 | 1 | ability ack — arms pending ability (abilityId@+4, u64 times @+0x10/+0x18/+0x20/+0x28, userData@+0x34); matches C++ `SendActionCommandResponse(AbilityCommandResponse)` (Server.cpp:1659, 57B BitStream) |
 | 2 | command finished — clears pending, stops anim (`FUN_004f7980(…, 1.0)`) |
 | 4 | cancel pending ability |
-| **8** | **movement GO**: takes the goal/stop-distance the client STASHED at click time (pending struct +0x40 goal, +0x3c targetId, +0x50 distance) and calls `Locomotion::SetGoalPositionWithDistance(localHero, goal, dist)` (or `SetGoalObject` if targetId set) → **smooth local walk**. Goal does NOT come from the packet. |
+| **8** | **approach-target GO (deferred-ability flow)**: if a pending command stash exists (`pending+4 != 0` — created ONLY by the FUN_004d9150 branch-1 deferred path), promotes it to active and calls `Locomotion::SetGoalPositionWithDistance(localHero, stashedGoal, dist)` (or `SetGoalObject`) → client walks into cast range. Goal does NOT come from the packet. **No pending stash → silent no-op.** |
 | 0x10 | clear (FUN_004e21c0) |
 
-**Retail smooth-movement flow:** click → command deferred (ValidateCommandRoute=1,
-goal stashed, 0x9C sent, 3s deadline) → server replies 0xA8 type=8 → client walks
-smoothly to its own stashed goal → client sends Stop(4) on arrival. The C++ reference
-KNOWS this packet (sends type 1 for abilities; its comments cite these exact client
-functions) but never implemented type 8 — that's why it fell back to teleportMovement.
+**❌ D-016 CLIENT-REFUTED for plain movement (2026-06-05 09:19 run):** replying 0xA8
+type 8 to ActionCommand type=3 produced ZERO movement — position frozen all run.
+Conclusion: plain ground clicks do NOT route through the deferred-ability path (no
+stash exists), so case 8 had nothing to execute. Type 8 belongs to the ABILITY flow
+(walk-into-range authorization). ReCap reverted movement to the D-015 teleport
+contract; the rewritten 56B `ActionCommandResponsePacket` (latent 4B-bug fixed) is
+kept for future ability work, where C++'s type-1-only implementation is incomplete.
 
-**ReCap experiment (D-016 candidate):** on ActionCommand type=3, reply 0xA8 56B:
-`[u8 cmdByte0][u8 8][u8 0][u8 0]` + 52 zero bytes (case 8 reads only the stash; byte0
-is stored, not gated) — possibly instead of (or before) the 0x90 teleport. Expected:
-smooth walking. Verify byte0 semantics on wire first (C++ sends `*param_1` = the
-matching pending-slot byte; client stores it at pending+0x38).
+## ★★ Plain movement is CLIENT-AUTHORITATIVE (2026-06-05, second sweep)
+
+The full plain-movement pipeline, statically mapped (all renamed in Ghidra):
+
+1. Click → queued into one of 3 pending-command global blocks (@0x143fd6c/fde0/fd2c).
+2. `PlayerCtrl::PumpPendingCommands` @0x004e2bc0 (per frame): sends the 0x9C ONCE
+   (`ClientNet::SendActionCommandMsgs` @0x0053be60 — also delivers to local listeners,
+   incl. the embedded GameSimulator), then validates EVERY frame.
+3. `PlayerCtrl::ValidatePendingCommand` @0x004e25b0 — local gates: hero resolvable,
+   command-permission bitmask (`FUN_009c7620`), **`GameObject::GetHitPoints(hero) > 0`**
+   (@0x009dde90 = `*(*(obj+0x2cc)+0x40)` — Combatant component), not CC'd, no
+   animation/timer locks. Returns 1/3=apply, 2=wait, -0x27xx=reject.
+4. On OK → `PlayerCtrl::ApplyActionCommandLocally` @0x004e9290 — **case 3 Movement:
+   `Locomotion::SetGoalPosition` + `goalFlags |= cmd.goalFlags` on the local hero** →
+   the client walks itself. Case 4 Stop → `Locomotion::Stop`.
+
+**The server is NOT in the decision loop** — 0x9C is a notification; the original
+server echoed movement to OTHER players (0x91) and corrected with teleports.
+
+### Why our client doesn't walk (current suspects, runtime-verifiable)
+
+Every path dies if the hero's client-side components are missing or zeroed:
+- `+0x298` locomotion component — created in `ObjectManager::CreateObjectInternal`
+  ONLY if client noun record byte `+0xdb` (hasLocomotion) is set
+  (`nGameObject::CreateLocomotionData` @0x00a1b080, sole caller).
+- `+0x2cc` Combatant component — same pattern (sibling noun gate); the 0x97
+  CombatantDataUpdate handler DROPS the update if the component is null, so HP stays 0
+  → `ValidatePendingCommand` rejects every command (movement AND abilities — also
+  explains type=7/10 doing nothing).
+
+C# DOES send 0x97 HP=200 + 0x96 at spawn — so the suspect is the component creation
+(noun record flags client-side) or the 0x97/0x96 reflection encoding.
+
+**Decisive runtime check (CE/Ghidra debugger attach, 3 reads):** resolve hero object
+(id 2) → read `+0x298` (locomotion comp), `+0x2cc` (combatant comp), and
+`comp(+0x2cc)+0x40` (HP). Null component → noun-flag/creation problem; HP=0 with
+component present → 0x97 encoding problem; all good → permission bitmask
+(`FUN_009c7620`) is the blocker.
+
+### ActionCommand payload sizes (client truth, `ActionCommand::GetPayloadSize` @0x00a1ca80)
+
+type 1=12B · 2=16B · **3/4/10=24B** · 5/11=4B · 6=1B · **7/8=44B** · 9=20B · 12/13=0B
+(validates the C++ structs; types 1/2/6 are unnamed in the C++ ref).
 
 ## Client Locomotion class — full mapped API (2026-06-05)
 
