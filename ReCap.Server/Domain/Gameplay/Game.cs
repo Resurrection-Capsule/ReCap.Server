@@ -726,8 +726,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             var noun = DbpfReader.FnvHash(marker.FindByName("nounDef").AsString());
             if (noun != HealthObeliskNoun && noun != BossObeliskNoun) continue;
 
+            // bindMarker:false EXPERIMENT (D-023): capture has zero obelisk samples; the only
+            // render-verified world-object shape is the bare enemy {6,7}. Marker-bound obelisks
+            // ({6,7,8,17,22}) stayed invisible at point-blank range (scaldron_4 gate 2026-06-05).
             var scale = marker.FindByName("scale").AsFloat();
-            SpawnWorldObject(client, noun, marker, scale <= 0f ? 1f : scale, hasCollision: true);
+            SpawnWorldObject(client, noun, marker, scale <= 0f ? 1f : scale, hasCollision: true, bindMarker: false);
             obelisks++;
         }
 
@@ -742,6 +745,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 if (teleporter is null || teleporter.Children.Count == 0) continue;
 
                 SpawnWorldObject(client, SecurityTeleporterNoun, marker, scale: 0f, hasCollision: false);
+                RegisterTeleporterTrigger(marker, teleporter);
                 teleporters++;
             }
         }
@@ -774,6 +778,77 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         Log.Game.Info($"PopulateLevel({level}): {obelisks} obelisks, {teleporters} teleporter triggers, {enemies} director enemies");
     }
 
+    // Server-side teleporter activation (D-023). C++ never implemented trigger volumes
+    // (asset schema only, no onEnter handling) — walking into a teleporter did nothing there
+    // either. Contract used here is the D-015 client-verified teleport pair (0x90 pos +
+    // 0x91 flags|=0x20). The hero position comes from the client itself: every ActionCommand
+    // header carries the current hero pos, streamed ~5×/s while walking.
+    private readonly record struct TeleporterTrigger(Vector3 Position, float Radius, uint DestinationMarkerId);
+    private readonly List<TeleporterTrigger> _teleporterTriggers = new();
+    private readonly Dictionary<uint, DateTime> _teleportCooldowns = new();
+    private Dictionary<uint, Vector3>? _markerPositionsById;
+
+    private void RegisterTeleporterTrigger(AssetValue marker, AssetValue teleporter)
+    {
+        var destination = teleporter.FindByName("destinationMarkerId").AsUInt32();
+        if (destination == 0) return;
+
+        // TriggerVolumeDef dims (AssetCatalog.cpp:225-248): sphereRadius, else box half-extent.
+        var volume = teleporter.FindByName("triggerVolume");
+        var radius = volume?.FindByName("sphereRadius").AsFloat() ?? 0f;
+        if (radius <= 0f)
+        {
+            var boxW = volume?.FindByName("boxWidth").AsFloat() ?? 0f;
+            var boxL = volume?.FindByName("boxLength").AsFloat() ?? 0f;
+            radius = MathF.Max(boxW, boxL) / 2f;
+        }
+        if (radius <= 0f) radius = 4f;
+
+        _teleporterTriggers.Add(new TeleporterTrigger(marker.FindByName("pos").AsVector3(), radius, destination));
+    }
+
+    private Vector3? ResolveMarkerPosition(uint markerId)
+    {
+        if (Assets is null) return null;
+        if (_markerPositionsById is null)
+        {
+            _markerPositionsById = new Dictionary<uint, Vector3>();
+            foreach (var set in Assets.MarkerSets.Values)
+            {
+                if (set.FindByName("markers") is not ArrayValue markers) continue;
+                foreach (var marker in markers.Items)
+                    _markerPositionsById.TryAdd(marker.FindByName("markerId").AsUInt32(), marker.FindByName("pos").AsVector3());
+            }
+        }
+        return _markerPositionsById.TryGetValue(markerId, out var pos) ? pos : null;
+    }
+
+    private void CheckTeleporterTriggers(RakNetClient client, uint objectId, Vector3 heroPos)
+    {
+        if (_teleporterTriggers.Count == 0) return;
+        if (_teleportCooldowns.TryGetValue(objectId, out var until) && DateTime.UtcNow < until) return;
+
+        foreach (var trigger in _teleporterTriggers)
+        {
+            if (Vector3.DistanceSquared(heroPos, trigger.Position) > trigger.Radius * trigger.Radius) continue;
+
+            if (ResolveMarkerPosition(trigger.DestinationMarkerId) is not Vector3 destination)
+            {
+                Log.Game.Warn($"Teleporter dest marker 0x{trigger.DestinationMarkerId:X8} unresolved");
+                return;
+            }
+
+            _teleportCooldowns[objectId] = DateTime.UtcNow.AddSeconds(3);
+            var locomotion = GetObjectLocomotion(objectId);
+            locomotion.SetGoalPosition(destination);
+            locomotion.GoalFlags |= 0x020;
+            client.SendPacket(new ObjectTeleportPacket { ObjectId = objectId, Position = destination, Orientation = default });
+            client.SendPacket(new ObjectPlayerMovePacket { ObjectId = objectId, Locomotion = locomotion });
+            Log.Game.Info($"Teleporter: obj=0x{objectId:X} ({heroPos.X:F0},{heroPos.Y:F0},{heroPos.Z:F0}) -> ({destination.X:F0},{destination.Y:F0},{destination.Z:F0})");
+            return;
+        }
+    }
+
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,
     // send LPU. Without it the client never binds an active hero and fades out.
     private void SwapCharacter(RakNetClient client, Player player, int deckIndex, uint objectId)
@@ -795,6 +870,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType is 3 or 4 or 5 or 10)
             ClearActiveEmote(sender, packet.ObjectId);
+
+        CheckTeleporterTriggers(sender, packet.ObjectId, new Vector3(packet.PosX, packet.PosY, packet.PosZ));
 
         if (packet.CommandType == 3)
         {
