@@ -11,9 +11,18 @@ public class AttributeDataUpdatePacket : IRakNetPacket
 
     public uint ObjectId { get; set; }
 
-    // AttributeType field IDs (Attributes.h)
+    // AttributeType field IDs — verified against the working-binary wire (cpp_loopback
+    // 0x96 msg #612); the binary uses 111/112 for weapon damage (C++ source enum drifted).
+    public const byte Strength = 0;
+    public const byte Dexterity = 1;
+    public const byte Mind = 2;
     public const byte MaxHealth = 4;
     public const byte MaxMana = 5;
+    public const byte PhysicalDefense = 7;
+    public const byte EnergyDefense = 9;
+    public const byte CriticalRating = 10;
+    public const byte NonCombatSpeed = 11;
+    public const byte CombatSpeed = 12;
     public const byte AttackSpeedScale = 23;
     public const byte CooldownScale = 24;
     public const byte InvisibleToSecurityTeleporters = 109;

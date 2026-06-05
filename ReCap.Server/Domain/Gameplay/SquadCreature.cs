@@ -10,7 +10,15 @@ public sealed record SquadCreature(
     float GearScore,
     float GearScoreFlattened,
     float MaxHealth,
-    float MaxMana);
+    float MaxMana,
+    float Strength = 0f,
+    float Dexterity = 0f,
+    float Mind = 0f,
+    float PhysicalDefense = 0f,
+    float EnergyDefense = 0f,
+    float CriticalRating = 0f,
+    float NonCombatSpeed = 0f,
+    float CombatSpeed = 0f);
 
 // Darkspore element types as written to mCreatureType on the wire. Values mirror the
 // C++ SporeNet::CreatureType enum (Creature.cpp from_string); the client expects these

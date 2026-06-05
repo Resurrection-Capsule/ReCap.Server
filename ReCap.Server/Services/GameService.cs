@@ -44,6 +44,11 @@ public class GameService : IGameHandler
 
         float maxHealth = 200f;
         float maxMana = 200f;
+        // Base stats: C++ Object setup reads ClassAttributes base* fields (Object.cpp:608-662);
+        // the working binary ships them in the spawn 0x96 (capture msgs #607/#612/#617).
+        float strength = 0f, dexterity = 0f, mind = 0f;
+        float physicalDefense = 0f, energyDefense = 0f, criticalRating = 0f;
+        float nonCombatSpeed = 0f, combatSpeed = 0f;
         var attrs = Assets?.ResolveClassAttributesForCreature(noun);
         if (attrs is not null)
         {
@@ -51,6 +56,14 @@ public class GameService : IGameHandler
             var m = attrs.FindByName("maxMana").AsFloat();
             if (h > 0f) maxHealth = h;
             if (m > 0f) maxMana = m;
+            strength = attrs.FindByName("baseStrength").AsFloat();
+            dexterity = attrs.FindByName("baseDexterity").AsFloat();
+            mind = attrs.FindByName("baseMind").AsFloat();
+            physicalDefense = attrs.FindByName("basePhysicalDefense").AsFloat();
+            energyDefense = attrs.FindByName("baseEnergyDefense").AsFloat();
+            criticalRating = attrs.FindByName("baseCritical").AsFloat();
+            nonCombatSpeed = attrs.FindByName("baseNonCombatSpeed").AsFloat();
+            combatSpeed = attrs.FindByName("baseCombatSpeed").AsFloat();
         }
 
         var gearScore = (float)creature.GearScore;
@@ -64,7 +77,15 @@ public class GameService : IGameHandler
             GearScore: gearScore,
             GearScoreFlattened: gearScore,
             MaxHealth: maxHealth,
-            MaxMana: maxMana);
+            MaxMana: maxMana,
+            Strength: strength,
+            Dexterity: dexterity,
+            Mind: mind,
+            PhysicalDefense: physicalDefense,
+            EnergyDefense: energyDefense,
+            CriticalRating: criticalRating,
+            NonCombatSpeed: nonCombatSpeed,
+            CombatSpeed: combatSpeed);
     }
 
     // ── IGameHandler ──────────────────────────────────────────────────────────

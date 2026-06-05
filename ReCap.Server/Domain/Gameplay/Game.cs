@@ -630,9 +630,20 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             float maxMp = squad[i].MaxMana > 0 ? squad[i].MaxMana : 200f;
             client.SendPacket(new CombatantDataUpdatePacket { ObjectId = charObjId, HitPoints = maxHp, ManaPoints = maxMp });
 
+            // C++ Object setup attribute set (Object.cpp:608-662, base ClassAttributes >0 only
+            // + SetWeaponDamage(1,5)); wire-verified vs cpp_loopback 0x96 hero msgs #607/612/617.
             var attrs = new AttributeDataUpdatePacket { ObjectId = charObjId };
+            var c = squad[i];
+            if (c.Strength > 0f) attrs.Set(AttributeDataUpdatePacket.Strength, c.Strength);
+            if (c.Dexterity > 0f) attrs.Set(AttributeDataUpdatePacket.Dexterity, c.Dexterity);
+            if (c.Mind > 0f) attrs.Set(AttributeDataUpdatePacket.Mind, c.Mind);
             attrs.Set(AttributeDataUpdatePacket.MaxHealth, maxHp);
             attrs.Set(AttributeDataUpdatePacket.MaxMana, maxMp);
+            if (c.PhysicalDefense > 0f) attrs.Set(AttributeDataUpdatePacket.PhysicalDefense, c.PhysicalDefense);
+            if (c.EnergyDefense > 0f) attrs.Set(AttributeDataUpdatePacket.EnergyDefense, c.EnergyDefense);
+            if (c.CriticalRating > 0f) attrs.Set(AttributeDataUpdatePacket.CriticalRating, c.CriticalRating);
+            if (c.NonCombatSpeed > 0f) attrs.Set(AttributeDataUpdatePacket.NonCombatSpeed, c.NonCombatSpeed);
+            if (c.CombatSpeed > 0f) attrs.Set(AttributeDataUpdatePacket.CombatSpeed, c.CombatSpeed);
             attrs.Set(AttributeDataUpdatePacket.AttackSpeedScale, 1f);
             attrs.Set(AttributeDataUpdatePacket.CooldownScale, 1f);
             attrs.Set(AttributeDataUpdatePacket.InvisibleToSecurityTeleporters, 1f);
