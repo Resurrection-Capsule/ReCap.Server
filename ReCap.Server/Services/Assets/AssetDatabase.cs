@@ -18,6 +18,7 @@ public sealed class AssetDatabase : IDisposable
     private Assets.EntryIndex? _entryIndex;
 
     private readonly Dictionary<uint, AssetValue> _nouns = new();
+    private readonly Dictionary<uint, AssetValue> _nounsByWireId = new();
     private readonly Dictionary<uint, AssetValue> _nonPlayerClasses = new();
     private readonly Dictionary<uint, AssetValue> _playerClasses = new();
     private readonly Dictionary<uint, AssetValue> _npcAffixes = new();
@@ -40,7 +41,10 @@ public sealed class AssetDatabase : IDisposable
 
     public static AssetDatabase FromConfig() => new(ServerConfig.GamePath);
 
-    public AssetValue? GetNoun(uint id) => _nouns.GetValueOrDefault(id);
+    // Two hash domains (VERIFIED 2026-06-04): DBPF InstanceId = FNV(bare name, no extension);
+    // the WIRE noun id = FNV(name + ".Noun"). GetNoun resolves both so wire-id callers
+    // (squad nouns, ObjectManager.Spawn) actually hit data.
+    public AssetValue? GetNoun(uint id) => _nouns.GetValueOrDefault(id) ?? _nounsByWireId.GetValueOrDefault(id);
     public AssetValue? GetNounByName(string name) => _nouns.GetValueOrDefault(DbpfReader.FnvHash(name));
 
     public AssetValue? GetNonPlayerClass(uint id) => _nonPlayerClasses.GetValueOrDefault(id);
@@ -134,6 +138,7 @@ public sealed class AssetDatabase : IDisposable
         ct.ThrowIfCancellationRequested();
 
         LoadCategory(ctx, "Noun", "Noun", _nouns);
+        BuildNounWireIndex();
         ct.ThrowIfCancellationRequested();
 
         LoadCategory(ctx, "NonPlayerClass", "NonPlayerClass", _nonPlayerClasses);
@@ -174,6 +179,17 @@ public sealed class AssetDatabase : IDisposable
         {
             Log.Assets.Error($"Step '{label}' failed: {ex.GetType().Name}: {ex.Message}");
         }
+    }
+
+    private void BuildNounWireIndex()
+    {
+        if (_reader is null) return;
+        foreach (var (name, entry) in _reader.ListAssetsByType("Noun"))
+        {
+            if (_nouns.TryGetValue(entry.Key.InstanceId, out var node))
+                _nounsByWireId[DbpfReader.FnvHash(name)] = node;
+        }
+        Log.Assets.Info($"Noun wire-id index: {_nounsByWireId.Count} entries");
     }
 
     private static void LoadCategory(Assets.LoaderContext ctx, string typeExtension, string rootStruct, Dictionary<uint, AssetValue> sink)

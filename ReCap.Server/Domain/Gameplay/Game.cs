@@ -436,7 +436,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 // resolve the chosen squad from the player's persisted deck.
                 var squad = ResolveSquadForPlayer(player, (int)packet.SquadId);
                 _playerSquads[player.Slot] = squad;
-                Log.Game.Info($"Resolved squad {packet.SquadId}: [{string.Join(", ", squad.Select(c => $"0x{c.Noun:X8} gs={c.GearScore:F0}"))}]");
+                Log.Game.Info($"Resolved squad {packet.SquadId}: [{string.Join(", ", squad.Select(c => $"0x{c.Noun:X8} gs={c.GearScore:F0} hp={c.MaxHealth:F0} spd={c.NonCombatSpeed:F2}/{c.CombatSpeed:F2}"))}]");
 
                 if (player.PlayerData != null)
                 {
