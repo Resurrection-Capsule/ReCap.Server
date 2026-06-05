@@ -26,7 +26,10 @@ All addresses verified by decompilation this session and annotated in the Ghidra
 | 0x90 ObjectTeleport | `ClientNet::OnGmsObjectTeleport` @0x0053e0e0 | 32B | **None** | `Locomotion::Stop` @0x00a1a150 + set position unconditionally; if local hero, also input/camera resync `FUN_004e2ec0(1)` |
 | LocomotionDataUnreliableUpdate | `ClientNet::OnGmsLocomotionDataUnreliableUpdate` @0x0053e600 | 16B (objId + vec3 goal) | **None** | Writes goalPosition (+0x148) AND partialGoalPosition (+0x154) into the locomotion component for ANY object — the sim walks it |
 | LocomotionDataUpdate | `ClientNet::OnGmsLocomotionDataUpdate` @0x0053e6f0 | reflection-encoded | None | Reflection-deserializes into the locomotion component (`FUN_00a23270`) |
-| ObjectJump | `ClientNet::OnGmsObjectJump` @0x0053e380 | 40B | none seen | Position + jump params |
+| ForcePhysicsUpdate | `ClientNet::OnGmsForcePhysicsUpdate` @0x0053e380 | 40B (= C++ SendForcePhysicsUpdate, Server.cpp:1735, BitStream(41)) | none seen | objId + 3×vec3 |
+
+(Correction 2026-06-05: 0x0053e380 was briefly mislabeled ObjectJump; ObjectJump (kGms id 17)
+is @0x0053dee0. Full client handler table: `docs/architecture/flow/COMMAND_MATRIX.md`.)
 
 ## Client has the full Locomotion class
 

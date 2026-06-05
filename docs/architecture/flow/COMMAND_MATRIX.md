@@ -128,6 +128,69 @@ CatalystPickup=9, Cancel=10, UseInteractableObject=11, Dance=12, Taunt=13.
 
 ---
 
+## Client-side handler map (Ghidra, 2026-06-05 — complete in-game dispatcher sweep)
+
+Source: kGms name table @`0x0118b488` (pairs `{char* name, u32 internal id}`, ids 0–77)
++ the in-game dispatcher @`0x0053fbb0` (switch on internal id−6, byte-table `0x0053feb4`,
+jump-table `0x0053fe10`, 40 cases). All handlers renamed + plate-commented in the Ghidra
+project as `ClientNet::OnGms<Name>`.
+
+⚠ **Internal kGms id ≠ wire opcode minus a constant** (ObjectCreate id 12 ↔ wire 0x8C,
+ObjectPlayerMove id 18 ↔ wire 0x91): a remap exists in the receive path (not yet located).
+Identify handlers by the dispatcher table / body layout, never by offset arithmetic.
+
+| kGms id | Name | Client handler | Note |
+|---------|------|----------------|------|
+| 6  | PartyMergeComplete | 0x004e8790 | |
+| 8  | VoteKickStarted | 0x0053cd30 | |
+| 11 | GameState | 0x0053ca60 | per-tick (wire 0x8A) |
+| 12 | ObjectCreate | 0x0053f550 | mapped earlier (D-009) |
+| 13 | ObjectUpdate | 0x0053dd00 | mapped earlier |
+| 14 | ObjectDelete | 0x0053ddc0 | |
+| 15 | PlayerCharacterDeploy | 0x0053fa90 | |
+| 16 | ObjectTeleport | 0x0053e0e0 | UNGATED — see CLIENT_MOVEMENT_CONTRACT.md |
+| 17 | ObjectJump | 0x0053dee0 | |
+| 19 | ForcePhysicsUpdate | 0x0053e380 | 40B = C++ SendForcePhysicsUpdate |
+| 18 | ObjectPlayerMove | 0x0053e1c0 | LOCAL-HERO GATE — see CLIENT_MOVEMENT_CONTRACT.md |
+| 20 | PhysicsChanged | 0x0053e490 | |
+| 21 | LocomotionDataUpdate | 0x0053e6f0 | reflection-encoded |
+| 22 | LocomotionDataUnreliableUpdate | 0x0053e600 | UNGATED smooth-move channel |
+| 23 | AttributeDataUpdate | 0x0053e7c0 | wire 0x96 |
+| 24 | CombatantDataUpdate | 0x0053e890 | wire 0x97 |
+| 25 | InteractableDataUpdate | 0x0053e960 | wire 0x98 |
+| 26 | AgentBlackboardUpdate | 0x0053ea30 | wire 0x99 |
+| 27 | LootDataUpdate | 0x0053eb00 | |
+| 28 | ServerEvent | 0x0053ec80 | |
+| 30 | ActionCommandResponse | 0x0053cb10 | reply to 0x9C — candidate unblock for the deferred command path (+3000ms deadline) |
+| 35 | LabsPlayerUpdate | 0x0053ebf0 | wire 0xA1 |
+| 36/37/38 | ModifierCreated/Updated/Deleted | 0x0053edd0 / 0x0053ee80 / 0x0053ef30 | |
+| 39 | SetAnimationState | 0x0053efe0 | |
+| 40 | SetObjectGfxState | 0x0053f170 | |
+| 48 | GamePrepareForStart | 0x0053cb80 | |
+| 49 | GameStart | 0x0053cc40 | |
+| 55 | DirectorState | 0x0053dcd0 | |
+| 56 | ObjectivesInitForLevel | 0x0053c820 | |
+| 57 | ObjectivesComplete | 0x0053bc50 | |
+| 58 | ObjectiveUpdated | 0x0053bb10 | |
+| 63 | CombatEvent | 0x0053ed50 | |
+| 64 | ReloadLevel | 0x0053cce0 | |
+| 65 | GravityForceUpdate | 0x0053f240 | |
+| 66 | CooldownUpdate | 0x0053f310 | |
+| 68 | CrystalMessage | 0x0053f700 | |
+| 75 | ObjectiveAdd | 0x0053c970 | |
+| 77 | DebugPing | 0x0053d840 | |
+
+**Not in this dispatcher** (other receive paths / client→server only): HelloReq(0),
+HelloPlayer(1, @0x00a93d50), ReconnectPlayer(2), Connected(3, @0x00a93b50), Goodbye(4),
+PlayerJoined(5, @0x00a93f50), PlayerDeparted(7, @0x00a94040), PlayerStatusUpdate(9),
+GameAborted(10), ActionCommandMsgs(29, C→S), PlayerDamage(31), LootSpawned(32),
+LootAcquired(33), SystemMessage(34), ChainPlayerMsgs(41), ChainVote(42),
+ChainLevelResults(43), ChainCashOut(44), ChainGame(45), ChainGameOver(46), QuickGame(47),
+Cheat(50), Arena(51-54), Juggernaut(59-62), CrystalDragMessage(67, C→S),
+KillRace(69-72), TutorialGame(73), Cinematic(74), LootDropMessage(76, C→S). The
+connection/lobby-phase ones live in the `0x00a9xxxx` transport layer; the Chain*/mode
+messages likely have a second dispatcher (unmapped — next sweep target).
+
 ## Gaps & next steps
 
 **Inbound (C→S) gaps — the only ones that block gameplay:**
