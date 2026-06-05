@@ -760,19 +760,20 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType == 3)
         {
-            // Retail smooth-movement protocol (CLIENT_MOVEMENT_CONTRACT.md, D-016): the client
-            // defers the click (stashes goal, sends 0x9C, 3s deadline) and walks smoothly via
-            // Locomotion::SetGoalPositionWithDistance when the server replies 0xA8 type 8.
-            // Goal comes from the client's own stash — the response carries no position.
-            // (Previous contract: 0x90 teleport + 0x91 flags 0x21 — C++ teleportMovement, D-015.)
+            // Movement contract D-015 (client-verified): 0x90 teleport(pos=goal, quat=0) then
+            // 0x91 flags=0x21 per click — C++ teleportMovement (Server.cpp:76/722), wire ground
+            // truth cpp_loopback. D-016 (0xA8 type 8) was client-refuted for plain movement:
+            // type 8 only fires the deferred-ability approach stash (CLIENT_MOVEMENT_CONTRACT.md).
             var (goalFlags, gx, gy, gz) = packet.ReadMovementData();
+            var goal = new Vector3(gx, gy, gz);
             var locomotion = GetObjectLocomotion(packet.ObjectId);
-            locomotion.SetGoalPosition(new Vector3(gx, gy, gz));
+            locomotion.SetGoalPosition(goal);
             locomotion.PartialGoalPosition = new Vector3(packet.PosX, packet.PosY, packet.PosZ);
-            locomotion.GoalFlags |= goalFlags;
+            locomotion.GoalFlags |= goalFlags | 0x020;
 
-            sender.SendPacket(new ActionCommandResponsePacket { ActionType = 8 });
-            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) ack=0xA8 type 8");
+            sender.SendPacket(new ObjectTeleportPacket { ObjectId = packet.ObjectId, Position = goal, Orientation = default });
+            sender.SendPacket(new ObjectPlayerMovePacket { ObjectId = packet.ObjectId, Locomotion = locomotion });
+            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{locomotion.GoalFlags:X}");
         }
         else if (packet.CommandType == 4)
         {
