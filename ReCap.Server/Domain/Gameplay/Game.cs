@@ -40,6 +40,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private bool ReadyForStart = false;
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
+    private readonly Dictionary<uint, LocomotionData> _objectLocomotion = new();
     private readonly Dictionary<byte, uint[]> _deckObjectIds = new();
     private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
@@ -759,37 +760,38 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType == 3)
         {
-            // ActionCommandMovementData: goalPosition + goalFlags. C++ broadcasts 0x91 to move.
+            // C++ OnActionCommandMsgs Movement (Server.cpp:715-731): SetGoalPosition forces flag
+            // 0x001 then ORs the client's goalFlags; partial goal = common-data position.
             var (goalFlags, gx, gy, gz) = packet.ReadMovementData();
-            var movePacket = new ObjectPlayerMovePacket
-            {
-                ObjectId = packet.ObjectId,
-                Locomotion = new LocomotionData
-                {
-                    GoalFlags = goalFlags,
-                    GoalPosition = new Vector3(gx, gy, gz),
-                    AllowedStopDistance = 0,
-                    DesiredStopDistance = 0
-                }
-            };
-            sender.SendPacket(movePacket);
-            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{goalFlags:X}");
+            var locomotion = GetObjectLocomotion(packet.ObjectId);
+            locomotion.SetGoalPosition(new Vector3(gx, gy, gz));
+            locomotion.PartialGoalPosition = new Vector3(packet.PosX, packet.PosY, packet.PosZ);
+            locomotion.GoalFlags |= goalFlags;
+
+            sender.SendPacket(new ObjectPlayerMovePacket { ObjectId = packet.ObjectId, Locomotion = locomotion });
+            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{locomotion.GoalFlags:X}");
         }
         else if (packet.CommandType == 4)
         {
-            var movePacket = new ObjectPlayerMovePacket
-            {
-                ObjectId = packet.ObjectId,
-                Locomotion = new LocomotionData
-                {
-                    GoalFlags = 0x020
-                }
-            };
-            sender.SendPacket(movePacket);
+            // C++ StopMovement → Locomotion::Stop (flags=0x020, GoalPosition preserved) → tick
+            // sends 0x91 for player-controlled objects (Instance.cpp:967-970).
+            var locomotion = GetObjectLocomotion(packet.ObjectId);
+            locomotion.Stop();
+            sender.SendPacket(new ObjectPlayerMovePacket { ObjectId = packet.ObjectId, Locomotion = locomotion });
         }
         else if (packet.CommandType == 5)
         {
             Log.Game.Debug("Switch character requested");
         }
+    }
+
+    private LocomotionData GetObjectLocomotion(uint objectId)
+    {
+        if (!_objectLocomotion.TryGetValue(objectId, out var locomotion))
+        {
+            locomotion = new LocomotionData();
+            _objectLocomotion[objectId] = locomotion;
+        }
+        return locomotion;
     }
 }

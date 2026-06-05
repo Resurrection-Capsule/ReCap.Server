@@ -154,6 +154,29 @@ public class LocomotionData
     public Vector3 Offset { get; set; }
     public int ReflectedLastUpdate { get; set; }
 
+    // C++ Locomotion::SetGoalPosition (Locomotion.cpp:477): reset stale target state, force flag 0x001.
+    public void SetGoalPosition(Vector3 position)
+    {
+        TargetObjectId = 0;
+        Facing = Vector3.Zero;
+        TargetPosition = Vector3.Zero;
+        ExternalLinearVelocity = Vector3.Zero;
+
+        GoalFlags = 0x001;
+        GoalPosition = position;
+    }
+
+    // C++ Locomotion::Stop (Locomotion.cpp:564): GoalPosition preserved, flags become 0x020.
+    public void Stop()
+    {
+        TargetObjectId = 0;
+        ExternalLinearVelocity = Vector3.Zero;
+        TargetPosition = Vector3.Zero;
+        Facing = Vector3.Zero;
+
+        GoalFlags = 0x020;
+    }
+
     public void WriteTo(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true);
