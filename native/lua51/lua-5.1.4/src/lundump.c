@@ -75,15 +75,17 @@ static lua_Number LoadNumber(LoadState* S)
 
 static TString* LoadString(LoadState* S)
 {
+ lu_int32 size32;  /* ReCap: chunks are 32-bit (header size_t=4); stream sizes fixed at 4 bytes */
  size_t size;
- LoadVar(S,size);
+ LoadVar(S,size32);
+ size=(size_t)size32;
  if (size==0)
   return NULL;
  else
  {
   char* s=luaZ_openspace(S->L,S->b,size);
   LoadBlock(S,s,size);
-  return luaS_newlstr(S->L,s,size-1);		/* remove trailing '\0' */
+  return luaS_newlstr(S->L,s,size-1);
  }
 }
 
@@ -220,7 +222,7 @@ void luaU_header (char* h)
  *h++=(char)LUAC_FORMAT;
  *h++=(char)*(char*)&x;				/* endianness */
  *h++=(char)sizeof(int);
- *h++=(char)sizeof(size_t);
+ *h++=(char)4;	/* ReCap: stream size_t forced to 4 (32-bit chunk format) */
  *h++=(char)sizeof(Instruction);
  *h++=(char)sizeof(lua_Number);
  *h++=(char)(((lua_Number)0.5)==0);		/* is lua_Number integral? */

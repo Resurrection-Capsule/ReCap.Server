@@ -1,0 +1,55 @@
+﻿diff --git a/native/lua51/lua-5.1.4/src/ldump.c b/native/lua51/lua-5.1.4/src/ldump.c
+index c9d3d48..539ef80 100644
+--- a/native/lua51/lua-5.1.4/src/ldump.c
++++ b/native/lua51/lua-5.1.4/src/ldump.c
+@@ -62,14 +62,14 @@ static void DumpString(const TString* s, DumpState* D)
+ {
+  if (s==NULL || getstr(s)==NULL)
+  {
+-  size_t size=0;
++  lu_int32 size=0;
+   DumpVar(size,D);
+  }
+  else
+  {
+-  size_t size=s->tsv.len+1;		/* include trailing '\0' */
++  lu_int32 size=(lu_int32)(s->tsv.len+1);
+   DumpVar(size,D);
+-  DumpBlock(getstr(s),size,D);
++  DumpBlock(getstr(s),(size_t)size,D);
+  }
+ }
+ 
+diff --git a/native/lua51/lua-5.1.4/src/lundump.c b/native/lua51/lua-5.1.4/src/lundump.c
+index 8010a45..7189d4f 100644
+--- a/native/lua51/lua-5.1.4/src/lundump.c
++++ b/native/lua51/lua-5.1.4/src/lundump.c
+@@ -75,15 +75,17 @@ static lua_Number LoadNumber(LoadState* S)
+ 
+ static TString* LoadString(LoadState* S)
+ {
++ lu_int32 size32;  /* ReCap: chunks are 32-bit (header size_t=4); stream sizes fixed at 4 bytes */
+  size_t size;
+- LoadVar(S,size);
++ LoadVar(S,size32);
++ size=(size_t)size32;
+  if (size==0)
+   return NULL;
+  else
+  {
+   char* s=luaZ_openspace(S->L,S->b,size);
+   LoadBlock(S,s,size);
+-  return luaS_newlstr(S->L,s,size-1);		/* remove trailing '\0' */
++  return luaS_newlstr(S->L,s,size-1);
+  }
+ }
+ 
+@@ -220,7 +222,7 @@ void luaU_header (char* h)
+  *h++=(char)LUAC_FORMAT;
+  *h++=(char)*(char*)&x;				/* endianness */
+  *h++=(char)sizeof(int);
+- *h++=(char)sizeof(size_t);
++ *h++=(char)4;	/* ReCap: stream size_t forced to 4 (32-bit chunk format) */
+  *h++=(char)sizeof(Instruction);
+  *h++=(char)sizeof(lua_Number);
+  *h++=(char)(((lua_Number)0.5)==0);		/* is lua_Number integral? */
