@@ -45,10 +45,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
 
-    // Mirrors C++ teleportMovement (Server.cpp:76): true = movement replies snap the hero
-    // (0x90 + 0x91 flags 0x21, D-015 verified); false = smooth path (0x91 flags 0x001 only;
-    // the own-hero walk is client-side, D-017/D-017b). CLI: --no-teleport-movement.
-    public static bool TeleportMovement { get; set; } = true;
+    // Mirrors C++ teleportMovement (Server.cpp:76). Default false = smooth movement (0x91
+    // flags 0x001; own-hero walk is client-side, enabled by D-017/D-017b ClassAttributes).
+    // CLI --teleport-movement re-enables the D-015 snap contract (0x90 + 0x91 flags 0x21)
+    // as a fallback for creatures whose data lacks locomotion speeds.
+    public static bool TeleportMovement { get; set; } = false;
 
     public IEnumerable<ulong> GetPlayerIds() => Players.Where(p => !p.Value.IsBot).Select(p => p.Value.Id);
 
