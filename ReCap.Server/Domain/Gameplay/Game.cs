@@ -760,20 +760,19 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         if (packet.CommandType == 3)
         {
-            // C++ OnActionCommandMsgs Movement (Server.cpp:715-731): SetGoalPosition forces flag
-            // 0x001 then ORs the client's goalFlags | 0x020 (teleportMovement=true, Server.cpp:76/722).
-            // Wire ground truth (cpp_loopback capture): per click 0x90 teleport(pos=goal, quat=0)
-            // then 0x91 flags=0x21 — flags=0x01 alone was client-tested 2026-06-05: no movement.
+            // Retail smooth-movement protocol (CLIENT_MOVEMENT_CONTRACT.md, D-016): the client
+            // defers the click (stashes goal, sends 0x9C, 3s deadline) and walks smoothly via
+            // Locomotion::SetGoalPositionWithDistance when the server replies 0xA8 type 8.
+            // Goal comes from the client's own stash — the response carries no position.
+            // (Previous contract: 0x90 teleport + 0x91 flags 0x21 — C++ teleportMovement, D-015.)
             var (goalFlags, gx, gy, gz) = packet.ReadMovementData();
-            var goal = new Vector3(gx, gy, gz);
             var locomotion = GetObjectLocomotion(packet.ObjectId);
-            locomotion.SetGoalPosition(goal);
+            locomotion.SetGoalPosition(new Vector3(gx, gy, gz));
             locomotion.PartialGoalPosition = new Vector3(packet.PosX, packet.PosY, packet.PosZ);
-            locomotion.GoalFlags |= goalFlags | 0x020;
+            locomotion.GoalFlags |= goalFlags;
 
-            sender.SendPacket(new ObjectTeleportPacket { ObjectId = packet.ObjectId, Position = goal, Orientation = default });
-            sender.SendPacket(new ObjectPlayerMovePacket { ObjectId = packet.ObjectId, Locomotion = locomotion });
-            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) flags=0x{locomotion.GoalFlags:X}");
+            sender.SendPacket(new ActionCommandResponsePacket { ActionType = 8 });
+            Log.Game.Debug($"Move obj=0x{packet.ObjectId:X} -> ({gx:F1},{gy:F1},{gz:F1}) ack=0xA8 type 8");
         }
         else if (packet.CommandType == 4)
         {
