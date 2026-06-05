@@ -525,13 +525,17 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         return null;
     }
 
-    // C++ ObjectManager::Create(marker) + SendObjectCreate: the object carries the marker
-    // transform and markerId (ObjectManager.cpp:206-212). Wire-verified 93B shape:
-    // createData all-10 + object-reflection {6,7,8,17,22}.
-    private void SpawnWorldObject(RakNetClient client, uint noun, AssetValue marker, float scale, bool hasCollision)
+    // C++ ObjectManager::Create(marker) + SendObjectCreate. Wire-verified vs cpp_loopback
+    // (zelems_1, decoded 2026-06-05, tools/scratch/decode_creates.py):
+    //   marker objects (SecurityTeleporter 93B) = createData all-10 with ROT ZEROS
+    //     + object-reflection {6,7,8,17,22} (markerId sent);
+    //   enemies (81B) = same createData shape (scale=1, team=0, hasColl=1)
+    //     + object-reflection {6,7} ONLY — no scale/collision/markerId on the wire.
+    // The capture leaves createData rot zeroed even for rotated markers — marker rotDegrees
+    // are NOT propagated; orientation rides the reflection quat.
+    private void SpawnWorldObject(RakNetClient client, uint noun, AssetValue marker, float scale, bool hasCollision, bool bindMarker = true)
     {
         var pos = marker.FindByName("pos").AsVector3();
-        var rot = marker.FindByName("rotDegrees").AsVector3();
         var markerId = marker.FindByName("markerId").AsUInt32();
 
         var objId = _nextObjectId++;
@@ -540,13 +544,19 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         var objData = new SporelabsObject
         {
             Position = pos,
-            Orientation = Quaternion.Identity,
-            Scale = scale,
-            HasCollision = hasCollision,
-            MarkerScale = 1f,
-            SourceMarkerKeyMarkerId = markerId
+            Orientation = Quaternion.Identity
         };
-        foreach (byte bit in new byte[] { 6, 7, 8, 17, 22 }) objData.SetDataBit(bit);
+        objData.SetDataBit(6);
+        objData.SetDataBit(7);
+        if (bindMarker)
+        {
+            objData.Scale = scale;
+            objData.HasCollision = hasCollision;
+            objData.SourceMarkerKeyMarkerId = markerId;
+            objData.SetDataBit(8);
+            objData.SetDataBit(17);
+            objData.SetDataBit(22);
+        }
 
         client.SendPacket(new ObjectCreatePacket
         {
@@ -555,9 +565,6 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             {
                 Noun = noun,
                 Position = pos,
-                RotXDegrees = rot.X,
-                RotYDegrees = rot.Y,
-                RotZDegrees = rot.Z,
                 Scale = scale,
                 Team = 0,
                 HasCollision = hasCollision,
@@ -565,6 +572,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             },
             ObjectData = objData
         });
+        Log.Game.Debug($"WorldObject obj=0x{objId:X} noun=0x{noun:X8} at ({pos.X:F0},{pos.Y:F0},{pos.Z:F0}){(bindMarker ? $" marker=0x{markerId:X8}" : " (enemy shape)")}");
     }
 
     private void OnPlayerStart(RakNetClient client)
@@ -757,7 +765,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 if (!DirectorSpawnPointNouns.Contains(markerNoun)) continue;
 
                 var enemyNoun = enemyBank[Random.Shared.Next(enemyBank.Length)];
-                SpawnWorldObject(client, enemyNoun, marker, scale: 1f, hasCollision: true);
+                SpawnWorldObject(client, enemyNoun, marker, scale: 1f, hasCollision: true, bindMarker: false);
                 enemies++;
                 break;
             }
