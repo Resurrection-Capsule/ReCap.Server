@@ -77,5 +77,44 @@ local-hero gate, the 3s deadline expired, nothing moved. The working binary's
    command-def `+0x151` byte is for the movement command — would tell whether the client
    can self-walk without any server packet.
 
+## ★ ActionCommandResponse type 8 = "movement GO" (2026-06-05 — THE smooth-move protocol)
+
+`ClientNet::OnGmsActionCommandResponse` @0x0053cb10 (wire 0xA8, 56B body) routes on
+**byte +1 = response type** (`FUN_004d9ba0`):
+
+| type | effect |
+|------|--------|
+| 1 | ability ack — arms pending ability (abilityId@+4, u64 times @+0x10/+0x18/+0x20/+0x28, userData@+0x34); matches C++ `SendActionCommandResponse(AbilityCommandResponse)` (Server.cpp:1659, 57B BitStream) |
+| 2 | command finished — clears pending, stops anim (`FUN_004f7980(…, 1.0)`) |
+| 4 | cancel pending ability |
+| **8** | **movement GO**: takes the goal/stop-distance the client STASHED at click time (pending struct +0x40 goal, +0x3c targetId, +0x50 distance) and calls `Locomotion::SetGoalPositionWithDistance(localHero, goal, dist)` (or `SetGoalObject` if targetId set) → **smooth local walk**. Goal does NOT come from the packet. |
+| 0x10 | clear (FUN_004e21c0) |
+
+**Retail smooth-movement flow:** click → command deferred (ValidateCommandRoute=1,
+goal stashed, 0x9C sent, 3s deadline) → server replies 0xA8 type=8 → client walks
+smoothly to its own stashed goal → client sends Stop(4) on arrival. The C++ reference
+KNOWS this packet (sends type 1 for abilities; its comments cite these exact client
+functions) but never implemented type 8 — that's why it fell back to teleportMovement.
+
+**ReCap experiment (D-016 candidate):** on ActionCommand type=3, reply 0xA8 56B:
+`[u8 cmdByte0][u8 8][u8 0][u8 0]` + 52 zero bytes (case 8 reads only the stash; byte0
+is stored, not gated) — possibly instead of (or before) the 0x90 teleport. Expected:
+smooth walking. Verify byte0 semantics on wire first (C++ sends `*param_1` = the
+matching pending-slot byte; client stores it at pending+0x38).
+
+## Client Locomotion class — full mapped API (2026-06-05)
+
+All matched 1:1 vs C++ `Locomotion.cpp` (which is a reimpl of this class) and renamed:
+SetGoalPosition @0x00a19bb0 (0x001) · SetGoalPositionWithDistance @0x00a19ca0 ·
+SetGoalObject @0x00a19da0 · SetGoalObjectEx @0x00a19f20 (0x400|0x40) · SetFacing
+@0x00a1a9f0 (0x042) · Stop @0x00a1a150 (0x020) · TurnToFaceTargetObject @0x00a1ab80
+(0x102) · MoveToPointWhileFacingTarget @0x00a1a060 (0x101) · ClearExternalVelocity
+@0x00a1a2f0 (0x020+zero extVel) · ClearTargetObject @0x009fb0a2 (&~0x40,&~0x100) ·
+plus MoveTowardPoint/MoveToPointExact/MoveToCircleEdge/MoveToPointWithinRange/
+MoveToObject (earlier sessions). Component layout (object+0x298): +0x90 targetId,
++0x144 goalFlags, +0x148 goalPos, +0x154 partialGoalPos, +0x178 facingDir,
++0x184 extLinVel, +0x19c/+0x1a0 allowed/desired stop, +0x1ac targetPos. goalFlags
+semantics confirmed = the C++ Locomotion.cpp:20-31 table.
+
 Wire ground truth for the verified teleport contract: `captures/cpp_loopback.pcapng`
 (dump via `dump_moves.py`). Ledger: D-015.

@@ -135,9 +135,32 @@ Source: kGms name table @`0x0118b488` (pairs `{char* name, u32 internal id}`, id
 jump-table `0x0053fe10`, 40 cases). All handlers renamed + plate-commented in the Ghidra
 project as `ClientNet::OnGms<Name>`.
 
-⚠ **Internal kGms id ≠ wire opcode minus a constant** (ObjectCreate id 12 ↔ wire 0x8C,
-ObjectPlayerMove id 18 ↔ wire 0x91): a remap exists in the receive path (not yet located).
-Identify handlers by the dispatcher table / body layout, never by offset arithmetic.
+✅ **Remap rule SOLVED (2026-06-05):** `wire opcode = 0x7F + POSITION in the kGms name
+table @0x118b488`; the table's u32 value = the internal dispatch id (what `GetType()`
+returns and what the dispatchers switch on). The table position order matches the C++/C#
+`PacketID`/`PacketType` enum — verified position-by-position against wire-anchored ids
+(0x8C, 0x90, 0x91, 0x9C, 0xA1, 0xA7, 0xAF-0xB1, 0xB7, 0xB8, 0xCC).
+
+**Enum bug found+fixed via this rule:** C++ `Types.h` (and old C# `PacketType.cs`)
+skipped 0x9D and shifted the next names +1. Client truth: `0x9D=PlayerDamage,
+0x9E=LootSpawned, 0x9F=LootAcquired, 0xA0=SystemMessage` (SystemMessage was missing
+entirely). C# fixed 2026-06-05; nothing sent in that range yet, so no wire impact.
+
+**Handler registration mechanism:** handlers are `tTransportMessageFunctor{vtbl, fn,
+this}` objects registered per kGms internal id on the msg-manager singleton.
+`nSporeNet::cClientSession::ConnectAndRegisterMessages` @0x00a93353 registers the
+connection-phase ids (1 HelloPlayer, 3 Connected, 5 PlayerJoined, 7 PlayerDeparted);
+`cSporeOnline_Common`'s functor is the in-game dispatcher below (covers 40 ids,
+default=drop); Chain*/Arena/mode messages are consumed by per-game-state listeners
+registered on state entry (heap — map via runtime trace or per-state OnEnter sweep).
+
+**GameSimulator (embedded server!):** `FUN_009c6150` @0x009c6150 ("SimulatorDebugPing"
+registry entry) is a debug-path dispatcher that handles the **client→server** ids
+in-process: 9 PlayerStatusUpdate → 0x009c3020, 29 ActionCommandMsgs → **0x009c5b40**,
+67 CrystalDrag → 0x009c2f60, 76 LootDrop (stub), 77 DebugPing → 0x009c5340. The client
+ships the original server-side command handling — `0x009c5b40` is ground truth for what
+the real server did with ActionCommands (richer than the C++ reference; deep-dive
+pending).
 
 | kGms id | Name | Client handler | Note |
 |---------|------|----------------|------|

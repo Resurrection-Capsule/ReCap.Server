@@ -32,9 +32,12 @@ public enum PacketType : byte
     LootDataUpdate = 0x9A,
     ServerEvent = 0x9B,
     ActionCommandMsgs = 0x9C,
-    PlayerDamage = 0x9E,
-    LootSpawned = 0x9F,
-    LootAcquired = 0xA0,
+    // 0x9D-0xA0 verified against the client kGms name table @0x118b488 (wire = 0x7F + table
+    // position; LabsPlayerUpdate=0xA1 anchor). C++ Types.h skips 0x9D and shifts these +1 — wrong.
+    PlayerDamage = 0x9D,
+    LootSpawned = 0x9E,
+    LootAcquired = 0x9F,
+    SystemMessage = 0xA0,
     LabsPlayerUpdate = 0xA1,
     ModifierCreated = 0xA2,
     ModifierUpdated = 0xA3,
