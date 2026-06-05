@@ -41,6 +41,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
     private readonly Dictionary<uint, LocomotionData> _objectLocomotion = new();
+    private readonly Dictionary<uint, int> _interactableTimesUsed = new();
     private readonly Dictionary<byte, uint[]> _deckObjectIds = new();
     private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
@@ -822,6 +823,47 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             _playerCharacterObjectIds[player.Slot] = deckIds[creatureIndex];
             SwapCharacter(sender, player, creatureIndex, deckIds[creatureIndex]);
         }
+        else if (packet.CommandType == 11)
+        {
+            // C++ UseInteractableObject (Server.cpp case 11 → Instance::InteractWithObject,
+            // Instance.cpp:541-578): TimesUsed++ on the interactable, then per noun type
+            // (Loot/Crystal pickups; default = dev-shortcut DropLoot — loot phase pending).
+            // v1: track TimesUsed + send 0x98 so the client sees the obelisk state change.
+            var targetId = packet.ReadInteractableObjectId();
+            var timesUsed = _interactableTimesUsed.GetValueOrDefault(targetId) + 1;
+            _interactableTimesUsed[targetId] = timesUsed;
+
+            sender.SendPacket(new InteractableDataUpdatePacket
+            {
+                ObjectId = targetId,
+                TimesUsed = timesUsed,
+                UsesAllowed = 0,
+                Ability = 0
+            });
+            Log.Game.Info($"Interact obj=0x{targetId:X} timesUsed={timesUsed}");
+        }
+        else if (packet.CommandType is 12 or 13)
+        {
+            // C++ Dance/Taunt (Server.cpp:966-977): SendAnimationState with the emote anim hash,
+            // overlay=false, scale=1 (Instance.cpp:990, defaults Instance.h:202).
+            SendAnimationState(sender, packet.ObjectId,
+                packet.CommandType == 12 ? EmoteDanceState : EmoteTauntState);
+        }
+    }
+
+    private static readonly uint EmoteDanceState = ObjectivesInitForLevelPacket.FnvHash("emote_dance_all");
+    private static readonly uint EmoteTauntState = ObjectivesInitForLevelPacket.FnvHash("emote_taunt_all");
+
+    private void SendAnimationState(RakNetClient client, uint objectId, uint state, bool overlay = false, float scale = 1f)
+    {
+        client.SendPacket(new SetAnimationStatePacket
+        {
+            ObjectId = objectId,
+            State = state,
+            Timestamp = (ulong)(DateTime.UtcNow - StartTime).TotalMilliseconds,
+            Overlay = overlay,
+            Scale = scale
+        });
     }
 
     private LocomotionData GetObjectLocomotion(uint objectId)
