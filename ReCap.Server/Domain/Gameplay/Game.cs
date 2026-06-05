@@ -774,7 +774,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private void HandleActionCommand(RakNetClient sender, ActionCommandMsgsPacket packet)
     {
-        Log.Game.Debug($"ActionCommand: type={packet.CommandType} obj=0x{packet.ObjectId:X} pos=({packet.PosX:F1},{packet.PosY:F1},{packet.PosZ:F1})");
+        Log.Game.Debug($"ActionCommand: type={packet.CommandType} stamp={packet.CommandStamp} obj=0x{packet.ObjectId:X} pos=({packet.PosX:F1},{packet.PosY:F1},{packet.PosZ:F1})");
+
+        if (packet.CommandType is 3 or 4 or 5 or 10)
+            ClearActiveEmote(sender, packet.ObjectId);
 
         if (packet.CommandType == 3)
         {
@@ -823,6 +826,43 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             _playerCharacterObjectIds[player.Slot] = deckIds[creatureIndex];
             SwapCharacter(sender, player, creatureIndex, deckIds[creatureIndex]);
         }
+        else if (packet.CommandType == 6)
+        {
+            // Overdrive (client emit @0x004ebb50, payload u8 heroSlot) — not in the C++ ref.
+            // v1: ack with response type=2 so the client command lock clears; the overdrive
+            // effect itself is Simulation-phase work.
+            SendActionCommandResponse(sender, packet.CommandStamp);
+            Log.Game.Info($"Overdrive slot={packet.ReadOverdriveSlot()} (stub)");
+        }
+        else if (packet.CommandType is 7 or 8)
+        {
+            // UseCharacterAbility / UseSquadAbility (44B ActionCommandAbilityData,
+            // C++ Types.h:855, client emit @0x004d8a80). v1: parse + response type=2 —
+            // clears the client's 3s pending lock (FUN_004d9150) without arming the
+            // case-1 ability path (which drives locomotion/FX from response fields).
+            // Real ability resolution is Simulation-phase work.
+            var (targetId, cursorPos, targetPos, index, rank, userData) = packet.ReadAbilityData();
+            SendActionCommandResponse(sender, packet.CommandStamp);
+            Log.Game.Info($"Ability type={packet.CommandType} slot={index} rank={rank} target=0x{targetId:X} " +
+                          $"cursor=({cursorPos.X:F1},{cursorPos.Y:F1},{cursorPos.Z:F1}) " +
+                          $"targetPos=({targetPos.X:F1},{targetPos.Y:F1},{targetPos.Z:F1}) userData=0x{userData:X} (stub)");
+        }
+        else if (packet.CommandType == 9)
+        {
+            // CatalystPickup (20B ActionCommandCatalystData, C++ Types.h:847, client emit
+            // @0x0044ece0). C++ routes to Instance::InteractWithObject (Server.cpp:942-947).
+            // v1: same interact bookkeeping as type 11 + lock-clearing ack; loot phase pending.
+            var (targetId, position) = packet.ReadCatalystData();
+            RecordInteraction(sender, targetId);
+            SendActionCommandResponse(sender, packet.CommandStamp);
+            Log.Game.Info($"CatalystPickup obj=0x{targetId:X} pos=({position.X:F1},{position.Y:F1},{position.Z:F1})");
+        }
+        else if (packet.CommandType == 10)
+        {
+            // Cancel (C++ Server.cpp:950-955 → Instance::CancelAction, which only stops the
+            // object's Lua action thread — none here yet). Emote clear already handled above.
+            Log.Game.Debug($"Cancel obj=0x{packet.ObjectId:X}");
+        }
         else if (packet.CommandType == 11)
         {
             // C++ UseInteractableObject (Server.cpp case 11 → Instance::InteractWithObject,
@@ -830,29 +870,66 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             // (Loot/Crystal pickups; default = dev-shortcut DropLoot — loot phase pending).
             // v1: track TimesUsed + send 0x98 so the client sees the obelisk state change.
             var targetId = packet.ReadInteractableObjectId();
-            var timesUsed = _interactableTimesUsed.GetValueOrDefault(targetId) + 1;
-            _interactableTimesUsed[targetId] = timesUsed;
-
-            sender.SendPacket(new InteractableDataUpdatePacket
-            {
-                ObjectId = targetId,
-                TimesUsed = timesUsed,
-                UsesAllowed = 0,
-                Ability = 0
-            });
-            Log.Game.Info($"Interact obj=0x{targetId:X} timesUsed={timesUsed}");
+            RecordInteraction(sender, targetId);
+            SendActionCommandResponse(sender, packet.CommandStamp);
         }
         else if (packet.CommandType is 12 or 13)
         {
             // C++ Dance/Taunt (Server.cpp:966-977): SendAnimationState with the emote anim hash,
             // overlay=false, scale=1 (Instance.cpp:990, defaults Instance.h:202).
-            SendAnimationState(sender, packet.ObjectId,
-                packet.CommandType == 12 ? EmoteDanceState : EmoteTauntState);
+            // C++ alone is incomplete: the client arms a 3s pending-command lock when it sends
+            // type 12/13 (FUN_004d9150 → block+4, deadline block+0x10) and hard-rejects movement
+            // clicks until ActionCommandResponse type=2 echoes the command stamp (FUN_004d9ba0
+            // case 2 → clears lock + resets anim). Response must go FIRST so the emote anim
+            // sent after it survives the case-2 anim reset.
+            SendActionCommandResponse(sender, packet.CommandStamp);
+            var emoteState = packet.CommandType == 12 ? EmoteDanceState : EmoteTauntState;
+            SendAnimationState(sender, packet.ObjectId, emoteState);
+            _activeEmotes[packet.ObjectId] = emoteState;
         }
     }
 
     private static readonly uint EmoteDanceState = ObjectivesInitForLevelPacket.FnvHash("emote_dance_all");
     private static readonly uint EmoteTauntState = ObjectivesInitForLevelPacket.FnvHash("emote_taunt_all");
+
+    private readonly Dictionary<uint, uint> _activeEmotes = new();
+
+    // Looping emotes (emote_*_all have no end, anim flag +0x70=0 in FUN_004ddde0) never
+    // terminate client-side; retail-like cancel = clear the scripted anim when the player
+    // issues the next move/stop/switch/cancel command.
+    private void ClearActiveEmote(RakNetClient client, uint objectId)
+    {
+        if (!_activeEmotes.Remove(objectId)) return;
+        SendAnimationState(client, objectId, 0);
+    }
+
+    // Response type=2 (FUN_004d9ba0 case 2): clears the client pending-command lock when
+    // SyncStamp echoes ActionCommandMsgs byte +0x01. UserData=0xFFFFFFFF (<0) skips the
+    // client's DAT_0143fe3c write (FUN_004e2030).
+    private void SendActionCommandResponse(RakNetClient client, byte stamp)
+    {
+        client.SendPacket(new ActionCommandResponsePacket
+        {
+            SyncStamp = stamp,
+            ResponseType = 2,
+            UserData = 0xFFFFFFFF
+        });
+    }
+
+    private void RecordInteraction(RakNetClient client, uint targetId)
+    {
+        var timesUsed = _interactableTimesUsed.GetValueOrDefault(targetId) + 1;
+        _interactableTimesUsed[targetId] = timesUsed;
+
+        client.SendPacket(new InteractableDataUpdatePacket
+        {
+            ObjectId = targetId,
+            TimesUsed = timesUsed,
+            UsesAllowed = 0,
+            Ability = 0
+        });
+        Log.Game.Info($"Interact obj=0x{targetId:X} timesUsed={timesUsed}");
+    }
 
     private void SendAnimationState(RakNetClient client, uint objectId, uint state, bool overlay = false, float scale = 1f)
     {

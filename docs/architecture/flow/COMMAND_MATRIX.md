@@ -27,16 +27,20 @@ other client packet hits `default` and is dropped.
 |----|------|-------------|--------------|
 | 0x7F | HelloPlayerRequest | `OnHelloPlayerRequest` (596) | ✅ handled (RakNetServer) |
 | 0x88 | PlayerStatusUpdate | `OnPlayerStatusUpdate` (643) | ✅ handled (Game) |
-| 0x9C | ActionCommandMsgs | `OnActionCommandMsgs` (688) | ⚠️ dispatched but **parse misaligned**, no response (task #11) |
+| 0x9C | ActionCommandMsgs | `OnActionCommandMsgs` (688) | ✅ all client-emitted types handled (D-020); abilities/overdrive = ack stubs pending Simulation |
 | 0xAC | ChainPlayerMsgs | `OnChainPlayerMsgs` (988) | ✅ handled (Game) |
 | 0xC2 | CrystalDragMessage | `OnCrystalDragMessage` (1026) | ❌ **not handled** (catalyst drag/swap) |
 | 0xCB | LootDropMessage | `OnLootDropMessage` (1093) | ❌ not handled (C++ itself is a stub) |
 | 0xCC | DebugPing | `OnDebugPing` (1136) | ✅ handled (Game) |
 
-**ActionCommandMsgs (0x9C) sub-commands** (dispatched inside `OnActionCommandMsgs`):
-Movement=3, StopMovement=4, SwitchCharacter=5, UseCharacterAbility=7, UseSquadAbility=8,
-CatalystPickup=9, Cancel=10, UseInteractableObject=11, Dance=12, Taunt=13.
-→ Movement/Stop/Switch are pure C# (locomotion). UseAbility/SquadAbility = **Lua phase**.
+**ActionCommandMsgs (0x9C) sub-commands** (dispatched inside `OnActionCommandMsgs`; client
+ground-truth sweep 2026-06-05, VERIFIED_FACTS "ActionCommand contract"):
+Movement=3, StopMovement=4, SwitchCharacter=5, **Overdrive=6 (client-only, not in C++)**,
+UseCharacterAbility=7, UseSquadAbility=8, CatalystPickup=9, Cancel=10,
+UseInteractableObject=11, Dance=12, Taunt=13. Types 1/2 = inert (no client emit path).
+→ All handled in C# (D-018/D-019/D-020). Enqueue-path types (5/6/9/11/12/13) carry a
+rolling commandStamp at header +0x01 and arm a 3s client lock — server must ack with
+ActionCommandResponse type=2 echoing the stamp. Ability/Overdrive effects = **Simulation phase**.
 
 ---
 
@@ -75,7 +79,7 @@ CatalystPickup=9, Cancel=10, UseInteractableObject=11, Dance=12, Taunt=13.
 | 0x99 | AgentBlackboardUpdate | S→C | — | SendAgentBlackboardUpdate | reflection |
 | 0x9A | LootDataUpdate | S→C | — | SendLootDataUpdate | DBG=false (dead) |
 | 0x9B | ServerEvent | S→C | — | SendServerEvent | DBG=false (dead) |
-| 0x9C | ActionCommandMsgs | C→S | ✅ | OnActionCommandMsgs | ⚠️ parse misaligned, no ObjectPlayerMove reply |
+| 0x9C | ActionCommandMsgs | C→S | ✅ | OnActionCommandMsgs | ✅ all client types handled (D-015..D-020) |
 | 0x9E | PlayerDamage | — | — | **unimpl** | — |
 | 0x9F | LootSpawned | — | — | **unimpl** | — |
 | 0xA0 | LootAcquired | — | — | **unimpl** | — |
@@ -217,10 +221,9 @@ messages likely have a second dispatcher (unmapped — next sweep target).
 ## Gaps & next steps
 
 **Inbound (C→S) gaps — the only ones that block gameplay:**
-- **0x9C ActionCommandMsgs** — dispatched, but our `ReadFrom` reads `ObjectId` first while
-  the real layout has the type byte right after the packet id (objectId at +0x09, position
-  at +0x0D). We also never reply with `0x91 ObjectPlayerMove`. → **task #11** (movement first;
-  abilities = Lua phase).
+- ~~0x9C ActionCommandMsgs~~ — DONE through D-020 (2026-06-05): parse fixed, all client-emitted
+  types handled, command-lock ack (0xA8 type=2 stamp echo) in place. Remaining depth = real
+  ability/overdrive resolution (Simulation phase) + catalyst loot effect (loot phase).
 - **0xC2 CrystalDragMessage** — unhandled. Needed for catalyst slot drag/swap in-game.
 - 0xCB LootDropMessage — C++ is itself a stub; low priority.
 
