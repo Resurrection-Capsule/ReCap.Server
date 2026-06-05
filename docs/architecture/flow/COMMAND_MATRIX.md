@@ -29,8 +29,8 @@ other client packet hits `default` and is dropped.
 | 0x88 | PlayerStatusUpdate | `OnPlayerStatusUpdate` (643) | ✅ handled (Game) |
 | 0x9C | ActionCommandMsgs | `OnActionCommandMsgs` (688) | ✅ all client-emitted types handled (D-020); abilities/overdrive = ack stubs pending Simulation |
 | 0xAC | ChainPlayerMsgs | `OnChainPlayerMsgs` (988) | ✅ handled (Game) |
-| 0xC2 | CrystalDragMessage | `OnCrystalDragMessage` (1026) | ❌ **not handled** (catalyst drag/swap) |
-| 0xCB | LootDropMessage | `OnLootDropMessage` (1093) | ❌ not handled (C++ itself is a stub) |
+| 0xC2 | CrystalDragMessage | `OnCrystalDragMessage` (1026) | ✅ handled (D-021; reject-only until loot phase fills the grid) |
+| 0xCB | LootDropMessage | `OnLootDropMessage` (1093) | ✅ raw-capture handler (layout unknown — C++ is a hexdump stub; map when client emits) |
 | 0xCC | DebugPing | `OnDebugPing` (1136) | ✅ handled (Game) |
 
 **ActionCommandMsgs (0x9C) sub-commands** (dispatched inside `OnActionCommandMsgs`; client
@@ -116,8 +116,8 @@ ActionCommandResponse type=2 echoing the stamp. Ability/Overdrive effects = **Si
 | 0xBF | ReloadLevel | S→C | — | SendReloadLevel | no body |
 | 0xC0 | GravityForceUpdate | — | — | **unimpl** | — |
 | 0xC1 | CooldownUpdate | S→C | — | SendCooldownUpdate | ability cooldowns |
-| 0xC2 | CrystalDragMessage | C→S | ❌ | OnCrystalDragMessage | **inbound gap** — catalyst drag/swap |
-| 0xC3 | CrystalMessage | S→C | — | SendCrystalMessage | catalyst slot update |
+| 0xC2 | CrystalDragMessage | C→S | ✅ | OnCrystalDragMessage | ✅ D-021 (24B parse; reject until loot) |
+| 0xC3 | CrystalMessage | S→C | ✅ | SendCrystalMessage | ✅ D-021 (fixed 29B, client @0x0053f700) |
 | 0xC4 | KillRacePlayerMsgs | — | — | **unimpl** | mode |
 | 0xC5 | KillRaceLobbyMsgs | — | — | **unimpl** | mode |
 | 0xC6 | KillRaceGameMsgs | S→C | — | SendKillRaceGame | never wired |
@@ -125,7 +125,7 @@ ActionCommandResponse type=2 echoing the stamp. Ability/Overdrive effects = **Si
 | 0xC8 | TutorialGameMsgs | S→C | — | SendTutorial | bool / xp |
 | 0xC9 | CinematicMsgs | S→C | — | SendCinematic | cinematic params |
 | 0xCA | ObjectiveAdd | S→C | — | SendObjectiveAdd | Objective.WriteTo |
-| 0xCB | LootDropMessage | C→S | ❌ | OnLootDropMessage | C++ itself stubbed (hex dump only) |
+| 0xCB | LootDropMessage | C→S | ✅ | OnLootDropMessage | raw-capture handler (C++ itself stubbed; layout unmapped) |
 | 0xCC | DebugPing | C↔S | ✅ | OnDebugPing / SendDebugPing | state-machine driver |
 
 > Note: 0x9D is absent from the enum (0x9C → 0x9E).
@@ -224,8 +224,9 @@ messages likely have a second dispatcher (unmapped — next sweep target).
 - ~~0x9C ActionCommandMsgs~~ — DONE through D-020 (2026-06-05): parse fixed, all client-emitted
   types handled, command-lock ack (0xA8 type=2 stamp echo) in place. Remaining depth = real
   ability/overdrive resolution (Simulation phase) + catalyst loot effect (loot phase).
-- **0xC2 CrystalDragMessage** — unhandled. Needed for catalyst slot drag/swap in-game.
-- 0xCB LootDropMessage — C++ is itself a stub; low priority.
+- ~~0xC2 CrystalDragMessage~~ — DONE (D-021): parse + 0xC3 reject (29B); swap/drop depth = loot phase.
+- ~~0xCB LootDropMessage~~ — raw-capture handler (layout unknown; C++ is a hexdump stub — hex-log ours the same way and map via Ghidra when it fires).
+- **Inbound layer is now 100%** — every C→S packet the client emits is parsed and answered.
 
 **Outbound (S→C) not yet sent but likely needed soon:**
 - 0x8E ObjectDelete, 0x90 ObjectTeleport, 0xA5 SetAnimationState — object/combat lifecycle.

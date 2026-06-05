@@ -376,6 +376,15 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             case ActionCommandMsgsPacket actionCommand:
                 HandleActionCommand(sender, actionCommand);
                 break;
+
+            case CrystalDragMessagePacket crystalDrag:
+                HandleCrystalDrag(sender, crystalDrag);
+                break;
+
+            case LootDropMessagePacket lootDrop:
+                // Unknown layout (C++ Server.cpp:1093 is a hexdump stub) — capture for mapping.
+                Log.Game.Info($"LootDropMessage ({lootDrop.RawData.Length}B): {Convert.ToHexString(lootDrop.RawData)}");
+                break;
         }
     }
 
@@ -913,6 +922,23 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             SyncStamp = stamp,
             ResponseType = 2,
             UserData = 0xFFFFFFFF
+        });
+    }
+
+    // C++ OnCrystalDragMessage (Server.cpp:1026-1091). The catalyst grid only gains content
+    // via loot pickups (Instance.cpp:1103) — none exist before the loot phase, so every drag
+    // resolves exactly like C++ with an empty grid: reject (type 3, slot echo → the client
+    // snaps the crystal back, ClientNet::OnGmsCrystalMessage @0x0053f700 reads fixed 29B).
+    // MoveType 2 grid-swap + 0 drop-to-world land with the loot phase (need Player catalysts
+    // + CrystalBits LPU updates + DropCatalyst world loot, Player.cpp:374-391).
+    private void HandleCrystalDrag(RakNetClient sender, CrystalDragMessagePacket packet)
+    {
+        Log.Game.Debug($"CrystalDrag slot={packet.CrystalSlot} move={packet.MoveType} newSlot={packet.NewSlot}");
+        sender.SendPacket(new CrystalMessagePacket
+        {
+            MoveType = 3,
+            Slot = packet.CrystalSlot,
+            NewSlot = 0
         });
     }
 

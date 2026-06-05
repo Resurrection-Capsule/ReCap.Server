@@ -71,6 +71,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.ObjectTeleport:
+                packet = new ObjectTeleportPacket();
                 break;
 
             case PacketType.ObjectPlayerMove:
@@ -232,9 +233,11 @@ public static class PacketActivator
                 break;
 
             case PacketType.CrystalDragMessage:
+                packet = new CrystalDragMessagePacket();
                 break;
 
             case PacketType.CrystalMessage:
+                packet = new CrystalMessagePacket();
                 break;
 
             case PacketType.KillRacePlayerMsgs:
@@ -259,6 +262,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.LootDropMessage:
+                packet = new LootDropMessagePacket();
                 break;
 
             case PacketType.DebugPing:
