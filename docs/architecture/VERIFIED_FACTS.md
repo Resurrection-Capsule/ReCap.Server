@@ -71,6 +71,23 @@ Client sender: `ClientNet::SendActionCommandMsgs` @0x0053be60 (single builder, v
 - **Emote anims loop forever:** `emote_dance_all`/`emote_taunt_all` have anim non-loop flag +0x70 = 0 (`FUN_004ddde0`) — they never self-terminate. Retail-like cancel = server sends SetAnimationState(state=0) when the player issues the next move/stop/switch/cancel command.
 - **SetAnimationState 0xA5 (25B)** handler @0x0053efe0: the repeated trailing u32 state is a **network-player-ID guard** (compared vs playerCtrlBlock+0x1c), not client data; non-overlay writes obj fields 0xac/0xb0 (state) + 0xb8 (converted timestamp); overlay=1 uses a separate overlay anim slot (FUN_004f79f0), skipping the object field writes.
 
+## ServerEvent 0x9B contract (client ground-truth, Ghidra 2026-06-05)
+
+Handler `ClientNet::OnGmsServerEvent` @0x0053ec80; registrar `AssetData::RegisterServerEventFields` @0x00f60ea0 (struct 0x98). 26-field reflection → sequence mode (field-ID + payload, 0xFF sentinel). The C++ ref sender (Server.cpp:1899) is debug-disabled and was never validated — these facts come from the client parse.
+
+- **Field table:** `0 simpleSwarmEffectID u32 · 1 objectFxIndex u8 · 2 bRemove · 3 bHardStop · 4 bForceAttach · 5 bCritical · 6 asset u32 (FNV of "name.ServerEventDef") · 7 objectId u32 · 8 secondaryObjectId u32 · 9 attackerId u32 · 10 position vec3 · 11 facing vec3 · 12 orientation quat · 13 targetPoint vec3 · 14 textValue i32 · 15 clientEventID u32 · 16 clientIgnoreFlags u8 · 17-25 loot descriptor (lootReferenceId u64, lootInstanceId u64, rigblock/suffix/prefix1/prefix2 u32, itemLevel i32, rarity i32, creationTime u64)`. C++'s "14-15/17-25 unused" comment is WRONG.
+- **Dispatch is mutually exclusive on field 15:** clientEventID==0 → FX path (`ClientNet::PlayServerEventEffect` @0x0050a970); !=0 → UI dispatcher (`ClientUI::DispatchClientEvent` @0x004e4c90). FX + UI together = two packets.
+- **FX recipes:** at-position = {6, 10}; attached = {6, 7} (+{1 slot 1-16, 4 forceAttach} for tracked creature slots); stop = {7, 1, 2} (+3 hardStop; asset not required). Unresolved asset hash = silent skip (no crash). Visibility filter `GetAsset::ServerEventDef_` @0x004e33b0 (team vs ShowPickups* cvars).
+- **clientEventID values** (UI events, dispatcher @0x004e4c90): PlayerEnteredTunnel 0x8D5AB239, TeleportersDeactivated 0x57CCFCE5, hero-enters-portal 0x6F8812D2, hero-exits-portal 0x414B80B8, etc. (full enum in C++ ServerEvent.h:22-66, hashes confirmed in the dispatcher switch).
+- **Data-driven teleport FX:** marker `componentData.teleporter.triggerVolume.events.onEnterEvent/onExitEvent` are .ServerEventDef keys — the server plays them via 0x9B (ReCap: Game.RegisterTeleporterTrigger/CheckTeleporterTriggers).
+
+## Client object visual pipeline + render gates (Ghidra 2026-06-05, D-024 open)
+
+`ObjectManager::UpdateObjectGraphics` @0x009ec530 picks the visual path: **creature** (obj+0x298 locomotion != 0 && obj+0x61 == 0 → graphics component obj+0x2C0 via `Render::CreateCreatureGraphicsComponent` @0x00a19200) vs **interactable/prop** (→ obstacle+render handle obj+0x2BC via `Render::SubmitNavObstacle` @0x00a11760 → `Render::SubmitAndAssign` @0x00a261f0).
+- **Interactable render gates** (@0x009ec597-af, all required, silent skip otherwise): `noun+5 isFixed == true` · `noun+0xB8 physicsType != 0` · `obj+0x60 hasCollision == true`.
+- Obelisk nouns (probe vs AssetData_Binary, tools/scratch/NounProbe): `isFixed=True`, `physicsType` enum (value not extracted), `modelKey = "prefab_*_obelisk_gfx.Markerset"` — the obelisk visual is a **gfx markerset composition**, a third pipeline distinct from creature (npcClassData) and bmdl prop. SecurityTeleporter `modelKey = "Shared!teleporter_level.bmdl"` — the visible in-game portal IS the spawned trigger object rendering its own model (client-confirmed: portal visible, scale 0 notwithstanding).
+- Obelisk invisibility (D-024) remains UNRESOLVED: both wire shapes (bare {6,7} and marker-bound {6,7,8,17,22}) verified non-rendering at point-blank; gates above are the candidates (physicsType value / hasCollision routing / gfx-markerset modelKey resolution). Decisive next = runtime BP at 0x009ec530 with a live obelisk create.
+
 ## Client markerset architecture (2026-06-04)
 
 - **Client loads level markersets locally** from its own asset data (`ClientLevel::BuildMarkersetHashInfo` @0x004ed250 reads the in-memory markerset vector, publishes `LABS_LEVEL_MARKERSET_INFO`/`LABS_local_MARKERSET_HASH` as script vars). No RakNet packet carries markerset data.

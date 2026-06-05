@@ -783,7 +783,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // either. Contract used here is the D-015 client-verified teleport pair (0x90 pos +
     // 0x91 flags|=0x20). The hero position comes from the client itself: every ActionCommand
     // header carries the current hero pos, streamed ~5×/s while walking.
-    private readonly record struct TeleporterTrigger(Vector3 Position, float Radius, uint DestinationMarkerId);
+    private readonly record struct TeleporterTrigger(
+        Vector3 Position, float Radius, uint DestinationMarkerId, uint OnEnterEvent, uint OnExitEvent);
     private readonly List<TeleporterTrigger> _teleporterTriggers = new();
     private readonly Dictionary<uint, DateTime> _teleportCooldowns = new();
     private Dictionary<uint, Vector3>? _markerPositionsById;
@@ -794,6 +795,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         if (destination == 0) return;
 
         // TriggerVolumeDef dims (AssetCatalog.cpp:225-248): sphereRadius, else box half-extent.
+        // events.onEnterEvent/onExitEvent = .ServerEventDef keys (FX, data-driven) — played via
+        // ServerEvent 0x9B (client contract: ServerEventPacket.cs).
         var volume = teleporter.FindByName("triggerVolume");
         var radius = volume?.FindByName("sphereRadius").AsFloat() ?? 0f;
         if (radius <= 0f)
@@ -804,7 +807,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         }
         if (radius <= 0f) radius = 4f;
 
-        _teleporterTriggers.Add(new TeleporterTrigger(marker.FindByName("pos").AsVector3(), radius, destination));
+        var events = volume?.FindByName("events");
+        var onEnter = events?.FindByName("onEnterEvent").AsUInt32() ?? 0;
+        var onExit = events?.FindByName("onExitEvent").AsUInt32() ?? 0;
+        if (onEnter != 0 || onExit != 0)
+            Log.Game.Debug($"Teleporter trigger events: enter=0x{onEnter:X8} exit=0x{onExit:X8}");
+
+        _teleporterTriggers.Add(new TeleporterTrigger(
+            marker.FindByName("pos").AsVector3(), radius, destination, onEnter, onExit));
     }
 
     private Vector3? ResolveMarkerPosition(uint markerId)
@@ -839,12 +849,22 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             }
 
             _teleportCooldowns[objectId] = DateTime.UtcNow.AddSeconds(3);
+
+            // Data-driven teleport FX (trigger volume onEnter/onExit .ServerEventDef keys):
+            // enter at the source on the hero, exit at the destination after the snap.
+            if (trigger.OnEnterEvent != 0)
+                client.SendPacket(new ServerEventPacket { ServerEventDef = trigger.OnEnterEvent, ObjectId = objectId });
+
             var locomotion = GetObjectLocomotion(objectId);
             locomotion.SetGoalPosition(destination);
             locomotion.GoalFlags |= 0x020;
             client.SendPacket(new ObjectTeleportPacket { ObjectId = objectId, Position = destination, Orientation = default });
             client.SendPacket(new ObjectPlayerMovePacket { ObjectId = objectId, Locomotion = locomotion });
-            Log.Game.Info($"Teleporter: obj=0x{objectId:X} ({heroPos.X:F0},{heroPos.Y:F0},{heroPos.Z:F0}) -> ({destination.X:F0},{destination.Y:F0},{destination.Z:F0})");
+
+            if (trigger.OnExitEvent != 0)
+                client.SendPacket(new ServerEventPacket { ServerEventDef = trigger.OnExitEvent, ObjectId = objectId });
+
+            Log.Game.Info($"Teleporter: obj=0x{objectId:X} ({heroPos.X:F0},{heroPos.Y:F0},{heroPos.Z:F0}) -> ({destination.X:F0},{destination.Y:F0},{destination.Z:F0}) fx=({trigger.OnEnterEvent:X8}/{trigger.OnExitEvent:X8})");
             return;
         }
     }

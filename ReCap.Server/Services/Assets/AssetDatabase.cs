@@ -139,6 +139,7 @@ public sealed class AssetDatabase : IDisposable
 
         LoadCategory(ctx, "Noun", "Noun", _nouns);
         BuildNounWireIndex();
+        LogObeliskNounDiagnostics();
         ct.ThrowIfCancellationRequested();
 
         LoadCategory(ctx, "NonPlayerClass", "NonPlayerClass", _nonPlayerClasses);
@@ -198,6 +199,32 @@ public sealed class AssetDatabase : IDisposable
         catch (Exception ex)
         {
             Log.Assets.Error($"Category '{typeExtension}' failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // Diagnostic: log render-gate fields for obelisk nouns.
+    // Client render gate FUN_009ec530: noun[5]=isFixed && noun[0xB8]=physicsType!=0 && obj+0x60=hasCollision.
+    // All three must be true for the interactable obstacle+visual to be submitted.
+    private void LogObeliskNounDiagnostics()
+    {
+        var targets = new[]
+        {
+            ("prefab_health_obelisk", DbpfReader.FnvHash("prefab_health_obelisk")),
+            ("prefab_boss_obelisk",   DbpfReader.FnvHash("prefab_boss_obelisk")),
+        };
+        foreach (var (name, id) in targets)
+        {
+            var noun = _nouns.GetValueOrDefault(id);
+            if (noun is null) { Log.Assets.Warn($"Obelisk noun not found: {name} (id=0x{id:X8})"); continue; }
+            var isFixed     = noun.FindByName("isFixed").AsBool();
+            var physicsType = noun.FindByName("physicsType").AsUInt32();
+            var hasNetwork  = noun.FindByName("hasNetworkComponent").AsBool();
+            var hasLocomot  = noun.FindByName("hasLocomotion").AsBool();
+            var hasCombat   = noun.FindByName("hasCombatantComponent").AsBool();
+            var interactable = noun.FindByName("componentData")?.FindByName("interactable");
+            var usesAllowed  = interactable?.FindByName("numUsesAllowed").AsInt32() ?? -1;
+            var abilityKey   = interactable?.FindByName("interactableAbility").AsUInt32() ?? 0;
+            Log.Assets.Info($"Noun {name}: isFixed={isFixed} physicsType=0x{physicsType:X} hasNetworkComponent={hasNetwork} hasLocomotion={hasLocomot} hasCombatant={hasCombat} interactable.usesAllowed={usesAllowed} interactable.ability=0x{abilityKey:X8}");
         }
     }
 

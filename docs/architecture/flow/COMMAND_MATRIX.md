@@ -78,7 +78,7 @@ ActionCommandResponse type=2 echoing the stamp. Ability/Overdrive effects = **Si
 | 0x98 | InteractableDataUpdate | S→C | — | SendInteractableDataUpdate | raw; DBG-gated |
 | 0x99 | AgentBlackboardUpdate | S→C | — | SendAgentBlackboardUpdate | reflection |
 | 0x9A | LootDataUpdate | S→C | — | SendLootDataUpdate | DBG=false (dead) |
-| 0x9B | ServerEvent | S→C | — | SendServerEvent | DBG=false (dead) |
+| 0x9B | ServerEvent | S→C | ✅ | SendServerEvent | ✅ ServerEventPacket (client-verified 26-field contract; C++ sender was DBG=false/dead — see VERIFIED_FACTS) |
 | 0x9C | ActionCommandMsgs | C→S | ✅ | OnActionCommandMsgs | ✅ all client types handled (D-015..D-020) |
 | 0x9E | PlayerDamage | — | — | **unimpl** | — |
 | 0x9F | LootSpawned | — | — | **unimpl** | — |
