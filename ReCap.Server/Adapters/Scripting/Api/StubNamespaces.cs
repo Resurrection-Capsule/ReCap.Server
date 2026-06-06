@@ -1,0 +1,36 @@
+namespace ReCap.Server.Adapters.Scripting.Api;
+
+public static class StubNamespaces
+{
+    public static void RegisterAll(nint L)
+    {
+        LuaApiModule.RegisterNamespace(L, "nThreadData");
+        LuaApiModule.RegisterNamespace(L, "nTimeManager");
+        LuaApiModule.RegisterNamespace(L, "nThread");
+        LuaApiModule.RegisterNamespace(L, "nBehaviorTree");
+        LuaApiModule.RegisterNamespace(L, "nScenarioManager");
+        LuaApiModule.RegisterNamespace(L, "nAbility");
+        LuaApiModule.RegisterNamespace(L, "nModifier");
+        LuaApiModule.RegisterNamespace(L, "nCondition");
+        LuaApiModule.RegisterNamespace(L, "nPhysics");
+        LuaApiModule.RegisterNamespace(L, "nUtil");
+        LuaApiModule.RegisterNamespace(L, "nBit");
+        LuaApiModule.RegisterNamespace(L, "nGameObject");
+        LuaApiModule.RegisterNamespace(L, "nAttribute");
+        LuaApiModule.RegisterNamespace(L, "nLocomotion");
+        LuaApiModule.RegisterNamespace(L, "nObjectManager");
+        LuaApiModule.RegisterNamespace(L, "nPlayer");
+        LuaApiModule.RegisterNamespace(L, "nEvent");
+        LuaApiModule.RegisterNamespace(L, "nAgent");
+        LuaApiModule.RegisterNamespace(L, "nDebug");
+        LuaApiModule.RegisterNamespace(L, "nMathUtil");
+        LuaApiModule.RegisterNamespace(L, "nGameDirector");
+        LuaApiModule.RegisterNamespace(L, "nGameSimulator");
+        LuaApiModule.RegisterNamespace(L, "nLevel");
+        LuaApiModule.RegisterNamespace(L, "nObjective");
+        LuaApiModule.RegisterNamespace(L, "nAffix");
+        LuaApiModule.RegisterNamespace(L, "nJuggernaut");
+        LuaApiModule.RegisterNamespace(L, "nTuning");
+        LuaApiModule.RegisterNamespace(L, "nClient");
+    }
+}

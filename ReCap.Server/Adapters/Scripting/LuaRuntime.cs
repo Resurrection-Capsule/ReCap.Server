@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using ReCap.Server.Adapters.Scripting.Api;
 using ReCap.Server.Adapters.Scripting.Native;
 using Serilog.Events;
 
@@ -34,6 +37,14 @@ public sealed class LuaRuntime : IDisposable
             LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.Require, 0);
         }
         LuaNative.lua_setfield(L, LuaNative.LUA_GLOBALSINDEX, "require");
+        StubNamespaces.RegisterAll(L);
+        NUtilModule.Register(L);
+        NMathUtilModule.Register(L);
+        LuaNative.lua_getfield(L, LuaNative.LUA_GLOBALSINDEX, "math");
+        LuaNative.lua_pushstring(L, "random");
+        unsafe { LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.MathRandom, 0); }
+        LuaNative.lua_rawset(L, -3);
+        LuaNative.lua_settop(L, -2);
         return rt;
     }
 
@@ -147,6 +158,38 @@ internal static class LuaStubs
             try { ReCap.Server.Util.Logging.Log.Lua.Error($"[stub] print failed: {ex.Message}"); } catch { }
         }
         return 0;
+    }
+
+    [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    internal static int MathRandom(nint L)
+    {
+        try
+        {
+            var argc = LuaNative.lua_gettop(L);
+            if (argc == 0)
+            {
+                LuaNative.lua_pushnumber(L, (float)Random.Shared.NextDouble());
+                return 1;
+            }
+            if (argc == 1)
+            {
+                var m = (int)System.Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                if (m < 1) m = 1;
+                LuaNative.lua_pushnumber(L, (float)Random.Shared.Next(1, m + 1));
+                return 1;
+            }
+            var lo = (int)System.Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            var hi = (int)System.Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            if (hi < lo) hi = lo;
+            LuaNative.lua_pushnumber(L, (float)Random.Shared.Next(lo, hi + 1));
+            return 1;
+        }
+        catch (Exception ex)
+        {
+            try { ReCap.Server.Util.Logging.Log.Lua.Error($"[stub] math.random failed: {ex.Message}"); } catch { }
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
     }
 
     [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
