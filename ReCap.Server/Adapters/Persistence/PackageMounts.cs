@@ -10,7 +10,7 @@ public sealed record WellKnownPackage(string RelativePath)
     public static readonly WellKnownPackage AssetDataBinary = new("AssetData_Binary.package");
     public static readonly WellKnownPackage ServerData = new("ServerData.package");
     public static readonly WellKnownPackage Web = new("Web.package");
-    public static readonly WellKnownPackage LocaleTextEnUs = new(Path.Combine("Locale", "en-us", "Text.package"));
+    public static readonly WellKnownPackage LocaleTextEnUs = new(Path.Combine("Locale", "pt-br", "Text.package"));
 }
 
 public sealed class PackageMounts(string dataDir)
@@ -20,8 +20,10 @@ public sealed class PackageMounts(string dataDir)
 
     public string DataDir { get; } = dataDir;
 
-    private static readonly Lazy<PackageMounts?> _default = new(BuildDefault);
-    public static PackageMounts? Default => _default.Value;
+    private static PackageMounts? _initialized;
+    private static readonly Lazy<PackageMounts?> _fromConfig = new(BuildDefault);
+    public static PackageMounts? Default => _initialized ?? _fromConfig.Value;
+    public static void Initialize(string dataDir) => _initialized = new PackageMounts(dataDir);
 
     private static PackageMounts? BuildDefault()
     {

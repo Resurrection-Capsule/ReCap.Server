@@ -46,7 +46,7 @@ public static unsafe class LuaApiModule
             var key = LuaNative.lua_type(L, 2) == LuaNative.LUA_TSTRING
                 ? (LuaNative.ToManagedString(L, 2) ?? "?")
                 : "?";
-            StubTelemetry.RecordLookup(ns, key);
+            StubTelemetry.RecordLookup(L, ns, key);
             LuaNative.lua_pushstring(L, ns);
             LuaNative.lua_pushstring(L, key);
             LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&StubCall, 2);
@@ -67,7 +67,7 @@ public static unsafe class LuaApiModule
         {
             var ns = LuaNative.ToManagedString(L, LuaUpvalueIndex(1)) ?? "?";
             var key = LuaNative.ToManagedString(L, LuaUpvalueIndex(2)) ?? "?";
-            StubTelemetry.RecordCall(ns, key);
+            StubTelemetry.RecordCall(L, ns, key);
         }
         catch (Exception ex)
         {
@@ -82,16 +82,21 @@ public static unsafe class LuaApiModule
 internal static class StubTelemetry
 {
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _seen = [];
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<nint, string> _tags = new();
 
-    public static void RecordLookup(string ns, string key)
+    public static void TagState(nint L, string tag) => _tags[L] = tag;
+    public static void UntagState(nint L) => _tags.TryRemove(L, out _);
+    private static string Tag(nint L) => _tags.TryGetValue(L, out var t) ? t : "untagged";
+
+    public static void RecordLookup(nint L, string ns, string key)
     {
-        if (_seen.TryAdd($"{ns}.{key}", 0))
+        if (_seen.TryAdd($"{Tag(L)}|{ns}.{key}", 0))
             Util.Logging.Log.Lua.Warn($"unimplemented {ns}.{key} (first lookup)");
     }
 
-    public static void RecordCall(string ns, string key)
+    public static void RecordCall(nint L, string ns, string key)
     {
-        if (_seen.TryAdd($"{ns}.{key}:called", 0))
+        if (_seen.TryAdd($"{Tag(L)}|{ns}.{key}:called", 0))
             Util.Logging.Log.Lua.Warn($"unimplemented {ns}.{key} CALLED - returns nothing");
     }
 

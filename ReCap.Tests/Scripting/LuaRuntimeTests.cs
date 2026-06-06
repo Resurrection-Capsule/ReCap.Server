@@ -21,4 +21,12 @@ public class LuaRuntimeTests
         Assert.Contains("boom", ex.Message);
         Assert.Contains("errchunk", ex.Message);
     }
+
+    [Fact]
+    public void WatchdogAbortsRunawayLoop()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        Assert.Throws<LuaScriptException>(
+            () => rt.Execute(LuaFixtures.Compile("while true do end"), "runaway"));
+    }
 }

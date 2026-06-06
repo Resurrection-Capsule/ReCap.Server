@@ -128,6 +128,7 @@ public static class Program
             serverOpts.GameRoot = install.Root;
             serverOpts.DataDir = install.DataDir;
             serverOpts.GamePath = Path.Combine(install.DataDir, "AssetData_Binary.package");
+            PackageMounts.Initialize(install.DataDir);
         }
         else
         {

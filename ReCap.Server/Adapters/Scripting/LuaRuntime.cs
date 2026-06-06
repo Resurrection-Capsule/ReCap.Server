@@ -23,7 +23,19 @@ public sealed class LuaRuntime : IDisposable
         _handle = handle;
     }
 
-    public static LuaRuntime CreateSandboxedState(Func<string, byte[]?>? chunkResolver = null)
+    private const int WatchdogInstructionBudget = 50_000_000;
+
+    internal static void InstallWatchdog(nint threadState)
+    {
+        unsafe
+        {
+            LuaNative.lua_sethook(threadState,
+                (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&LuaStubs.WatchdogHook,
+                LuaNative.LUA_MASKCOUNT, WatchdogInstructionBudget);
+        }
+    }
+
+    public static LuaRuntime CreateSandboxedState(Func<string, byte[]?>? chunkResolver = null, string contextTag = "boot")
     {
         var L = LuaNative.luaL_newstate();
         var handle = new LuaStateHandle();
@@ -45,6 +57,8 @@ public sealed class LuaRuntime : IDisposable
         unsafe { LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.MathRandom, 0); }
         LuaNative.lua_rawset(L, -3);
         LuaNative.lua_settop(L, -2);
+        Api.StubTelemetry.TagState(L, contextTag);
+        InstallWatchdog(L);
         return rt;
     }
 
@@ -127,12 +141,20 @@ public sealed class LuaRuntime : IDisposable
     public void Dispose()
     {
         _resolvers.TryRemove(L, out _);
+        Api.StubTelemetry.UntagState(L);
         _handle.Dispose();
     }
 }
 
 internal static class LuaStubs
 {
+    [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    internal static void WatchdogHook(nint L, nint ar)
+    {
+        LuaNative.lua_pushstring(L, "instruction budget exceeded");
+        LuaNative.lua_error(L);
+    }
+
     [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     internal static int Print(nint L)
     {
