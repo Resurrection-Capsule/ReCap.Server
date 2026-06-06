@@ -25,6 +25,20 @@ internal sealed class FakeBridge : IScriptGameBridge
     { x = 0f; y = 0f; z = 0f; w = 1f; return id == 10; }
     public List<(uint ObjectId, uint State)> AnimationBroadcasts { get; } = [];
     public void BroadcastAnimationState(uint objectId, uint stateHash) => AnimationBroadcasts.Add((objectId, stateHash));
+
+    public float Health = 80f;
+    public IReadOnlyList<uint> QueryObjectsInRadius(float x, float y, float z, float radius, bool damageableOnly)
+        => radius >= 5f ? [10u, 77u] : [];
+    public float ApplyHeal(uint targetId, float amount)
+    {
+        if (targetId != 10) return 0f;
+        var before = Health;
+        Health = Math.Clamp(Health + amount, 0f, 100f);
+        return Health - before;
+    }
+    public List<uint> Deleted { get; } = [];
+    public void MarkForDelete(uint objectId) => Deleted.Add(objectId);
+    public void SetVisible(uint objectId, bool visible) { }
 }
 
 public class GameBridgeTests
@@ -117,6 +131,31 @@ public class GameBridgeTests
         Assert.True(rt.EvalBool(LuaFixtures.Compile("""
             return nAbility.GetAbilityInstanceID() == 42
                and nAbility.TargetInRangeAtStart() == true
+            """)));
+    }
+
+    [Fact]
+    public void ObjectsInRadiusReturnsIpairsReadyTable()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local hits = nObjectManager.GetObjectsInRadius(0, 0, 0, 6, { 1, 2 })
+            local count, last = 0, 0
+            for i, id in ipairs(hits) do count = count + 1 last = id end
+            local empty = nObjectManager.GetObjectsInRadius(0, 0, 0, 1)
+            return count == 2 and last == 77 and #empty == 0
+            """)));
+    }
+
+    [Fact]
+    public void HealDamageAppliesClampedAndReturnsTwoValues()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local healed, crit = nGameObject.HealDamage(0, 10, 50)
+            local over = nGameObject.HealDamage(0, 10, 50)
+            local damaged = nGameObject.HealDamage(0, 10, -30)
+            return healed == 20 and crit == false and over == 0 and damaged == -30
             """)));
     }
 

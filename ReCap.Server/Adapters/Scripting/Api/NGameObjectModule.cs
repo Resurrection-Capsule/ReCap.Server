@@ -21,7 +21,82 @@ public static unsafe class NGameObjectModule
             ("GetFootprintRadius", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetFootprintRadius),
             ("ValidateHostileTarget", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ValidateHostileTarget),
             ("ValidateFriendlyTarget", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ValidateFriendlyTarget),
-            ("SetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAnimationState));
+            ("SetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAnimationState),
+            ("HealDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&HealDamage),
+            ("MarkForDelete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MarkForDelete),
+            ("SetIsVisible", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetIsVisible),
+            ("SetStealthType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetStealthType));
+    }
+
+    // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,
+    // amount, amount2, [flags], [applyMods], [forceDead]) → 2 returns (actualHeal float,
+    // isCrit bool); clamps to MaxHP, revives from 0, emits damage/sim events (server events =
+    // Simulation phase). MarkForDelete @0x009fd370 (obj+0x5d=1, swept next tick, 0 ret).
+    // SetIsVisible @0x009fd660 (obj+0x5f, 0 ret, no net msg). SetStealthType @0x009fddb0
+    // (combatComponent+0x556, 0 ret).
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int HealDamage(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is null || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            {
+                LuaNative.lua_pushnumber(L, 0f);
+                LuaNative.lua_pushboolean(L, 0);
+                return 2;
+            }
+            var targetId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            var amount = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, 3) : 0f;
+            var applied = bridge.ApplyHeal(targetId, amount);
+            LuaNative.lua_pushnumber(L, applied);
+            LuaNative.lua_pushboolean(L, 0);
+            return 2;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            LuaNative.lua_pushboolean(L, 0);
+            return 2;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int MarkForDelete(nint L)
+    {
+        try
+        {
+            if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+                ScriptContextRegistry.Get(L)?.GameBridge?.MarkForDelete(ReadId(L));
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetIsVisible(nint L)
+    {
+        try
+        {
+            if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+                ScriptContextRegistry.Get(L)?.GameBridge?.SetVisible(ReadId(L), LuaNative.lua_toboolean(L, 2) != 0);
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetStealthType(nint L)
+    {
+        // Stealth component state lands with the Simulation phase; arity contract (0 returns) holds.
+        return 0;
     }
 
     // Retail contracts (Ghidra 2026-06-06): GetCenterPoint @0x009fb7f0 (3 floats, lua error on

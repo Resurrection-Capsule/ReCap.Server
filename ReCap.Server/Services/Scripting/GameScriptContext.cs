@@ -124,4 +124,37 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
     public void BroadcastAnimationState(uint objectId, uint stateHash) =>
         _game.BroadcastAnimationState(objectId, stateHash);
+
+    // Client wrapper @0x00a0aed0: QueryObjectsInRadius capped at 256, no alive gate; the table
+    // filter (nSporeLabs.damageableObjectTypes whitelist) is approximated server-side as
+    // "has a combatant" (MaxHealth > 0) until per-noun type ids are parsed.
+    public IReadOnlyList<uint> QueryObjectsInRadius(float x, float y, float z, float radius, bool damageableOnly)
+    {
+        var center = new System.Numerics.Vector3(x, y, z);
+        var radiusSq = radius * radius;
+        var result = new List<uint>();
+        foreach (var (id, obj) in _game.Objects.Objects)
+        {
+            if (damageableOnly && obj.MaxHealth <= 0f) continue;
+            if (System.Numerics.Vector3.DistanceSquared(center, obj.Position) > radiusSq) continue;
+            result.Add(id);
+            if (result.Count >= 256) break;
+        }
+        return result;
+    }
+
+    public float ApplyHeal(uint targetId, float amount)
+    {
+        if (!_game.Objects.Objects.TryGetValue(targetId, out var obj) || obj.MaxHealth <= 0f) return 0f;
+        var before = obj.Health;
+        obj.Health = Math.Clamp(obj.Health + amount, 0f, obj.MaxHealth);
+        return obj.Health - before;
+    }
+
+    public void MarkForDelete(uint objectId) => _game.Objects.Remove(objectId);
+
+    public void SetVisible(uint objectId, bool visible)
+    {
+        // GameObject visibility flag lands with the object-stream phase; accept silently for now.
+    }
 }

@@ -12,6 +12,10 @@ public interface IScriptGameBridge
     IReadOnlyDictionary<int, float>? GetAttributeTable(uint objectId);
     bool TryGetOrientation(uint objectId, out float x, out float y, out float z, out float w);
     void BroadcastAnimationState(uint objectId, uint stateHash);
+    IReadOnlyList<uint> QueryObjectsInRadius(float x, float y, float z, float radius, bool damageableOnly);
+    float ApplyHeal(uint targetId, float amount);
+    void MarkForDelete(uint objectId);
+    void SetVisible(uint objectId, bool visible);
 }
 
 public readonly record struct AbilityInvocation(
