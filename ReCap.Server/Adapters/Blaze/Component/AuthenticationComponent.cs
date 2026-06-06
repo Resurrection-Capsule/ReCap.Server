@@ -71,11 +71,11 @@ public class AuthenticationComponent : IComponent
 
     private bool GetAuthToken(Client client, Packet packet)
     {
-        client.AuthToken ??= client.UserId.ToString();
+        var authToken = client.AuthToken ??= client.UserId.ToString();
 
-        accountService.setAccountAuthToken(client.UserId, client.AuthToken);
+        accountService.setAccountAuthToken(client.UserId, authToken);
 
-        client.RespondTo(packet, new GetAuthTokenResponse { AuthToken = client.AuthToken });
+        client.RespondTo(packet, new GetAuthTokenResponse { AuthToken = authToken });
 
         client.Notify(new UserStatus
         {

@@ -31,7 +31,7 @@ public class Client
 
     public ulong UserId { get; set; }
     public string Username { get; set; } = string.Empty;
-    public string AuthToken { get; set; }
+    public string? AuthToken { get; set; }
     public UserSessionExtendedData ExtendedData { get; } = new();
 
     public Client(BlazeServer server, TcpClient tcpClient)
