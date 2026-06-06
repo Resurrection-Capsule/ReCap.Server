@@ -24,7 +24,8 @@ public class Api
         foreach(Type type in assembly.GetTypes()) {
             if (type.GetCustomAttributes(typeof(RestController), true).Length > 0) {
                 var instance = Activator.CreateInstance(type, [newSqliteConfig]);
-                restControllers.Add(instance);
+                if (instance is not null)
+                    restControllers.Add(instance);
             }
         }
     }
@@ -66,8 +67,8 @@ public class Api
             ReCap.Server.Util.Logging.Log.Rest.Debug($"Parameters: {string.Join(", ", parameters)}");
         }
 
-        string uri = context.Request.Url.LocalPath.Split("?")[0];
-        byte[] fileBytes = null;
+        string uri = context.Request.Url?.LocalPath.Split("?")[0] ?? "/";
+        byte[]? fileBytes = null;
 
         try
         {
@@ -78,7 +79,7 @@ public class Api
                 {
                     var methodName = parameters.GetValueOrDefault("method", "<unknown>");
                     var method = GetMethod(restControllerType, methodName);
-                    fileBytes = (byte[])method.Invoke(restController, new object[] { context, parameters });
+                    fileBytes = (byte[]?)method.Invoke(restController, new object[] { context, parameters });
                     context.Response.ContentType = GetContentType(restControllerType, method);
 
                     if (fileBytes == null)
@@ -88,6 +89,12 @@ public class Api
                 }
             }
             
+            if (fileBytes == null && GameStorageAdapter.Handles(uri))
+            {
+                fileBytes = GameStorageAdapter.GetFile(uri);
+                context.Response.ContentType = GameStorageAdapter.ContentType(uri);
+            }
+
             if (fileBytes == null)
             {
                 fileBytes = GetBytesByFilePath(uri);
@@ -110,7 +117,7 @@ public class Api
         try {
             return StaticStorageAdapter.GetFile(uri);
         }
-        catch (FileNotFoundException ex)
+        catch (FileNotFoundException)
         {
             return StaticStorageAdapter.GetFile((uri + "/index.html").Replace("//", "/"));
         }
@@ -122,8 +129,8 @@ public class Api
 
         foreach (MethodInfo method in methods)
         {
-            if (method.GetCustomAttribute(typeof(RequestMapping)) != null &&
-                ((RequestMapping)method.GetCustomAttribute(typeof(RequestMapping))).Name == methodName)
+            if (method.GetCustomAttribute(typeof(RequestMapping)) is RequestMapping mapping &&
+                mapping.Name == methodName)
             {
                 return method;
             }
@@ -138,14 +145,16 @@ public class Api
 
         foreach (MethodInfo method in methods)
         {
-            if (method.GetCustomAttribute(typeof(ExceptionHandler)) != null &&
-                ((ExceptionHandler)method.GetCustomAttribute(typeof(ExceptionHandler))).Type == exceptionType)
+            if (method.GetCustomAttribute(typeof(ExceptionHandler)) is ExceptionHandler handler &&
+                handler.Type == exceptionType)
             {
                 return method;
             }
         }
 
-        return GetExceptionMethod(exceptionType.BaseType);
+        return exceptionType.BaseType is { } baseType
+            ? GetExceptionMethod(baseType)
+            : throw new InvalidOperationException($"No exception handler registered for {exceptionType}");
     }
 
     private bool isRestController(System.Type restControllerType, string apiPath)
@@ -158,15 +167,12 @@ public class Api
         return false;
     }
 
-    private string GetContentType(System.Type restControllerType, MethodInfo methodInfo)
+    private string? GetContentType(System.Type restControllerType, MethodInfo methodInfo)
     {
-        if (methodInfo.GetCustomAttribute(typeof(RequestMapping)) != null)
+        if (methodInfo.GetCustomAttribute(typeof(RequestMapping)) is RequestMapping mapping &&
+            mapping.ContentType is { } contentType)
         {
-            var contentType = ((RequestMapping)methodInfo.GetCustomAttribute(typeof(RequestMapping))).ContentType;
-            if (contentType != null)
-            {
-                return contentType;
-            }
+            return contentType;
         }
         var dnAttribute = restControllerType.GetCustomAttributes(typeof(RestController), true).FirstOrDefault() as RestController;
         if (dnAttribute != null)

@@ -23,9 +23,9 @@ public class BootstrapRestController
     [RequestMapping(Name="api.config.getConfigs")]
     public byte[] getConfigs(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string darksporeVersion = parameters.GetValueOrDefault("build", null);
-        bool includeSettings = parameters.GetValueOrDefault("include_settings", null) == "true";
-        bool includePatches = parameters.GetValueOrDefault("include_patches", null) == "true";
+        string? darksporeVersion = parameters.GetValueOrDefault("build");
+        bool includeSettings = parameters.GetValueOrDefault("include_settings") == "true";
+        bool includePatches = parameters.GetValueOrDefault("include_patches") == "true";
 
         string host = ServerConfig.HostName;
 
@@ -60,7 +60,7 @@ public class BootstrapRestController
             //     ID = "test5",
             //     Description = "test6",
             //     ApplicationInstructions = "test6",
-            //     Locale = "en-US",
+            //     Locale = "pt-BR",
             //     Shipping = "true",
             //     FileUrl = "test.zip",
             //     ArchiveSize = "1000",
