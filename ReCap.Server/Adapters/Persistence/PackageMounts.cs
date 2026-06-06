@@ -1,0 +1,54 @@
+using System.IO;
+using System.Threading;
+using AssetData.Parser;
+using ReCap.Server.Config;
+
+namespace ReCap.Server.Adapters.Persistence;
+
+public sealed record WellKnownPackage(string RelativePath)
+{
+    public static readonly WellKnownPackage AssetDataBinary = new("AssetData_Binary.package");
+    public static readonly WellKnownPackage ServerData = new("ServerData.package");
+    public static readonly WellKnownPackage Web = new("Web.package");
+    public static readonly WellKnownPackage LocaleTextEnUs = new(Path.Combine("Locale", "en-us", "Text.package"));
+}
+
+public sealed class PackageMounts(string dataDir)
+{
+    private readonly Dictionary<string, DbpfReader?> _open = [];
+    private readonly Lock _gate = new();
+
+    public string DataDir { get; } = dataDir;
+
+    private static PackageMounts? _default;
+    public static PackageMounts? Default
+    {
+        get
+        {
+            if (_default is not null) return _default;
+            var gamePath = ServerConfig.GamePath;
+            if (string.IsNullOrWhiteSpace(gamePath)) return null;
+            var dataDir = Path.GetDirectoryName(gamePath);
+            if (dataDir is null) return null;
+            _default = new PackageMounts(dataDir);
+            return _default;
+        }
+    }
+
+    public DbpfReader? Get(WellKnownPackage package)
+    {
+        lock (_gate)
+        {
+            if (_open.TryGetValue(package.RelativePath, out var cached))
+                return cached;
+            var path = Path.Combine(DataDir, package.RelativePath);
+            DbpfReader? reader = null;
+            if (File.Exists(path))
+                reader = new DbpfReader(path);
+            else
+                Util.Logging.Log.Assets.Warn($"Package not found: {path}");
+            _open[package.RelativePath] = reader;
+            return reader;
+        }
+    }
+}
