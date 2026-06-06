@@ -817,3 +817,34 @@ See `docs/architecture/research/LUA_ABILITY_TICK_CONTRACT.md` for the full inves
 (samples, numparams breakdown, dispatch rule). Summary: always call
 `tick(self, agentId, targetId, cursorX, cursorY, cursorZ, rank)` — 7 args, no branching.
 Verified against three families: 1-param self-only, 9-param projectile, wrapper closures.
+
+---
+
+## 7. Ghidra address↔name map (annotated 2026-06-06)
+
+All functions below renamed + plate-commented in the Darkspore.exe Ghidra project
+(`[ReCap-mapped 2026-06-06]`). Decompile-verified before rename.
+
+| Address | Ghidra name | Role |
+|---|---|---|
+| 0x008f5af0 | `Lua::RequireScript` | custom require (VFS "Group!Name.ext", hex-prefix groups), returns 1 bool |
+| 0x008f5ba0 | `Lua::CreateSandboxedState` | state factory: libs by flag mask, nil-out debug/package/loadstring/dofile/loadfile/loadlib/module, print=stub, require bound |
+| 0x008f5d70 | `LuaManager::Construct` | manager ctor: "Gears/Lua" heap, main state at this+0x04, state[-4]=this, cObjectPoolT<cLuaThread> elem 0x108 |
+| 0x008f6e40 | `LuaManager::ControlGc` | lua_gc command mapper (ex-"SimulatorControl" mislabel) |
+| 0x00902160 | `Lua51::GcPropagateMark` | lgc.c propagatemark (ex-claimed "scheduler" — wrong) |
+| 0x00902700 | `Lua51::GcAtomic` | lgc.c atomic (ex-claimed "scheduler" — wrong) |
+| 0x00902880 | `Lua51::GcSingleStep` | lgc.c singlestep |
+| 0x00902980 | `Lua51::GcStep` | lgc.c luaC_step (luaC_checkGC driver) |
+| 0x00902a00 | `Lua51::GcFullCollect` | lgc.c luaC_fullgc (sole caller: ControlGc) |
+| 0x00903820 | `Lua51::ExecuteBytecode` | lvm.c luaV_execute, 38 opcodes, lua_Number=float |
+| 0x00909cb0 | `Lua51::CheckChunkHeader` | lundump header check `1B 4C 75 61 51 00 01 04 04 04 04 00` |
+| 0x009e19d0 | `Core::MountGamePackages` | *.package mount; dev flag DAT_014e2ef0 → Levels+ServerData explicit |
+| 0x00a0c810 | `LuaSystem::Initialize` | boot: 10 group hashes → AssetCatalog → execute all chunks |
+| 0x00a43040 | `RegisterAbility` | + plate: C4 contract; same native as nModifier.RegisterModifier |
+| 0x00a430e0 | `RegisterCondition` | + plate: C4 template |
+| 0x00a0c570 | `RegisterAffix` | + plate: C4 template |
+| 0x00a0c340 | `RegisterObjective` | + plate: C4 template |
+| 0x009fb870 | `GetPosition` (nGameObject glue) | + plate: C2 contract (3 floats, error on missing) |
+
+**Open:** retail cLuaThread resume loop (the real coroutine scheduler) remains unlocated —
+see VERIFIED_FACTS C5 second correction.

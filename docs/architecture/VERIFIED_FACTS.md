@@ -205,11 +205,23 @@ Server implementation: keep a `luaL_ref` to the props table + name + hash.
 
 ### C5 — CORRECTION: SimulatorControl @0x008f6e40 = lua_gc controller, NOT coroutine scheduler
 
-`FUN_008f6e40` (previously labeled "SimulatorControl" during the 2026-06-05 audit) is a
-**`lua_gc` controller** — it maps integer inputs to `LUA_GCSTOP`, `LUA_GCRESTART`, `LUA_GCCOLLECT`,
-`LUA_GCCOUNT`, `LUA_GCCOUNTB`, `LUA_GCSTEP`, `LUA_GCSETPAUSE`, `LUA_GCSETSTEPMUL` and calls
-`lua_gc(L, cmd, data)`. It is NOT the coroutine scheduler. The real coroutine stepper is at
-`FUN_00902700` / `FUN_00902160`. Supersedes the "SimulatorControl = scheduler" audit label from 2026-06-05.
+`FUN_008f6e40` (previously labeled "SimulatorControl" during the 2026-06-05 audit; renamed
+`LuaManager::ControlGc` in Ghidra 2026-06-06) is a **`lua_gc` controller** — it maps integer inputs
+to `LUA_GCSTOP`, `LUA_GCRESTART`, `LUA_GCCOLLECT`, `LUA_GCCOUNT`, `LUA_GCCOUNTB`, `LUA_GCSTEP`,
+`LUA_GCSETPAUSE`, `LUA_GCSETSTEPMUL` and calls `lua_gc(L, cmd, data)`. It is NOT the coroutine
+scheduler. Supersedes the "SimulatorControl = scheduler" audit label from 2026-06-05.
+
+**SECOND CORRECTION (2026-06-06, decompile + caller-chain verified):** the earlier claim here that
+"the real coroutine stepper is at `FUN_00902700` / `FUN_00902160`" was ALSO wrong — those are
+**lua 5.1.4 lgc.c internals**, not a scheduler: `0x00902700` = `atomic()` (gray/grayagain/weak
+lists at g+0x24/+0x28/+0x2C, white-bit flip `^3`), `0x00902160` = `propagatemark()` (switch on GC
+tag 5/6/8/9, returns traversed size). Full chain renamed in Ghidra: `Lua51::GcStep` @0x00902980
+(`luaC_step`, called from luaC_checkGC sites incl. the VM), `Lua51::GcSingleStep` @0x00902880,
+`Lua51::GcFullCollect` @0x00902a00 (sole caller = `LuaManager::ControlGc`), `Lua51::GcAtomic`,
+`Lua51::GcPropagateMark`. **The retail cLuaThread resume loop (real scheduler) remains UNLOCATED**
+in the client binary. ReCap's `LuaCoroutineScheduler` was built from the nThread yield/wake
+semantics (verified per-native) and passed the 25-ability gate, so no C# behavior depends on the
+mislocated address — but any future claim about "the client scheduler" must locate it first.
 
 ### C6 — Tick-call contract: always 7 args (self, agentId, targetId, cx, cy, cz, rank)
 
@@ -220,12 +232,76 @@ tick-capable: 283 abilities + 99 modifiers.
 
 Always call `tick(self, agentId, targetId, cursorX, cursorY, cursorZ, rank)` — 7 total args, no
 `numparams` branching. 1-param self-only ticks (e.g. `template_ability_firstaggro`) discard extras;
-9-param projectile ticks receive nil for params 8-9; getter-style scripts read from the per-thread
-invocation slot. Single call form satisfies all three families.
+getter-style scripts read from the per-thread invocation slot. Single call form satisfies all
+families.
+
+**CORRECTION (2026-06-06, luac disasm of template_ability_projectile):** the earlier "9-param
+positional projectile tick" claim was a misread — the 9-param function (`<?:179,325>`, layout
+`(agentId, targetId, ?, SELF, dirX, dirY, dirZ, rank, ?)` with self at POSITION 4) is an internal
+launch helper, NOT the registered tick. The actual `tick` (CLOSURE 16, `<?:403,558>`, 2 params) is
+fully getter-style: `nAbility.GetAgentID()/GetAgentAttributeSnapshot()/GetTargetID()/
+GetTargetPosition()`. The 7-arg dispatch is correct for every family observed. The historical 16
+gate errors were missing-native errors (stub 0-return arity), not arg-layout errors.
 
 Stub-errored natives (P4 backlog): `PayCooldownAndMana`, `GetAgentAttributeSnapshot`,
 `PlayAnimationSequence`, `GetAbilityInstanceID`, `TargetInRangeAtStart`, `GetAnimationSequenceIndex`,
 `nAttribute.GetAttributeValue`, `nEvent.Notify`, `nDebug.IsAbilityDebugEnabled`.
+
+### C3b — Combat-native contracts (Ghidra-decompiled 2026-06-06; arity = hard contract)
+
+| Native | Addr | Args | Returns | Semantics |
+|---|---|---|---|---|
+| `nAbility.GetAbilityInstanceID` | 0x00a403e0 | 0 | 1 num | per-cast instance id (`*ctx[0]`), 0 ok |
+| `nAbility.GetAgentAttributeSnapshot` | 0x00a417a0 | 0-1 (opt agent id) | 1 num | OPAQUE snapshot handle (`**agent[0x38]`), consumed by `_FromSnapshot` |
+| `nAbility.PayCooldownAndMana` | 0x00a43470 | 0 | **0** | no success bool; mana clamps to 0; stamps cooldown + net event |
+| `nAbility.TargetInRangeAtStart` | 0x00a410a0 | 0-1 | 1 bool | cached at-cast flag (`ctx[0x28]`), NOT live range test |
+| `nAbility.GetAnimationSequenceIndex` | 0x00a41ce0 | 0 | 1 num | reads `ctx[0x164]` (written by PlayAnimationSequence) |
+| `nAbility.PlayAnimationSequence` | 0x00a41d20 | 0 | **0** | network anim broadcast (GetWarmupData_New + event queue) |
+| `nAttribute.GetAttributeValue` | 0x009feca0 | 2 (objId, attrId int) | 1 float | attr array `comp+0x26c+id*4`, modifier chain + tuning caps; ids 0=Strength 1=Dexterity 2=Mind 4=MaxHealth CONFIRMED (domain 0..0x73, rest unmapped) |
+| `nAttribute.GetAttributeValue_FromSnapshot` | 0x009fede0 | 2 (handle, attrId) | 1 float | raw frozen read `snap+0x1c+id*4`, 0 on invalid |
+| `nEvent.Notify` | 0x00a0c1d0 | 1 table | **0** | named fields → FNV → event struct (type hash 0x8619ff24) → C++ event system + net serializer |
+| `nDebug.IsAbilityDebugEnabled` | 0x009f97b0 | 0 | 1 bool | hardcoded false |
+| `nGameObject.ValidateHostileTarget` | 0x009fd3c0 | 2-3 (src, target, [allowDead]) | 1 bool | hostile validity |
+| `nGameObject.ValidateFriendlyTarget` | 0x009fd460 | 2-3 | 1 bool | friendly variant |
+| `nGameObject.GetCenterPoint` | 0x009fb7f0 | 1 | 3 floats | collision-volume center; lua error on missing |
+| `nGameObject.GetOrientation` | 0x00a02bb0 | 1 | 4 floats | quaternion XYZW from obj+0x24..0x30 |
+| `nGameObject.GetFacing` | 0x009fb9a0 | 1 | 3 floats | forward vector derived from orientation |
+| `nGameObject.GetFootprintRadius` | 0x009fbb20 | 1 | 1 float | noun physics footprint; 0 on null |
+| `nGameObject.SetAnimationState` | 0x009fc000 | 2 (id, state str→FNV \| num) | **0** | sets obj+0xAC + timestamp, NETWORK broadcast (SporeNet msg) |
+| `nObjectManager.IsValidObject` | 0x009fb160 | 1 | 1 bool | pure existence check |
+| `nMathUtil.TransformVector` | 0x00a06bb0 | 7 (v3 + quat xyzw) | 3 floats | rotate vector by quaternion |
+| `nThread.WaitUntilTime` | 0x00a02280 | 1-3 (simTime, [obj], [bool]) | yield | waits until absolute SIM seconds (cast-speed/overdrive scaling via opt args) |
+
+`nAbility.GetRankedValue` is NOT a client native — `global.lua` (pre-boot chunk 0x57572DAC)
+defines it in Lua (alongside GetRankedValueWithRank/GetRankedValueNPC/GetManaCost/GetDuration/
+GetRankedValueHelper), so it exists after boot with zero server work.
+
+Gate progression with these implemented server-side (arity-exact): 25 retail abilities →
+**17 clean / 8 errored** (was 9/16). `nTimeManager.GetSimTimeDt` (0.05 fixed) was the single
+biggest unblocker. Remaining tier-3 frontier (next phase): `nObjectManager.GetObjectsInRadius` /
+`CreateObject` (server-side projectile spawn!), `nGameObject.SetIsVisible/SetStealthType/
+SetAttributeSnapshot/HealDamage/MarkForDelete`, `nThreadData.GetPrivateTable/SetGUID`,
+`nThread.WaitForHitpointsAbove/WaitForFadeOutInXSeconds`.
+
+### C7 — ActionCommand ability `index` = PlayerClass slot; type byte = 8 - (slot < 5)
+
+Client `BuildAbilityCommandStruct` @0x004d8a80 writes `type = 8 - (slot < 5)` — slots 0-4 emit
+type 7 (UseCharacterAbility), slots ≥5 emit type 8 (UseSquadAbility). Slot resolver
+@0x009c7180 maps the index to the CURRENT hero's PlayerClass asset fields:
+`[0]=basicAbility [1]=specialAbility1 [2]=specialAbility2 [3]=specialAbility3 [4]=passiveAbility`
+(AssetData::PlayerClass registrar field order). Squad slots 6/7/8 recurse into the squad
+character (client charIdx 4) sub-slots 0/1/2. `rank` = per-character per-slot rank array at
+PlayerCtrl+0x3e4 (via @0x009c7530).
+
+The PlayerClass field value is the **bare ability name** (e.g. `"LightningRogueBasic"`); its FNV
+hash is the RegisterAbility registry key — same lookup the client does via the ability registry
+getter @0x009dfb40. Package-verified server-side: 118 hero nouns resolve 5 slots; 114/118
+basicAbility hashes land in the boot-populated registry (the 4 misses are retail-missing chunks);
+100 are tick-capable (`AbilitySlotResolutionTests`).
+
+dalkon's C++ slot switch (Player.cpp:104: 0→0, 2→1, 3→3) does NOT match the client mapping —
+his JSON-db ability ids are a parallel domain; ReCap resolves from the PlayerClass asset instead
+(`AssetDatabase.ResolveAbilitySlots`).
 
 ---
 
