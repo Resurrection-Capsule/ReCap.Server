@@ -787,3 +787,33 @@ byte 10 = `0x04`. The consumer reads back with `lua_type == LUA_TNUMBER` (3) and
 | nTuning | 5 | 0x00a01bc0 |
 | nClient | 3 | 0x00a01bd0 |
 | **Total** | **432** | |
+
+---
+
+## 6. P3 Closeout Addendum (2026-06-06)
+
+### Boot registry counts (gate run, exact)
+
+| Kind | Registered | Tick-capable |
+|---|---|---|
+| Ability | 477 | 283 |
+| Modifier | 501 | 99 |
+| Affix | 11 | — |
+| Condition | 53 | — |
+| Objective | 13 | — |
+| **Total** | **1,055** | **382** |
+
+Boot: 1,017 chunks executed, 0 hard failures, 13 retail-missing (tagged as `[retail-missing]` warnings).
+
+### Arity table
+
+The per-native return-arity table is now canonical in `docs/architecture/VERIFIED_FACTS.md`
+(entry C3 — "Return arities"). Registrar addresses cited there correspond to the namespace
+function-table addresses in Section 3 of this document.
+
+### Tick contract
+
+See `docs/architecture/research/LUA_ABILITY_TICK_CONTRACT.md` for the full investigation
+(samples, numparams breakdown, dispatch rule). Summary: always call
+`tick(self, agentId, targetId, cursorX, cursorY, cursorZ, rank)` — 7 args, no branching.
+Verified against three families: 1-param self-only, 9-param projectile, wrapper closures.

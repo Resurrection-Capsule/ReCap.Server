@@ -154,6 +154,81 @@ Retail ServerData.package Lua chunks use **hex uint group prefixes** in `require
 - **Contract:** `ScriptVfs.ParseReference(str)` must handle both `"GroupName!File.lua"` (named) and
   `"0xHEXUINT!File.lua"` (hex-prefix) as equivalent references to the same group slot.
 
+## Lua scripting — marshalling contracts (Ghidra 2026-06-05/06, P3)
+
+### C1 — Object identity: lua_Number float IDs, round-trip via ROUND()
+
+Scripts hold game objects as **uint32 IDs pushed as `lua_Number` (float)**. No userdata or tables.
+Read pattern from `ObjectManager::GetObjectFromLuaArg` @0x009f9740: if `lua_type == LUA_TNUMBER (3)` →
+`(uint)Math.Round((double)lua_tonumber(...))`. C# binding: `PushId(uint id)` → `lua_pushnumber(L, (float)id)`;
+`ReadId()` → `(uint)Math.Round((double)lua_tonumber(L, n))`. Bug-compatible — do NOT fix float truncation
+for values > 2^24; retail scripts were written against it (see "Lua ID representation" entry above).
+
+### C2 — Position returns: 3 separate floats, error on missing object
+
+`nGameObject.GetPosition(id)` returns **3 separate floats x, y, z** on the Lua stack (3 return values).
+Client implementation @0x009fb870 pushes 3 numbers via `lua_pushnumber`; on missing object it raises a
+Lua error `"Could not find object!"` (NOT a 0,0,0 fallback). Do NOT return a vec3 table or userdata —
+dalkon's vec3 usertype was his approximation, not the retail contract.
+
+### C3 — Return arities (client-decompiled; MUST match — scripts consume return counts)
+
+Arities verified from the per-native client decompiles at the registrar-table addresses in
+`docs/architecture/research/LUA_REGISTRAR_TABLES.md` (nAbility @0x00a435c0, nModifier second block,
+nGameObject @0x00a08bc0, nBit @0x009fa3b0, nUtil @0x00a02220).
+
+| Native | Returns |
+|---|---|
+| `n*.Register{Ability,Modifier,Affix,Condition,Objective}` | **0** |
+| `nAbility.PreloadAsset` | **1** number (opaque handle) |
+| `nAbility.PreloadAnimation` | **1** number (resolved hash/id) |
+| `nAbility.PreloadModifier` | **1** number (echoes objectId arg) |
+| `nBit.Or / And / Xor / Not / LShift / RShift` | **1** number (fold op on rounded-uint args) |
+| `nUtil.GetAsset` | **1** number (opaque handle; C# uses FNV(name) as stable equivalent) |
+| `nThread.Sleep / WaitForever` | yields **0** values |
+| `nThread.WaitForXSeconds` | yields **0** values |
+| `nThread.WakeUp` | **0** |
+| `nThread.CreateThreadForObject` | **0** |
+| `nGameObject.GetHitPoints / GetMaxHitPoints` | **1** float (0.0 if object missing) |
+| `nGameObject.IsAlive` | **1** bool (hp > 0; false if missing) |
+| `nGameObject.GetTeam` | **1** number on hit; **0 values** if object missing |
+| `nGameObject.GetTargetID` | **1** number (0 if missing) |
+| `nAbility.GetAgentID / GetTargetID` | **1** number from running invocation context |
+
+### C4 — Register* semantics: FNV key, skip-if-exists, 0 returns
+
+Client `RegisterAbility` @0x00a43040; same template: `RegisterCondition` @0x00a430e0,
+`RegisterAffix` @0x00a0c570, `RegisterObjective` @0x00a0c340. **`nModifier.RegisterModifier` is the
+same native as `RegisterAbility`** — same function pointer, same code path. Semantics:
+FNV(name) → per-kind registry; if key exists → skip silently; else store; return 0 values.
+Server implementation: keep a `luaL_ref` to the props table + name + hash.
+
+### C5 — CORRECTION: SimulatorControl @0x008f6e40 = lua_gc controller, NOT coroutine scheduler
+
+`FUN_008f6e40` (previously labeled "SimulatorControl" during the 2026-06-05 audit) is a
+**`lua_gc` controller** — it maps integer inputs to `LUA_GCSTOP`, `LUA_GCRESTART`, `LUA_GCCOLLECT`,
+`LUA_GCCOUNT`, `LUA_GCCOUNTB`, `LUA_GCSTEP`, `LUA_GCSETPAUSE`, `LUA_GCSETSTEPMUL` and calls
+`lua_gc(L, cmd, data)`. It is NOT the coroutine scheduler. The real coroutine stepper is at
+`FUN_00902700` / `FUN_00902160`. Supersedes the "SimulatorControl = scheduler" audit label from 2026-06-05.
+
+### C6 — Tick-call contract: always 7 args (self, agentId, targetId, cx, cy, cz, rank)
+
+Evidence in `docs/architecture/research/LUA_ABILITY_TICK_CONTRACT.md` (investigated 2026-06-06).
+Gate results: 25 retail abilities invoked → 25 completed (9 clean / 16 errored on still-stubbed natives).
+Boot registry at gate: Ability=477, Modifier=501, Affix=11, Condition=53, Objective=13 (total 1,055);
+tick-capable: 283 abilities + 99 modifiers.
+
+Always call `tick(self, agentId, targetId, cursorX, cursorY, cursorZ, rank)` — 7 total args, no
+`numparams` branching. 1-param self-only ticks (e.g. `template_ability_firstaggro`) discard extras;
+9-param projectile ticks receive nil for params 8-9; getter-style scripts read from the per-thread
+invocation slot. Single call form satisfies all three families.
+
+Stub-errored natives (P4 backlog): `PayCooldownAndMana`, `GetAgentAttributeSnapshot`,
+`PlayAnimationSequence`, `GetAbilityInstanceID`, `TargetInRangeAtStart`, `GetAnimationSequenceIndex`,
+`nAttribute.GetAttributeValue`, `nEvent.Notify`, `nDebug.IsAbilityDebugEnabled`.
+
+---
+
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)
 
 These were asserted by old docs; keep until verified, then move up with a cite or kill:
