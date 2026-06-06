@@ -103,4 +103,6 @@ internal static class StubTelemetry
     public static IReadOnlyCollection<string> Snapshot() => _seen.Keys.OrderBy(k => k).ToList();
 
     public static void Clear() => _seen.Clear();
+
+    internal static string GetTag(nint L) => Tag(L);
 }

@@ -47,16 +47,19 @@ so the ACTUAL tick function's numparams is what matters (checked on the template
 
 ---
 
-## Decision Rule (from plan; confirmed by evidence)
+## Actual Dispatch Rule (shipped)
 
-`numparams` is checked on the ACTUAL tick function (via `tbl.tick`, which resolves via __index):
+Always call `tick(self, agentId, targetId, cursorX, cursorY, cursorZ, rank)` — 7 args.
 
-- `numparams >= 4`: call `tick(selfTable, agentId, targetId, 0, cursorX, cursorY, cursorZ, rank, 0)`
-  trimmed or padded to exactly numparams (pass only as many of the 9 as the function declares,
-  or 0 for extras beyond 7 standard args).
-- `numparams <= 1`: call `tick(selfTable)` — function uses context getters instead of positional args.
-- `numparams = 0`: this is a wrapper dispatch closure; get the real tick via the class SELF chain
-  (call `tbl[2](tbl)` or equivalently `tbl:tick()` via pcall).
+Lua handles the rest automatically:
+- 1-param self-only ticks (e.g. template_ability_firstaggro): Lua discards the extra args;
+  the function reads agentId/targetId/rank via context getters (per-thread invocation slot).
+- 9-param projectile ticks: params 8 and 9 are absent from the call → Lua fills them as nil;
+  the function reads positional args directly.
+- Getter-style scripts (`GetAgentID()` etc.) read from the per-thread `SetInvocation` slot,
+  populated via the `beforeFirstResume` callback before first coroutine resume.
+
+No `numparams` branching in the dispatcher; the single call form satisfies all three families.
 
 ---
 

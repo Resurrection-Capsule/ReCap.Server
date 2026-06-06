@@ -32,6 +32,7 @@ public class AbilityTickGateTests
         var started = 0;
         var completed = 0;
         var skippedGuard = 0;
+        var errorsBefore = ctx.Scheduler.ErrorCount;
 
         foreach (var entry in candidates)
         {
@@ -46,14 +47,15 @@ public class AbilityTickGateTests
                 completed++;
         }
 
-        Console.WriteLine($"Gate: candidates={candidates.Count} started={started} completed={completed} skipped(guard)={skippedGuard}");
+        var errored = ctx.Scheduler.ErrorCount - errorsBefore;
+        Console.WriteLine($"Gate: candidates={candidates.Count} started={started} completed={completed} errored={errored} skipped(guard)={skippedGuard}");
 
         var telemetry = StubTelemetry.Snapshot().Take(20).ToList();
         Console.WriteLine($"Stub telemetry top-{telemetry.Count} (P4 backlog):");
         foreach (var t in telemetry)
             Console.WriteLine($"  {t}");
 
-        Assert.True(completed >= 5,
-            $"expected >=5 retail ability ticks to complete; got {completed}/{started} started (guard-skipped={skippedGuard})");
+        Assert.True(completed - errored >= 5,
+            $"clean completions {completed - errored} (completed={completed}, errored={errored})/{candidates.Count}");
     }
 }

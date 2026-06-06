@@ -1,3 +1,4 @@
+using ReCap.Server.Adapters.Scripting.Api;
 using ReCap.Server.Adapters.Scripting.Native;
 
 namespace ReCap.Server.Adapters.Scripting;
@@ -19,6 +20,7 @@ public sealed class LuaCoroutineScheduler(nint mainState)
 
     public double Now => _now;
     public int ActiveCount => _threads.Count;
+    public int ErrorCount { get; private set; }
 
     public bool HasThreadForObject(uint objectId) => _byObject.ContainsKey(objectId);
 
@@ -59,6 +61,8 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         if (objectId != 0) _byObject[objectId] = threadL;
         var context = ScriptContextRegistry.Get(mainState);
         if (context is not null) ScriptContextRegistry.Register(threadL, context);
+        var tag = StubTelemetry.GetTag(mainState);
+        StubTelemetry.TagState(threadL, tag);
         LuaRuntime.InstallWatchdog(threadL);
         beforeFirstResume?.Invoke(threadL);
         Resume(entry, argCount);
@@ -97,6 +101,7 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         {
             var message = LuaNative.ToManagedString(entry.ThreadL, -1) ?? "unknown";
             Util.Logging.Log.Lua.Error($"[coroutine] object {entry.ObjectId}: {message}");
+            ErrorCount++;
         }
         Release(entry);
     }
@@ -109,6 +114,7 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         var context = ScriptContextRegistry.Get(entry.ThreadL);
         context?.RemoveInvocation(entry.ThreadL);
         ScriptContextRegistry.Unregister(entry.ThreadL);
+        StubTelemetry.UntagState(entry.ThreadL);
         LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, entry.ThreadRef);
     }
 }

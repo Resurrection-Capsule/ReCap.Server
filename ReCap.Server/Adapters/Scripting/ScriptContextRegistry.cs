@@ -20,12 +20,6 @@ public sealed class ScriptStateContext
     public LuaCoroutineScheduler? Scheduler { get; set; }
     public IScriptGameBridge? GameBridge { get; set; }
 
-    public AbilityInvocation? CurrentInvocation
-    {
-        get => _invocations.IsEmpty ? null : _invocations.Values.FirstOrDefault() as AbilityInvocation?;
-        set { if (value.HasValue) _invocations[0] = value.Value; else _invocations.TryRemove(0, out _); }
-    }
-
     public void SetInvocation(nint threadL, AbilityInvocation invocation) => _invocations[threadL] = invocation;
 
     public AbilityInvocation? GetInvocation(nint callerL)

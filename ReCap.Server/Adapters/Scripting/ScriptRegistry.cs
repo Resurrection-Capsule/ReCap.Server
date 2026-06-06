@@ -2,7 +2,7 @@ namespace ReCap.Server.Adapters.Scripting;
 
 public enum ScriptKind { Ability, Modifier, Affix, Condition, Objective }
 
-public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate, int TickNumParams = 0);
+public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate);
 
 public sealed class ScriptRegistry
 {
