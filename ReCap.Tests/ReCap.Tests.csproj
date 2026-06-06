@@ -18,4 +18,8 @@
     <ProjectReference Include="..\ReCap.Server\ReCap.Server.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\native\lua51\out\recaplua51.dll" Link="recaplua51.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\native\lua51\out\recaplua51.dll')" />
+  </ItemGroup>
+
 </Project>
