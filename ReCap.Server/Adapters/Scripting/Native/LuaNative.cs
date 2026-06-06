@@ -84,6 +84,7 @@ internal static partial class LuaNative
     [LibraryImport(Dll)] internal static partial int lua_next(nint L, int idx);
 
     [LibraryImport(Dll)] internal static partial int lua_error(nint L);
+    [LibraryImport(Dll)] internal static partial int lua_yield(nint L, int nresults);
     [LibraryImport(Dll)] internal static partial int lua_gc(nint L, int what, int data);
     [LibraryImport(Dll)] internal static partial int lua_sethook(nint L, nint func, int mask, int count);
     [LibraryImport(Dll)] internal static partial int luaL_ref(nint L, int t);

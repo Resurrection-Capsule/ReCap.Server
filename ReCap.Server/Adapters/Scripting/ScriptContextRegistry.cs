@@ -3,7 +3,7 @@ namespace ReCap.Server.Adapters.Scripting;
 public sealed class ScriptStateContext
 {
     public required ScriptRegistry Registry { get; init; }
-    public object? Scheduler { get; set; } // T5 retypes to LuaCoroutineScheduler
+    public LuaCoroutineScheduler? Scheduler { get; set; }
     public object? GameBridge { get; set; }
 }
 

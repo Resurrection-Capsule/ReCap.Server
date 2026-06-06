@@ -52,10 +52,13 @@ public sealed class LuaRuntime : IDisposable
         StubNamespaces.RegisterAll(L);
         NUtilModule.Register(L);
         NMathUtilModule.Register(L);
-        ScriptContextRegistry.Register(L, new ScriptStateContext { Registry = new ScriptRegistry() });
+        var ctx = new ScriptStateContext { Registry = new ScriptRegistry() };
+        ScriptContextRegistry.Register(L, ctx);
         Api.RegistrarModule.Register(L);
         Api.PreloadModule.Register(L);
         Api.NBitModule.Register(L);
+        ctx.Scheduler = new LuaCoroutineScheduler(L);
+        Api.NThreadModule.Register(L);
         LuaNative.lua_getfield(L, LuaNative.LUA_GLOBALSINDEX, "math");
         LuaNative.lua_pushstring(L, "random");
         unsafe { LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.MathRandom, 0); }

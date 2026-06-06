@@ -1,0 +1,91 @@
+using ReCap.Server.Adapters.Scripting.Native;
+
+namespace ReCap.Server.Adapters.Scripting;
+
+public sealed class LuaCoroutineScheduler(nint mainState)
+{
+    private sealed class ThreadEntry
+    {
+        public required nint ThreadL { get; init; }
+        public required int ThreadRef { get; init; }
+        public uint ObjectId { get; set; }
+        public bool Sleeping { get; set; }
+        public double? WakeAtSeconds { get; set; }
+    }
+
+    private readonly Dictionary<nint, ThreadEntry> _threads = [];
+    private readonly Dictionary<uint, nint> _byObject = [];
+    private double _now;
+
+    public double Now => _now;
+    public int ActiveCount => _threads.Count;
+
+    public bool HasThreadForObject(uint objectId) => _byObject.ContainsKey(objectId);
+
+    public nint Spawn(nint callerL, uint objectId, int fnIndex, int argCount)
+    {
+        var threadL = LuaNative.lua_newthread(mainState);
+        var threadRef = LuaNative.luaL_ref(mainState, LuaNative.LUA_REGISTRYINDEX);
+        LuaNative.lua_pushvalue(callerL, fnIndex);
+        LuaNative.lua_xmove(callerL, threadL, 1);
+        for (var i = 0; i < argCount; i++)
+        {
+            LuaNative.lua_pushvalue(callerL, fnIndex + 1 + i);
+            LuaNative.lua_xmove(callerL, threadL, 1);
+        }
+        var entry = new ThreadEntry { ThreadL = threadL, ThreadRef = threadRef, ObjectId = objectId };
+        _threads[threadL] = entry;
+        if (objectId != 0) _byObject[objectId] = threadL;
+        var context = ScriptContextRegistry.Get(mainState);
+        if (context is not null) ScriptContextRegistry.Register(threadL, context);
+        LuaRuntime.InstallWatchdog(threadL);
+        Resume(entry, argCount);
+        return threadL;
+    }
+
+    public void RegisterYield(nint threadL, bool sleeping, double? wakeAt)
+    {
+        if (!_threads.TryGetValue(threadL, out var entry)) return;
+        entry.Sleeping = sleeping;
+        entry.WakeAtSeconds = wakeAt;
+    }
+
+    public void WakeObject(uint objectId)
+    {
+        if (_byObject.TryGetValue(objectId, out var threadL) && _threads.TryGetValue(threadL, out var entry))
+            entry.Sleeping = false;
+    }
+
+    public void Tick(double nowSeconds)
+    {
+        _now = nowSeconds;
+        foreach (var entry in _threads.Values.ToList())
+        {
+            if (entry.Sleeping) continue;
+            if (entry.WakeAtSeconds is double wake && nowSeconds < wake) continue;
+            entry.WakeAtSeconds = null;
+            Resume(entry, 0);
+        }
+    }
+
+    private void Resume(ThreadEntry entry, int argCount)
+    {
+        var status = LuaNative.lua_resume(entry.ThreadL, argCount);
+        if (status == LuaNative.LUA_YIELD) return;
+        if (status != LuaNative.LUA_OK)
+        {
+            var message = LuaNative.ToManagedString(entry.ThreadL, -1) ?? "unknown";
+            Util.Logging.Log.Lua.Error($"[coroutine] object {entry.ObjectId}: {message}");
+        }
+        Release(entry);
+    }
+
+    private void Release(ThreadEntry entry)
+    {
+        _threads.Remove(entry.ThreadL);
+        if (entry.ObjectId != 0 && _byObject.TryGetValue(entry.ObjectId, out var l) && l == entry.ThreadL)
+            _byObject.Remove(entry.ObjectId);
+        ScriptContextRegistry.Unregister(entry.ThreadL);
+        LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, entry.ThreadRef);
+    }
+}
