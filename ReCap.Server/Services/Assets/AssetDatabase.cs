@@ -83,6 +83,29 @@ public sealed class AssetDatabase : IDisposable
         return node;
     }
 
+    // Client ability-slot contract (Ghidra FUN_009c7180 + AssetData::PlayerClass registrar,
+    // LUA_REGISTRAR_TABLES.md / VERIFIED_FACTS): ActionCommand ability `index` selects
+    // [0]=basicAbility [1]=specialAbility1 [2]=specialAbility2 [3]=specialAbility3 [4]=passiveAbility
+    // from the hero's PlayerClass; the field holds the bare ability name whose FNV hash is the
+    // RegisterAbility registry key.
+    public uint[]? ResolveAbilitySlots(uint nounId)
+    {
+        var noun = GetNoun(nounId);
+        if (noun is null) return null;
+
+        var classRef = (noun.FindByName("playerClassData") as StringValue)?.Value;
+        if (string.IsNullOrEmpty(classRef)) return null;
+
+        var classAsset = GetAssetByName(classRef);
+        if (classAsset is null) return null;
+
+        string[] slotFields = ["basicAbility", "specialAbility1", "specialAbility2", "specialAbility3", "passiveAbility"];
+        return slotFields
+            .Select(field => (classAsset.FindByName(field) as StringValue)?.Value)
+            .Select(name => string.IsNullOrEmpty(name) ? 0u : WireHash.Fnv1a(name))
+            .ToArray();
+    }
+
     public AssetValue? ResolveClassAttributesForCreature(uint nounId)
     {
         var noun = GetNoun(nounId);

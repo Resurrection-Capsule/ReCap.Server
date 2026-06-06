@@ -154,15 +154,12 @@ public static class Program
                 BootReport smokeReport;
                 using (var smokeRt = LuaRuntime.CreateSandboxedState(n => vfs.GetChunk(ScriptVfs.ParseReference(n))))
                     smokeReport = engine.ExecuteBootScripts(smokeRt);
-                Log.Lua.Info($"[lua-smoke] total={smokeReport.Total} failures={smokeReport.Failures.Count} retail-missing={smokeReport.MissingRequires.Count}");
-                foreach (var f in smokeReport.Failures.Take(10))
-                    Log.Lua.Info($"[lua-smoke] FAIL: {f}");
-                foreach (var m in smokeReport.MissingRequires.Take(20))
-                    Log.Lua.Warn($"[lua-smoke] MISSING: {m}");
+                Log.Lua.Info(smokeReport.FormatSummaryBlock());
+                if (smokeReport.MissingRequires.Count > 0)
+                    Log.Lua.Warn(smokeReport.FormatMissingBlock());
                 var snap = StubTelemetry.Snapshot();
-                Log.Lua.Info($"[lua-smoke] stub-telemetry count={snap.Count}");
-                foreach (var entry in snap)
-                    Log.Lua.Debug($"[lua-smoke] stub: {entry}");
+                if (snap.Count > 0)
+                    Log.Lua.Info($"Stubs hit: {snap.Count}\n    " + string.Join("\n    ", snap));
             }
             else
             {
@@ -180,7 +177,8 @@ public static class Program
         {
             Assets = assetDatabase,
             Decks = new DeckService(dbConfig),
-            Creatures = new CreatureService(dbConfig)
+            Creatures = new CreatureService(dbConfig),
+            Scripts = PackageMounts.Default is { } scriptMounts ? new ScriptEngine(new ScriptVfs(scriptMounts)) : null,
         };
 
 
@@ -321,12 +319,17 @@ public static class Program
     {
         var v = ServerConfigOptions.DEFAULT_GAME_VERSION;
         Console.WriteLine();
-        Console.WriteLine(@"   ____      ____            ");
-        Console.WriteLine(@"  |  _ \ ___/ ___|__ _ _ __  ");
-        Console.WriteLine(@"  | |_) / _ \ |  / _` | '_ \ ");
-        Console.WriteLine(@"  |  _ <  __/ |_| (_| | |_) |");
-        Console.WriteLine(@"  |_| \_\___|\____\__,_| .__/ ");
-        Console.WriteLine(@"                       |_|    ");
+        Console.WriteLine(@"  ____                                    _   _             ");
+        Console.WriteLine(@" |  _ \ ___  ___ _   _ _ __ _ __ ___  ___| |_(_) ___  _ __  ");
+        Console.WriteLine(@" | |_) / _ \/ __| | | | '__| '__/ _ \/ __| __| |/ _ \| '_ \ ");
+        Console.WriteLine(@" |  _ <  __/\__ \ |_| | |  | | |  __/ (__| |_| | (_) | | | |");
+        Console.WriteLine(@" |_| \_\___||___/\__,_|_|  |_|  \___|\___|\__|_|\___/|_| |_|");
+        Console.WriteLine(@"   ____                      _                              ");
+        Console.WriteLine(@"  / ___|__ _ _ __  ___ _   _| | ___                         ");
+        Console.WriteLine(@" | |   / _` | '_ \/ __| | | | |/ _ \                        ");
+        Console.WriteLine(@" | |__| (_| | |_) \__ \ |_| | |  __/                        ");
+        Console.WriteLine(@"  \____\__,_| .__/|___/\__,_|_|\___|                        ");
+        Console.WriteLine(@"            |_|                                             ");
         Console.WriteLine($"  Darkspore private server · v{v}");
         Console.WriteLine();
     }

@@ -15,6 +15,7 @@ public class GameService : IGameHandler
     public AssetDatabase? Assets { get; set; }
     public DeckService? Decks { get; set; }
     public CreatureService? Creatures { get; set; }
+    public Scripting.ScriptEngine? Scripts { get; set; }
 
     // Mirrors C++ PrepareGameStart + Player::SetSquad (Server.cpp:1210-1241,
     // Player.cpp:267-313): the squad is EXACTLY the persisted deck. Missing deck or
@@ -33,7 +34,7 @@ public class GameService : IGameHandler
         return deck.CreatureIds
             .Where(id => id != 0)
             .Select(id => Creatures.getCreatureById(id))
-            .Where(c => c is not null)
+            .OfType<CreatureModel>()
             .Select(ToSquadCreature)
             .ToList();
     }
@@ -108,6 +109,17 @@ public class GameService : IGameHandler
         {
             SquadResolver = ResolveSquad
         };
+        if (Scripts is not null)
+        {
+            try
+            {
+                game.ScriptContext = new Scripting.GameScriptContext(game, Scripts);
+            }
+            catch (Exception ex)
+            {
+                Util.Logging.Log.Game.Error($"Game {game.Id} script context boot failed: {ex.Message}");
+            }
+        }
         Games.Add(game.Id, game);
         return game;
     }
