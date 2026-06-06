@@ -20,7 +20,16 @@ public sealed class ScriptVfs(PackageMounts mounts)
         var dot = rest.LastIndexOf('.');
         var name = dot >= 0 ? rest[..dot] : rest;
         var ext = dot >= 0 ? rest[(dot + 1)..] : "lua";
-        return new ScriptKey(group is null ? 0u : Hash(group), Hash(name), Hash(ext));
+        uint groupId = 0u;
+        if (group is not null)
+        {
+            if (group.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+                uint.TryParse(group[2..], System.Globalization.NumberStyles.HexNumber, null, out var parsed))
+                groupId = parsed;
+            else
+                groupId = Hash(group);
+        }
+        return new ScriptKey(groupId, Hash(name), Hash(ext));
     }
 
     public byte[]? GetChunk(ScriptKey key)

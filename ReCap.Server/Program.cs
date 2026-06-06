@@ -5,10 +5,14 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ReCap.Server.Adapters.Blaze;
+using ReCap.Server.Adapters.Persistence;
 using ReCap.Server.Adapters.RakNet;
 using ReCap.Server.Adapters.Rest.Api;
+using ReCap.Server.Adapters.Scripting;
+using ReCap.Server.Adapters.Scripting.Api;
 using ReCap.Server.Config;
 using ReCap.Server.Services;
+using ReCap.Server.Services.Scripting;
 using ReCap.Server.Util;
 using ReCap.Server.Util.Logging;
 using Serilog.Events;
@@ -30,6 +34,7 @@ public static class Program
     const string _VERBOSE_ARG = "--verbose";
     const string _LOG_LEVEL_ARG = "--log-level=";
     const string _TELEPORT_MOVEMENT_ARG = "--teleport-movement";
+    const string _LUA_SMOKE_ARG = "--lua-smoke";
     static async Task Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -41,6 +46,7 @@ public static class Program
         string databasePath = null;
         string assetDataPath = null;
         int port = Api.DEFAULT_PORT;
+        bool luaSmoke = false;
 
 
         int argCount = args.Length;
@@ -86,6 +92,10 @@ public static class Program
                 Domain.Gameplay.Game.TeleportMovement = true;
                 Log.Server.Info("Movement mode: teleport (snap-per-click fallback enabled)");
             }
+            else if (arg == _LUA_SMOKE_ARG)
+            {
+                luaSmoke = true;
+            }
         }
 
 
@@ -122,6 +132,30 @@ public static class Program
         {
             assetDatabase = new AssetDatabase(ServerConfig.GamePath);
             _ = assetDatabase.WarmUpAsync();
+        }
+
+        if (luaSmoke)
+        {
+            var mounts = PackageMounts.Default;
+            if (mounts is not null)
+            {
+                var vfs = new ScriptVfs(mounts);
+                var engine = new ScriptEngine(vfs);
+                BootReport smokeReport;
+                using (var smokeRt = LuaRuntime.CreateSandboxedState(n => vfs.GetChunk(ScriptVfs.ParseReference(n))))
+                    smokeReport = engine.ExecuteBootScripts(smokeRt);
+                Log.Lua.Info($"[lua-smoke] total={smokeReport.Total} failures={smokeReport.Failures.Count}");
+                foreach (var f in smokeReport.Failures.Take(10))
+                    Log.Lua.Info($"[lua-smoke] FAIL: {f}");
+                var snap = StubTelemetry.Snapshot();
+                Log.Lua.Info($"[lua-smoke] stub-telemetry count={snap.Count}");
+                foreach (var entry in snap)
+                    Log.Lua.Debug($"[lua-smoke] stub: {entry}");
+            }
+            else
+            {
+                Log.Lua.Warn("[lua-smoke] no game data path — skipped");
+            }
         }
 
         CancellationTokenSource source = new CancellationTokenSource();
