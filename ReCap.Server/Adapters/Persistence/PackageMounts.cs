@@ -20,19 +20,15 @@ public sealed class PackageMounts(string dataDir)
 
     public string DataDir { get; } = dataDir;
 
-    private static PackageMounts? _default;
-    public static PackageMounts? Default
+    private static readonly Lazy<PackageMounts?> _default = new(BuildDefault);
+    public static PackageMounts? Default => _default.Value;
+
+    private static PackageMounts? BuildDefault()
     {
-        get
-        {
-            if (_default is not null) return _default;
-            var gamePath = ServerConfig.GamePath;
-            if (string.IsNullOrWhiteSpace(gamePath)) return null;
-            var dataDir = Path.GetDirectoryName(gamePath);
-            if (dataDir is null) return null;
-            _default = new PackageMounts(dataDir);
-            return _default;
-        }
+        var gamePath = ServerConfig.GamePath;
+        if (string.IsNullOrWhiteSpace(gamePath)) return null;
+        var dataDir = Path.GetDirectoryName(gamePath);
+        return dataDir is null ? null : new PackageMounts(dataDir);
     }
 
     public DbpfReader? Get(WellKnownPackage package)

@@ -13,6 +13,14 @@ public class PackageMountsTests
     }
 
     [Fact]
+    public void MissingPackageIsNegativeCachedAcrossCalls()
+    {
+        var mounts = new PackageMounts(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
+        Assert.Null(mounts.Get(WellKnownPackage.ServerData));
+        Assert.Null(mounts.Get(WellKnownPackage.ServerData));
+    }
+
+    [Fact]
     public void PackagePathsAreDataRelative()
     {
         Assert.Equal("ServerData.package", WellKnownPackage.ServerData.RelativePath);
