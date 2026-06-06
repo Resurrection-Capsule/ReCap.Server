@@ -160,6 +160,37 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void PlayAnimationSequenceRotatesAndBroadcasts()
+    {
+        using var rt = Make();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        var bridge = (FakeBridge)ctx.GameBridge!;
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nAbility.RegisterAbility('SeqTest', {
+                tick = function() end,
+                animationSequence = {
+                    { hit = 0.25, animationstate = 111 },
+                    { hit = 0.40, animationstate = 222 },
+                },
+            })
+            return true
+            """)));
+        ctx.SetInvocation(rt.L, new AbilityInvocation(AgentId: 10, TargetId: 0, CursorX: 0f, CursorY: 0f, CursorZ: 0f, Rank: 1,
+            AbilityHash: ReCap.Server.Adapters.Scripting.ScriptVfs.Hash("SeqTest"), InstanceId: 1));
+
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nAbility.PlayAnimationSequence()
+            local first = nAbility.GetAnimationSequenceIndex()
+            nAbility.PlayAnimationSequence()
+            local second = nAbility.GetAnimationSequenceIndex()
+            nAbility.PlayAnimationSequence()
+            local third = nAbility.GetAnimationSequenceIndex()
+            return first == 0 and second == 1 and third == 0
+            """)));
+        Assert.Equal([(10u, 111u), (10u, 222u), (10u, 111u)], bridge.AnimationBroadcasts);
+    }
+
+    [Fact]
     public void CircleIntersectsArcCoversConeHitCases()
     {
         using var rt = Make();

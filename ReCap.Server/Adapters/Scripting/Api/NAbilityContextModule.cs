@@ -104,14 +104,67 @@ public static unsafe class NAbilityContextModule
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int GetAnimationSequenceIndex(nint L)
     {
-        LuaNative.lua_pushnumber(L, 0f);
-        return 1;
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            LuaNative.lua_pushnumber(L, ctx?.GetAnimationSequenceIndex(L) ?? 0);
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
     }
 
+    // Reads the invoking ability's animationSequence table (entries: {hit, release,
+    // animationstate=PreloadAnimation hash}), rotates the Sequence index per (agent, ability)
+    // and broadcasts the chosen animationstate (0xA5). GetAnimationSequenceIndex returns the
+    // same index within the cast so timing reads (GetShotTiming → [idx+1].hit) line up.
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int PlayAnimationSequence(nint L)
     {
-        return 0;
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var inv = ctx?.GetInvocation(L);
+            if (ctx?.GameBridge is null || inv is null || inv.Value.AbilityHash == 0) return 0;
+
+            var entry = ctx.Registry.Find(ScriptKind.Ability, inv.Value.AbilityHash);
+            if (entry is null) return 0;
+
+            var top = LuaNative.lua_gettop(L);
+            LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
+            LuaNative.lua_getfield(L, -1, "animationSequence");
+            if (LuaNative.lua_type(L, -1) != 5)
+            {
+                LuaNative.lua_settop(L, top);
+                return 0;
+            }
+
+            var count = (int)LuaNative.lua_objlen(L, -1);
+            if (count <= 0)
+            {
+                LuaNative.lua_settop(L, top);
+                return 0;
+            }
+
+            var index = ctx.NextAnimationSequenceIndex(L, inv.Value.AgentId, inv.Value.AbilityHash, count);
+            LuaNative.lua_rawgeti(L, -1, index + 1);
+            LuaNative.lua_getfield(L, -1, "animationstate");
+            var state = LuaNative.lua_type(L, -1) == 3
+                ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, -1))
+                : 0u;
+            LuaNative.lua_settop(L, top);
+
+            if (state != 0)
+                ctx.GameBridge.BroadcastAnimationState(inv.Value.AgentId, state);
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     private static uint? ReadOptionalObjectIdArg(nint L)

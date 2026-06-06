@@ -34,7 +34,14 @@ if (args.Length == 2 && args[0] == "--scan")
 var wanted = args.Length > 0 ? args : new[] { "Fireball", "template_ability_projectile" };
 var byInstance = new System.Collections.Generic.Dictionary<uint, string>();
 foreach (var name in wanted)
-    byInstance[WireHash.Fnv1a(name)] = name;
+{
+    // "0x"-prefixed args are raw instance ids; anything else is FNV-hashed.
+    if (name.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
+        uint.TryParse(name[2..], System.Globalization.NumberStyles.HexNumber, null, out var raw))
+        byInstance[raw] = name;
+    else
+        byInstance[WireHash.Fnv1a(name)] = name;
+}
 
 foreach (var (name, entry) in reader.ListAssetsByType("lua"))
 {

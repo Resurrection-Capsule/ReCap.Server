@@ -939,6 +939,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     {
         Log.Game.Debug($"ActionCommand: type={packet.CommandType} stamp={packet.CommandStamp} obj=0x{packet.ObjectId:X} pos=({packet.PosX:F1},{packet.PosY:F1},{packet.PosZ:F1})");
 
+        // The 0x9C common header carries the hero's live position + orientation — adopt them so
+        // Lua facing/cone tests (GetFacing → CircleIntersectsArc) see the real heading.
+        if (Objects.Objects.TryGetValue(packet.ObjectId, out var heroObject))
+        {
+            heroObject.Position = new Vector3(packet.PosX, packet.PosY, packet.PosZ);
+            heroObject.Orientation = new Quaternion(packet.OriX, packet.OriY, packet.OriZ, packet.OriW);
+        }
+
         if (packet.CommandType is 3 or 4 or 5 or 10)
             ClearActiveEmote(sender, packet.ObjectId);
 

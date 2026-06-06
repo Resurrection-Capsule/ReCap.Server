@@ -40,7 +40,27 @@ public sealed class ScriptStateContext
         return null;
     }
 
-    internal void RemoveInvocation(nint threadL) => _invocations.TryRemove(threadL, out _);
+    internal void RemoveInvocation(nint threadL)
+    {
+        _invocations.TryRemove(threadL, out _);
+        _animSequenceCurrent.TryRemove(threadL, out _);
+    }
+
+    // nAbilityAnimationSelection.Sequence rotation: one counter per (agent, ability) across
+    // casts; the index chosen by PlayAnimationSequence is read back within the same cast by
+    // GetAnimationSequenceIndex (client ctx[0x164] behavior).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(uint Agent, uint Ability), int> _animSequenceCounter = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, int> _animSequenceCurrent = new();
+
+    public int NextAnimationSequenceIndex(nint threadL, uint agentId, uint abilityHash, int count)
+    {
+        var next = _animSequenceCounter.AddOrUpdate((agentId, abilityHash), 0, (_, prev) => prev + 1);
+        var index = count > 0 ? next % count : 0;
+        _animSequenceCurrent[threadL] = index;
+        return index;
+    }
+
+    public int GetAnimationSequenceIndex(nint threadL) => _animSequenceCurrent.GetValueOrDefault(threadL, 0);
 
     // Retail snapshot contract (client GetAgentAttributeSnapshot @0x00a417a0 /
     // GetAttributeValue_FromSnapshot @0x009fede0): the snapshot is an opaque numeric HANDLE
