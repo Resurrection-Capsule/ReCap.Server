@@ -119,18 +119,24 @@ require the original Darkspore Lua asset package filenames to crack.
 
 Full per-namespace function tables in `docs/architecture/research/LUA_REGISTRAR_TABLES.md`.
 
-## Lua ID representation: lua_pushnumber (double), round-tripped (Ghidra 2026-06-05)
+## Lua ID representation: lua_pushnumber (float32), round-tripped (Ghidra 2026-06-05)
 
-`nUtil::SPID` @0x009f9e00 and `nUtil::ToGUID` @0x009f9e40 both call **`lua_pushnumber`**
-(Lua 5.1 = `double`). Consumer `ObjectManager::GetObjectFromLuaArg` @0x009f9740 reads back
-with `lua_type==3` (LUA_TNUMBER) and `ROUND(float10)` to recover the integer.
+`nUtil::SPID` @0x009f9e00 and `nUtil::ToGUID` @0x009f9e40 both call **`lua_pushnumber`**.
+In this client `lua_Number = float` (32-bit IEEE 754, 24-bit mantissa) — verified via
+bytecode-header check @0x00909cb0 (`sizeof(lua_Number) == 4`) and all 1,042
+ServerData.package chunks carrying chunk header byte 10 = `0x04`.
+Consumer `ObjectManager::GetObjectFromLuaArg` @0x009f9740 reads back with `lua_type==3`
+(LUA_TNUMBER) and `ROUND(float10)` to recover the integer.
 
-- **uint32 hashes are exact** — max 0xFFFFFFFF < 2^32 < 2^53 (double mantissa). No loss.
-- **64-bit GUIDs lose precision** for values > 2^53 — `ToGUID` parses hex string → ulong →
-  `lua_pushnumber`; only the lower 53 bits survive in the double.
+- **uint32 values > 2^24 DO truncate** in the low bits when passing through a Lua number.
+  Runtime object IDs (small sequential ints) are exact in float; full 32-bit hashes truncate
+  identically on client and server — retail scripts were written against this behavior.
+- **64-bit GUIDs**: `ToGUID` parses a hex STRING input → the GUID flow avoids the float
+  problem entirely; do not push GUIDs as lua_Number.
 
-C# binding contract: `PushId(uint id)` → `lua_pushnumber(L, id)` (exact for uint32).
-`ReadId()` → `(uint)(long)Math.Round(lua_tonumber(L, n))`. For GUID (uint64): pass as
+C# binding contract (bug-compatible — replicate exactly, do NOT fix the truncation):
+`PushId(uint id)` → `lua_pushnumber(L, (float)id)`.
+`ReadId()` → `(uint)Math.Round((double)lua_tonumber(L, n))`. For GUID (uint64): pass as
 hex string, not as a number.
 
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)

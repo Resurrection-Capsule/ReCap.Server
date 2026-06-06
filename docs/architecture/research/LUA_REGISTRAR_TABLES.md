@@ -730,24 +730,26 @@ void ObjectManager::GetObjectFromLuaArg(undefined4 param_1, undefined4 param_2)
 }
 ```
 
-### Verdict: **lua_pushnumber (float64 Lua number), round-tripped via ROUND()**
+### Verdict: **lua_pushnumber (float32 Lua number), round-tripped via ROUND()**
 
-Both `SPID` and `ToGUID` call `lua_pushnumber`, which in Lua 5.1 is `lua_Number = double`
-(64-bit IEEE 754). The consumer reads back with `lua_type == LUA_TNUMBER` (3) and
+Both `SPID` and `ToGUID` call `lua_pushnumber`, which in **this client** is `lua_Number =
+float` (32-bit IEEE 754, 24-bit mantissa). Verified: bytecode-header check @0x00909cb0
+expects `sizeof(lua_Number) == 4`; all 1,042 ServerData.package chunks carry chunk header
+byte 10 = `0x04`. The consumer reads back with `lua_type == LUA_TNUMBER` (3) and
 `ROUND(float10)` to recover the integer.
 
 **Precision analysis:**
-- Lua 5.1 `lua_Number` is `double` (64-bit). A double has 53 bits of mantissa.
-- uint32 hashes fit exactly (max 0xFFFFFFFF < 2^32 < 2^53). **No precision loss for uint32.**
-- `ToGUID` parses 64-bit hex via `strtoul` into `ulong`, then `lua_pushnumber`. A 64-bit
-  integer with high bits set WILL lose precision in a double. GUIDs wider than 53 bits will
-  be rounded — only the lower 53 bits are exact.
+- `lua_Number` is **float** (32-bit). A float has 24 bits of mantissa.
+- uint32 values > 2^24 (16,777,216) **DO truncate in the low bits** when passed through a
+  Lua number. Runtime object IDs (small sequential ints) are exact; full 32-bit hashes
+  truncate identically on client and server, preserving script-observable behavior.
+- `ToGUID` parses 64-bit hex via `strtoul` into `ulong`, then `lua_pushnumber` as a string
+  input path — this GUID flow passes hex strings, avoiding the float problem entirely.
 
-**C# binding implications:**
-- `PushId(uint32 id)` → `lua_pushnumber(L, id)` — safe, exact.
-- `ReadId()` → `(uint)(long)Math.Round(lua_tonumber(L, n))` — safe for uint32.
-- For GUID (64-bit): use `lua_pushlstring` with a hex string + `lua_tolstring`, matching
-  what `ToGUID` expects on input. Do NOT push 64-bit integers as lua_Number.
+**C# binding contract (bug-compatible — replicate exactly, do NOT fix the truncation):**
+- `PushId(uint id)` → `lua_pushnumber(L, (float)id)` — matches client behavior.
+- `ReadId()` → `(uint)Math.Round((double)lua_tonumber(L, n))`.
+- For GUID (uint64): pass as hex string, not as a number (matching `ToGUID` input contract).
 
 ---
 
@@ -784,4 +786,4 @@ Both `SPID` and `ToGUID` call `lua_pushnumber`, which in Lua 5.1 is `lua_Number 
 | nJuggernaut | 3 | inline |
 | nTuning | 5 | 0x00a01bc0 |
 | nClient | 3 | 0x00a01bd0 |
-| **Total** | **436** | |
+| **Total** | **432** | |
