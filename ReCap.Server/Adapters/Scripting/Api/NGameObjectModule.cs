@@ -23,6 +23,7 @@ public static unsafe class NGameObjectModule
             ("ValidateFriendlyTarget", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ValidateFriendlyTarget),
             ("SetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAnimationState),
             ("HealDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&HealDamage),
+            ("TakeDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TakeDamage),
             ("MarkForDelete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MarkForDelete),
             ("SetIsVisible", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetIsVisible),
             ("SetStealthType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetStealthType));
@@ -59,6 +60,50 @@ public static unsafe class NGameObjectModule
             LuaNative.lua_pushnumber(L, 0f);
             LuaNative.lua_pushboolean(L, 0);
             return 2;
+        }
+    }
+
+    // Caller contract (melee tick disasm, CALL 36 12 4 = 11 args / 3 returns):
+    // TakeDamage(snapshotHandle, targetId, damage, damageType, damageSource, coefficient,
+    // descriptors, damageMultiplier, dirX, dirY, dirZ) → (damageDealt|nil, damageDealt, isCrit).
+    // First return is the script's hit gate (TEST). Modifier chain / crit / direction knockback
+    // land with the Simulation phase.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int TakeDamage(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is null || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            {
+                LuaNative.lua_pushnil(L);
+                LuaNative.lua_pushnumber(L, 0f);
+                LuaNative.lua_pushboolean(L, 0);
+                return 3;
+            }
+            var targetId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            var damage = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, 3) : 0f;
+            var dealt = -bridge.ApplyHeal(targetId, -Math.Abs(damage));
+            if (dealt > 0f)
+            {
+                LuaNative.lua_pushnumber(L, dealt);
+                LuaNative.lua_pushnumber(L, dealt);
+                LuaNative.lua_pushboolean(L, 0);
+            }
+            else
+            {
+                LuaNative.lua_pushnil(L);
+                LuaNative.lua_pushnumber(L, 0f);
+                LuaNative.lua_pushboolean(L, 0);
+            }
+            return 3;
+        }
+        catch
+        {
+            LuaNative.lua_pushnil(L);
+            LuaNative.lua_pushnumber(L, 0f);
+            LuaNative.lua_pushboolean(L, 0);
+            return 3;
         }
     }
 
@@ -190,6 +235,8 @@ public static unsafe class NGameObjectModule
         var forward = System.Numerics.Vector3.Transform(
             new System.Numerics.Vector3(0f, 1f, 0f),
             new System.Numerics.Quaternion(x, y, z, w));
+        Util.Logging.Log.Lua.Debug(
+            $"[arc] GetFacing quat=({x:F2},{y:F2},{z:F2},{w:F2}) → fwd=({forward.X:F2},{forward.Y:F2},{forward.Z:F2})");
         LuaNative.lua_pushnumber(L, forward.X);
         LuaNative.lua_pushnumber(L, forward.Y);
         LuaNative.lua_pushnumber(L, forward.Z);
@@ -221,6 +268,8 @@ public static unsafe class NGameObjectModule
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int ValidateFriendlyTarget(nint L) => ValidateTarget(L, hostile: false);
 
+    // Caller contract (template_ability_melee tick disasm): arg1 is the source TEAM number
+    // (scripts pass nGameObject.GetTeam(agent)), arg2 the target object id — NOT two object ids.
     private static int ValidateTarget(nint L, bool hostile)
     {
         try
@@ -230,18 +279,17 @@ public static unsafe class NGameObjectModule
                 LuaNative.lua_pushboolean(L, 0);
                 return 1;
             }
-            var sourceId = ReadId(L);
+            var sourceTeam = (byte)Math.Round((double)LuaNative.lua_tonumber(L, 1));
             var targetId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
             var allowDead = LuaNative.lua_gettop(L) >= 3 && LuaNative.lua_toboolean(L, 3) != 0;
             var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
 
             var valid = bridge is not null
-                && bridge.ObjectExists(sourceId)
                 && bridge.ObjectExists(targetId)
                 && (allowDead || bridge.GetHitPoints(targetId) > 0f)
                 && (hostile
-                    ? bridge.GetTeam(sourceId) != bridge.GetTeam(targetId)
-                    : bridge.GetTeam(sourceId) == bridge.GetTeam(targetId));
+                    ? sourceTeam != bridge.GetTeam(targetId)
+                    : sourceTeam == bridge.GetTeam(targetId));
             LuaNative.lua_pushboolean(L, valid ? 1 : 0);
             return 1;
         }

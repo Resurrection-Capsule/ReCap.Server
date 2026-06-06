@@ -50,6 +50,9 @@ public static unsafe class NMathUtilModule
                 hit = MathF.Abs(delta) <= halfAngle + circleSpan;
             }
 
+            ReCap.Server.Util.Logging.Log.Lua.Debug(
+                $"[arc] circle=({cx:F1},{cy:F1} r={cr:F1}) arc=({ax:F1},{ay:F1}) facing=({fx:F2},{fy:F2}) " +
+                $"len={length:F1} angle={totalAngle:F2} dist={dist:F1} → {(hit ? "HIT" : "miss")}");
             LuaNative.lua_pushboolean(L, hit ? 1 : 0);
             return 1;
         }
