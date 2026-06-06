@@ -1,5 +1,5 @@
-﻿diff --git a/native/lua51/lua-5.1.4/src/luaconf.h b/native/lua51/lua-5.1.4/src/luaconf.h
-index e2cb261..27324e7 100644
+diff --git a/native/lua51/lua-5.1.4/src/luaconf.h b/native/lua51/lua-5.1.4/src/luaconf.h
+index e2cb261..3cede32 100644
 --- a/native/lua51/lua-5.1.4/src/luaconf.h
 +++ b/native/lua51/lua-5.1.4/src/luaconf.h
 @@ -501,8 +501,8 @@
@@ -22,8 +22,9 @@ index e2cb261..27324e7 100644
 +#define LUA_NUMBER_SCAN		"%f"
 +#define LUA_NUMBER_FMT		"%.7g"
  #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
- #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
+-#define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
 -#define lua_str2number(s,p)	strtod((s), (p))
++#define LUAI_MAXNUMBER2STR	32 /* 7 digits, sign, point, exponent, and \0 */
 +#define lua_str2number(s,p)	((lua_Number)strtod((s), (p)))
  
  

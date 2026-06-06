@@ -1,4 +1,4 @@
-﻿diff --git a/native/lua51/lua-5.1.4/src/ldump.c b/native/lua51/lua-5.1.4/src/ldump.c
+diff --git a/native/lua51/lua-5.1.4/src/ldump.c b/native/lua51/lua-5.1.4/src/ldump.c
 index c9d3d48..539ef80 100644
 --- a/native/lua51/lua-5.1.4/src/ldump.c
 +++ b/native/lua51/lua-5.1.4/src/ldump.c

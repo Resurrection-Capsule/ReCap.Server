@@ -521,7 +521,7 @@
 #define LUA_NUMBER_SCAN		"%f"
 #define LUA_NUMBER_FMT		"%.7g"
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
-#define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
+#define LUAI_MAXNUMBER2STR	32 /* 7 digits, sign, point, exponent, and \0 */
 #define lua_str2number(s,p)	((lua_Number)strtod((s), (p)))
 
 
