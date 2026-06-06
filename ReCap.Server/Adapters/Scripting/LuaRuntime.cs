@@ -42,6 +42,17 @@ public sealed class LuaRuntime : IDisposable
         LuaNative.lua_getfield(L, -1, "traceback");
         _tracebackRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
         LuaNative.lua_settop(L, 0);
+
+        foreach (var banned in new[] { "debug", "loadstring", "dofile", "loadfile", "loadlib", "package", "module" })
+        {
+            LuaNative.lua_pushnil(L);
+            LuaNative.lua_setfield(L, LuaNative.LUA_GLOBALSINDEX, banned);
+        }
+        unsafe
+        {
+            LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.Print, 0);
+        }
+        LuaNative.lua_setfield(L, LuaNative.LUA_GLOBALSINDEX, "print");
     }
 
     public void Execute(byte[] chunk, string chunkName)
@@ -76,4 +87,22 @@ public sealed class LuaRuntime : IDisposable
     }
 
     public void Dispose() => _handle.Dispose();
+}
+
+internal static class LuaStubs
+{
+    [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    internal static int Print(nint L)
+    {
+        try
+        {
+            var top = LuaNative.lua_gettop(L);
+            var parts = new List<string>(top);
+            for (var i = 1; i <= top; i++)
+                parts.Add(LuaNative.ToManagedString(L, i) ?? LuaNative.lua_type(L, i).ToString());
+            ReCap.Server.Util.Logging.Log.Lua.Debug($"[print] {string.Join("\t", parts)}");
+        }
+        catch { }
+        return 0;
+    }
 }
