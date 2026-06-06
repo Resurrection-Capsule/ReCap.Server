@@ -1,4 +1,3 @@
-using AutoMapper;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models;
 using ReCap.Server.Domain;
 using ReCap.Server.Models;
@@ -7,22 +6,18 @@ namespace ReCap.Server.Mappers;
 
 public class DeckMapper
 {
-    private IMapper mapper;
+    private CreatureMapper creatureMapper = new();
 
-    private CreatureMapper creatureMapper;
-
-    public DeckMapper() {
-        creatureMapper = new CreatureMapper();
-        var configuration = new MapperConfiguration(cfg =>
-        {
-            cfg.CreateMap<Deck, DeckModel>();
-        });
-        mapper = configuration.CreateMapper();
-    }
-
-    public DeckModel toModel(Deck deck) {
-        return mapper.Map<DeckModel>(deck);
-    }
+    public DeckModel toModel(Deck deck) => new()
+    {
+        ID = deck.ID,
+        Name = deck.Name,
+        Slot = deck.Slot,
+        Category = deck.Category,
+        AccountID = deck.AccountID,
+        Locked = deck.Locked,
+        CreatureIds = [.. deck.CreatureIds],
+    };
 
     public DeckContract toContract(DeckModel deck, List<CreatureModel> creatures) {
         return new DeckContract{

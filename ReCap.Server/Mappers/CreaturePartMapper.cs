@@ -1,4 +1,3 @@
-using AutoMapper;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models;
 using ReCap.Server.Domain;
 using ReCap.Server.Models;
@@ -7,26 +6,47 @@ namespace ReCap.Server.Mappers;
 
 public class CreaturePartMapper
 {
-    private IMapper mapper;
+    public CreaturePartModel toModel(CreaturePart creaturePart) => new()
+    {
+        ID = creaturePart.ID,
+        AccountId = creaturePart.AccountId,
+        CreatureId = creaturePart.CreatureId,
+        CreationDate = creaturePart.CreationDate,
+        Cost = creaturePart.Cost,
+        Level = creaturePart.Level,
+        Rarity = creaturePart.Rarity,
+        MarketStatus = creaturePart.MarketStatus,
+        Status = creaturePart.Status,
+        Usage = creaturePart.Usage,
+        IsFlair = creaturePart.IsFlair,
+        RigblockAssetHash = creaturePart.RigblockAssetHash,
+        PrefixAssetHash = creaturePart.PrefixAssetHash,
+        PrefixSecondaryAssetHash = creaturePart.PrefixSecondaryAssetHash,
+        SuffixAssetHash = creaturePart.SuffixAssetHash,
+        RigblockAssetId = creaturePart.RigblockAssetId,
+        PrefixAssetId = creaturePart.PrefixAssetId,
+        PrefixSecondaryAssetId = creaturePart.PrefixSecondaryAssetId,
+        SuffixAssetId = creaturePart.SuffixAssetId,
+    };
 
-    public CreaturePartMapper() {
-        var configuration = new MapperConfiguration(cfg =>
-        {
-            cfg.CreateMap<CreaturePart, CreaturePartModel>();
-            cfg.CreateMap<CreaturePartModel, CreaturePartContract>();
-        });
-        mapper = configuration.CreateMapper();
-    }
-
-    public CreaturePartModel toModel(CreaturePart creaturePart) {
-        return mapper.Map<CreaturePartModel>(creaturePart);
-    }
-
-    public CreaturePartContract toContract(CreaturePartModel creaturePart) {
-        var contract = mapper.Map<CreaturePartContract>(creaturePart);
-        contract.ReferenceID = contract.ID;
-        return contract;
-    }
+    public CreaturePartContract toContract(CreaturePartModel creaturePart) => new()
+    {
+        ID = creaturePart.ID,
+        ReferenceID = creaturePart.ID,
+        CreatureId = creaturePart.CreatureId ?? 0,
+        CreationDate = creaturePart.CreationDate,
+        Cost = creaturePart.Cost,
+        Level = creaturePart.Level,
+        Rarity = (int)creaturePart.Rarity,
+        MarketStatus = creaturePart.MarketStatus,
+        Status = creaturePart.Status,
+        Usage = creaturePart.Usage,
+        IsFlair = creaturePart.IsFlair ? 1 : 0,
+        RigblockAssetHash = creaturePart.RigblockAssetHash,
+        PrefixAssetHash = creaturePart.PrefixAssetHash,
+        PrefixSecondaryAssetHash = creaturePart.PrefixSecondaryAssetHash,
+        SuffixAssetHash = creaturePart.SuffixAssetHash,
+    };
 
     private ulong fnv1aHashOfString(string val) {
         // C++ utils::hash_id (Functions.h:167) is 32-bit: uint32_t wraps at 2^32. The previous

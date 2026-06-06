@@ -96,9 +96,55 @@ public class CertGenerator
         return (cKeyPair.Private, finalCertificate);
     }
 
+    // BouncyCastle 2.3+ X509Name(string) rejects the retail GOS DN: the OU value embeds a
+    // second '=' ("OU=Global Online Studio/emailAddress=..."). The working ProtoSSL contract
+    // needs those exact DN bytes, so parse with the old 2.2.x semantics (split on unquoted ',',
+    // key = text before the FIRST '=', quotes stripped) and build the X509Name explicitly.
+    private static readonly Dictionary<string, Org.BouncyCastle.Asn1.DerObjectIdentifier> DnKeys =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["CN"] = X509Name.CN,
+            ["C"] = X509Name.C,
+            ["ST"] = X509Name.ST,
+            ["L"] = X509Name.L,
+            ["O"] = X509Name.O,
+            ["OU"] = X509Name.OU,
+        };
+
+    private static X509Name ParseDirectoryName(string dirName)
+    {
+        var oids = new List<Org.BouncyCastle.Asn1.DerObjectIdentifier>();
+        var values = new List<string>();
+        foreach (var token in SplitUnquoted(dirName, ','))
+        {
+            var eq = token.IndexOf('=');
+            oids.Add(DnKeys[token[..eq].Trim()]);
+            values.Add(token[(eq + 1)..].Trim());
+        }
+        return new X509Name(oids, values);
+    }
+
+    private static IEnumerable<string> SplitUnquoted(string value, char separator)
+    {
+        var current = new System.Text.StringBuilder();
+        var quoted = false;
+        foreach (var c in value)
+        {
+            if (c == '"') { quoted = !quoted; continue; }
+            if (c == separator && !quoted)
+            {
+                yield return current.ToString();
+                current.Clear();
+                continue;
+            }
+            current.Append(c);
+        }
+        yield return current.ToString();
+    }
+
     private static X509Certificate GenerateCertificate(string subjectName, AsymmetricCipherKeyPair subjectKeyPair, AsymmetricKeyParameter issuerPrivKey, X509Certificate? issuerCert = null)
     {
-        var issuerDn = issuerCert == null ? new X509Name(subjectName) : issuerCert.SubjectDN;
+        var issuerDn = issuerCert == null ? ParseDirectoryName(subjectName) : issuerCert.SubjectDN;
 
         var certGen = new X509V3CertificateGenerator();
         var serialNumber = BigIntegers.CreateRandomInRange(BigInteger.One, BigInteger.ValueOf(long.MaxValue), new SecureRandom());
@@ -106,7 +152,7 @@ public class CertGenerator
         certGen.SetIssuerDN(issuerDn);
         certGen.SetNotBefore(DateTime.UtcNow.Date);
         certGen.SetNotAfter(DateTime.UtcNow.Date.AddYears(10));
-        certGen.SetSubjectDN(new X509Name(subjectName));
+        certGen.SetSubjectDN(ParseDirectoryName(subjectName));
         certGen.SetPublicKey(subjectKeyPair.Public);
         var signatureFactory = new Asn1SignatureFactory(CipherAlgorithm, issuerPrivKey);
         return certGen.Generate(signatureFactory);

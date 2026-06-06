@@ -1,7 +1,5 @@
-using AutoMapper;
 using ReCap.Server.Adapters.Rest.Contracts.Game;
 using ReCap.Server.Adapters.Rest.Contracts.Game.Models;
-using ReCap.Server.Config;
 using ReCap.Server.Domain;
 using ReCap.Server.Models;
 
@@ -9,21 +7,19 @@ namespace ReCap.Server.Mappers;
 
 public class CreatureMapper
 {
-    private IMapper mapper;
-
-    public CreatureMapper() {
-        var configuration = new MapperConfiguration(cfg =>
-        {
-            cfg.CreateMap<Creature, CreatureModel>();
-            cfg.CreateMap<CreatureModel, CreatureContract>();
-            cfg.CreateMap<CreatureTemplateModel, GetCreatureResponseContract>();
-        });
-        mapper = configuration.CreateMapper();
-    }
-
-    public CreatureModel toModel(Creature creature) {
-        return mapper.Map<CreatureModel>(creature);
-    }
+    public CreatureModel toModel(Creature creature) => new()
+    {
+        ID = creature.ID,
+        Version = creature.Version,
+        TemplateID = creature.TemplateID,
+        TemplateName = creature.TemplateName,
+        AccountID = creature.AccountID,
+        Cost = creature.Cost,
+        GearScore = creature.GearScore,
+        ItemPoints = creature.ItemPoints,
+        LargePngUrl = creature.LargePngUrl,
+        ThumbPngUrl = creature.ThumbPngUrl,
+    };
 
     // C++ stores png_thumb_url empty (profile XML has no such node); the client itself builds
     // /template_png/<id>_thumb.png from the creature and fetches it via its registered content
@@ -33,32 +29,44 @@ public class CreatureMapper
     public static string CreaturePngUrl(ulong templateId)
         => $"/template_png/{templateId}_thumb.png";
 
-    public CreatureContract toContract(CreatureModel creature) {
-        var contract = mapper.Map<CreatureContract>(creature);
-        contract.LargePngUrl = CreaturePngUrl(creature.TemplateID);
-        contract.ThumbPngUrl = CreaturePngUrl(creature.TemplateID);
-        return contract;
-    }
+    public CreatureContract toContract(CreatureModel creature) => new()
+    {
+        ID = creature.ID,
+        Version = creature.Version,
+        TemplateID = creature.TemplateID,
+        TemplateName = creature.TemplateName,
+        GearScore = creature.GearScore,
+        ItemPoints = creature.ItemPoints,
+        LargePngUrl = CreaturePngUrl(creature.TemplateID),
+        ThumbPngUrl = CreaturePngUrl(creature.TemplateID),
+    };
 
-    public GetCreatureResponseContract toGetCreatureContract(CreatureTemplateModel creatureTemplate, CreatureModel creature, bool includeAbilities, bool includeParts) {
-        var response = mapper.Map<GetCreatureResponseContract>(creatureTemplate);
-        response.Stat = "ok";
-        response.Timestamp = 1;
-        response.ExecTime = 1;
+    public GetCreatureResponseContract toGetCreatureContract(CreatureTemplateModel creatureTemplate, CreatureModel creature, bool includeAbilities, bool includeParts) => new()
+    {
+        Stat = "ok",
+        Timestamp = 1,
+        ExecTime = 1,
 
-        response.PartsStr = creature.getPartsAsString();
-        response.StatsTemplate = null;
+        NameLocaleId = creatureTemplate.nameLocaleId,
+        WeaponMinDamage = creatureTemplate.weaponMinDamage,
+        WeaponMaxDamage = creatureTemplate.weaponMaxDamage,
+        AbilityPassive = (ulong)creatureTemplate.abilityPassive,
+        AbilityBasic = (ulong)creatureTemplate.abilityBasic,
+        AbilityRandom = (ulong)creatureTemplate.abilityRandom,
+        AbilitySpecial1 = (ulong)creatureTemplate.abilitySpecial1,
+        AbilitySpecial2 = (ulong)creatureTemplate.abilitySpecial2,
 
-        response.ID = creature.ID;
-        response.AccountID = creature.AccountID;
-        response.Version = creature.Version;
-        response.TemplateID = creature.TemplateID;
-        response.GearScore = creature.GearScore;
-        response.ItemPoints = creature.ItemPoints;
-        response.LargePngUrl = CreaturePngUrl(creature.TemplateID);
-        response.ThumbPngUrl = CreaturePngUrl(creature.TemplateID);
-        response.Stats = creature.getStatsAsString();
+        PartsStr = creature.getPartsAsString(),
+        StatsTemplate = null,
 
-        return response;
-    }
+        ID = creature.ID,
+        AccountID = creature.AccountID,
+        Version = creature.Version,
+        TemplateID = creature.TemplateID,
+        GearScore = creature.GearScore,
+        ItemPoints = creature.ItemPoints,
+        LargePngUrl = CreaturePngUrl(creature.TemplateID),
+        ThumbPngUrl = CreaturePngUrl(creature.TemplateID),
+        Stats = creature.getStatsAsString(),
+    };
 }
