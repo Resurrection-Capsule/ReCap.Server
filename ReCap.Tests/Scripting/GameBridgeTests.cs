@@ -160,6 +160,21 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void CircleIntersectsArcCoversConeHitCases()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local inFront  = nMathUtil.CircleIntersectsArc(3, 0, 0.5, 0, 0, 1, 0, 5, math.pi / 2)
+            local behind   = nMathUtil.CircleIntersectsArc(-3, 0, 0.5, 0, 0, 1, 0, 5, math.pi / 2)
+            local tooFar   = nMathUtil.CircleIntersectsArc(10, 0, 0.5, 0, 0, 1, 0, 5, math.pi / 2)
+            local overlap  = nMathUtil.CircleIntersectsArc(0.2, 0, 0.5, 0, 0, -1, 0, 5, math.pi / 2)
+            local edgeGraze= nMathUtil.CircleIntersectsArc(0, 3, 2.5, 0, 0, 1, 0, 5, math.pi / 2)
+            return inFront == true and behind == false and tooFar == false
+               and overlap == true and edgeGraze == true
+            """)));
+    }
+
+    [Fact]
     public void VoidNativesReturnZeroValuesAndDebugFlagIsFalse()
     {
         using var rt = Make();
