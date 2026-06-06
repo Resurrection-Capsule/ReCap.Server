@@ -1137,7 +1137,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // Lua nGameObject.SetAnimationState (client @0x009fc000 broadcasts via SporeNet message).
     public void BroadcastAnimationState(uint objectId, uint state)
     {
-        Log.Game.Debug($"[lua] SetAnimationState obj={objectId} state=0x{state:X8}");
+        Log.Game.Info($"[lua] SetAnimationState obj={objectId} state=0x{state:X8}");
         foreach (var player in Players.Values)
             if (player.Client is { } client)
                 SendAnimationState(client, objectId, state);

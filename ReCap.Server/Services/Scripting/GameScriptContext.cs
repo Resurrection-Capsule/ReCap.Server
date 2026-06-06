@@ -12,6 +12,9 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     private readonly ScriptRegistry _registry;
     private double _clockSeconds;
     private uint _nextAbilityInstanceId;
+    // lua_State is not thread-safe: Tick runs on the game loop, InvokeAbility on the RakNet
+    // packet thread — serialize every entry into the runtime.
+    private readonly Lock _luaGate = new();
 
     public GameScriptContext(Game game, ScriptEngine engine)
     {
@@ -29,8 +32,11 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
     public void Tick()
     {
-        _clockSeconds += 0.05;
-        _scheduler.Tick(_clockSeconds);
+        lock (_luaGate)
+        {
+            _clockSeconds += 0.05;
+            _scheduler.Tick(_clockSeconds);
+        }
     }
 
     // Spawn a coroutine for the named ability's tick function.
@@ -40,42 +46,45 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // use positional args. Both work: Lua ignores extra caller args and getters always match.
     public bool InvokeAbility(uint abilityHash, uint agentId, uint targetId, float cursorX, float cursorY, float cursorZ, int rank)
     {
-        var entry = _registry.Find(ScriptKind.Ability, abilityHash);
-        if (entry is null || !entry.HasTick) return false;
-        if (_scheduler.HasThreadForObject(agentId)) return false;
+        lock (_luaGate)
+        {
+            var entry = _registry.Find(ScriptKind.Ability, abilityHash);
+            if (entry is null || !entry.HasTick) return false;
+            if (_scheduler.HasThreadForObject(agentId)) return false;
 
-        var L = _runtime.L;
-        // TargetInRangeAtStart mirrors the client's cached at-cast flag (@0x00a410a0 reads a
-        // byte stamped at ability start, not a live range test): true when the cast carried a
-        // live target. Range-vs-distance refinement needs the ability's range prop (later).
-        var targetInRange = targetId != 0 && _game.Objects.Objects.ContainsKey(targetId);
-        var invocation = new AbilityInvocation(agentId, targetId, cursorX, cursorY, cursorZ, rank,
-            AbilityHash: abilityHash,
-            InstanceId: ++_nextAbilityInstanceId,
-            TargetInRangeAtStart: targetInRange);
+            var L = _runtime.L;
+            // TargetInRangeAtStart mirrors the client's cached at-cast flag (@0x00a410a0 reads a
+            // byte stamped at ability start, not a live range test): true when the cast carried a
+            // live target. Range-vs-distance refinement needs the ability's range prop (later).
+            var targetInRange = targetId != 0 && _game.Objects.Objects.ContainsKey(targetId);
+            var invocation = new AbilityInvocation(agentId, targetId, cursorX, cursorY, cursorZ, rank,
+                AbilityHash: abilityHash,
+                InstanceId: ++_nextAbilityInstanceId,
+                TargetInRangeAtStart: targetInRange);
 
-        LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
-        LuaNative.lua_getfield(L, -1, "tick");
-        LuaNative.lua_insert(L, -2);
+            LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
+            LuaNative.lua_getfield(L, -1, "tick");
+            LuaNative.lua_insert(L, -2);
 
-        // Push (self, agentId, targetId, cursorX, cursorY, cursorZ, rank) = 7 args + fn = 8 on stack
-        LuaNative.lua_pushnumber(L, (float)agentId);
-        LuaNative.lua_pushnumber(L, (float)targetId);
-        LuaNative.lua_pushnumber(L, cursorX);
-        LuaNative.lua_pushnumber(L, cursorY);
-        LuaNative.lua_pushnumber(L, cursorZ);
-        LuaNative.lua_pushnumber(L, (float)rank);
+            // Push (self, agentId, targetId, cursorX, cursorY, cursorZ, rank) = 7 args + fn = 8 on stack
+            LuaNative.lua_pushnumber(L, (float)agentId);
+            LuaNative.lua_pushnumber(L, (float)targetId);
+            LuaNative.lua_pushnumber(L, cursorX);
+            LuaNative.lua_pushnumber(L, cursorY);
+            LuaNative.lua_pushnumber(L, cursorZ);
+            LuaNative.lua_pushnumber(L, (float)rank);
 
-        // fn + self(table) + 6 number args = 8 total values on top
-        var threadL = _scheduler.SpawnFromStack(L, agentId, 8,
-            beforeFirstResume: threadState =>
-            {
-                var ctx = ScriptContextRegistry.Get(_runtime.L);
-                ctx?.SetInvocation(threadState, invocation);
-            });
+            // fn + self(table) + 6 number args = 8 total values on top
+            var threadL = _scheduler.SpawnFromStack(L, agentId, 8,
+                beforeFirstResume: threadState =>
+                {
+                    var ctx = ScriptContextRegistry.Get(_runtime.L);
+                    ctx?.SetInvocation(threadState, invocation);
+                });
 
-        LuaNative.lua_settop(L, 0);
-        return threadL != 0;
+            LuaNative.lua_settop(L, 0);
+            return threadL != 0;
+        }
     }
 
     public void Dispose() => _runtime.Dispose();
@@ -148,7 +157,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (!_game.Objects.Objects.TryGetValue(targetId, out var obj) || obj.MaxHealth <= 0f) return 0f;
         var before = obj.Health;
         obj.Health = Math.Clamp(obj.Health + amount, 0f, obj.MaxHealth);
-        ReCap.Server.Util.Logging.Log.Game.Debug(
+        ReCap.Server.Util.Logging.Log.Game.Info(
             $"[lua] HealDamage target={targetId} amount={amount:F1} hp {before:F1}→{obj.Health:F1}");
         return obj.Health - before;
     }
