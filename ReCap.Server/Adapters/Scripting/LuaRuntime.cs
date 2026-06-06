@@ -50,7 +50,7 @@ public sealed class LuaRuntime : IDisposable
         var status = LuaNative.luaL_loadbuffer(L, chunk, (nuint)chunk.Length, chunkName);
         if (status != LuaNative.LUA_OK)
             ThrowTop(chunkName);
-        status = LuaNative.lua_pcall(L, 0, 0, 1);
+        status = LuaNative.lua_pcall(L, 0, 0, -2);
         if (status != LuaNative.LUA_OK)
             ThrowTop(chunkName);
         LuaNative.lua_settop(L, 0);
@@ -61,7 +61,7 @@ public sealed class LuaRuntime : IDisposable
         LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, _tracebackRef);
         if (LuaNative.luaL_loadbuffer(L, chunk, (nuint)chunk.Length, "eval") != LuaNative.LUA_OK)
             ThrowTop("eval");
-        if (LuaNative.lua_pcall(L, 0, 1, 1) != LuaNative.LUA_OK)
+        if (LuaNative.lua_pcall(L, 0, 1, -2) != LuaNative.LUA_OK)
             ThrowTop("eval");
         var result = LuaNative.lua_toboolean(L, -1) != 0;
         LuaNative.lua_settop(L, 0);
