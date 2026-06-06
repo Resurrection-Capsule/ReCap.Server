@@ -101,6 +101,38 @@ The working C++ server is a **prebuilt binary** (`…/Darkspore/DarksporeBin/Ser
 - **Consequence:** for wire-format fidelity, the **capture is the ground truth**, not the source tree (the binary that actually drives the client is what matters). The source is a guide that may have regressed. Formats that did NOT drift (Character/LPU block, hero ObjectCreate {0,1,3,17}) matched both; objectives drifted.
 - **C# bug (high crash suspicion):** C# `ObjectiveData.WriteTo` emits 56-byte entries (id + u32 value + 48-byte description) → 282B ObjectivesInit, but the client (per the working capture) expects **7-byte entries (u32 id + u24 value)** → 37B. The 282B desyncs the client's per-objective read. Pending exact client-parse confirmation (Ghidra OnGms 0xB7 handler).
 
+## Lua registrar boot group order (Ghidra 2026-06-05)
+
+`LuaSystem::Initialize` @0x00a0c810 iterates a 10-element `uint local_34[10]` stack array
+(indices 0→9) and issues one `AssetCatalog::GetInstance` vtable query per group to collect
+all Lua scripts for that group before executing them.
+
+Exact iteration order (array index → hash):
+`[0] 0x3681d755=lua · [1] 0xda09176b=UNRESOLVED · [2] 0xfc0ff8f5=modifiers ·
+[3] 0xd2fcb262=UNRESOLVED · [4] 0x7153bbb1=abilities · [5] 0xd79fa88c=UNRESOLVED ·
+[6] 0xc130a42a=behaviors · [7] 0xb2a79c5c=UNRESOLVED · [8] 0xee84d09a=UNRESOLVED ·
+[9] 0x24f78aa1=UNRESOLVED`
+
+Hashes 0/2/4/6 resolved via FNV (multiply-then-xor, same fn as `WireHash.cs::Fnv1a`).
+Hashes 1/3/5/7/8/9 remain unresolved — not found in any binary string or candidate list;
+require the original Darkspore Lua asset package filenames to crack.
+
+Full per-namespace function tables in `docs/architecture/research/LUA_REGISTRAR_TABLES.md`.
+
+## Lua ID representation: lua_pushnumber (double), round-tripped (Ghidra 2026-06-05)
+
+`nUtil::SPID` @0x009f9e00 and `nUtil::ToGUID` @0x009f9e40 both call **`lua_pushnumber`**
+(Lua 5.1 = `double`). Consumer `ObjectManager::GetObjectFromLuaArg` @0x009f9740 reads back
+with `lua_type==3` (LUA_TNUMBER) and `ROUND(float10)` to recover the integer.
+
+- **uint32 hashes are exact** — max 0xFFFFFFFF < 2^32 < 2^53 (double mantissa). No loss.
+- **64-bit GUIDs lose precision** for values > 2^53 — `ToGUID` parses hex string → ulong →
+  `lua_pushnumber`; only the lower 53 bits survive in the double.
+
+C# binding contract: `PushId(uint id)` → `lua_pushnumber(L, id)` (exact for uint32).
+`ReadId()` → `(uint)(long)Math.Round(lua_tonumber(L, n))`. For GUID (uint64): pass as
+hex string, not as a number.
+
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)
 
 These were asserted by old docs; keep until verified, then move up with a cite or kill:
