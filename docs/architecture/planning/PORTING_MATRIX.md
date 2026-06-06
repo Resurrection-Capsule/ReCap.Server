@@ -24,7 +24,7 @@ Master index of **what is ported, partial, missing, or unknown** across every C+
 |---|---|---|---|
 | [RakNet](#raknet) | 5.2k | opcodes 100%; handlers ~70%; Send* ~40% | ~25 outbound `Send*` (loot/modifier/combat/ability/reconnect/cashout) missing |
 | [Blaze](#blaze) | 8.9k | ~65% handler surface | GameManager lifecycle (CreateGame/JoinGame/matchmaking), CensusData, Playgroups |
-| [Game](#game) | 21.7k | **~25%** | Entire combat engine: ObjectManager, Attributes, Lua/abilities, AI, NounDatabase, Locomotion sim |
+| [Game](#game) | 21.7k | **~25%** | Entire combat engine: ObjectManager, Attributes, Lua bindings (P3), AI, NounDatabase, Locomotion sim |
 | [SporeNet](#sporenet) | 3.3k | ~80% data model | Unified `User` session object, Room/Vendor/Feed, AssociationLists persistence |
 | [HTTP](#http) | 1.1k | path-level full; ~7/20 game-api stubs `null` | `/qos/*`, `/game/service/png`, deck/game/leaderboard stubs |
 | [Core/QoS/Network](#core) | 1.9k | utils mostly via BCL | `QoS::Server`, `Scheduler` (AddTask/CancelTask) |
@@ -35,7 +35,7 @@ Master index of **what is ported, partial, missing, or unknown** across every C+
 
 1. **Game/ObjectManager + Object lifecycle** — no server-side entity create/update/delete/death pipeline. Blocks all dungeon state. (Game)
 2. **Attributes + combat math** (`TakeDamage`/`Heal`/crit/damage distribution) — no damage possible. Blocks abilities + AI. (Game)
-3. **Lua VM + Ability/Objective system** — all gameplay scripting absent (~3.2k LOC in `LuaFunctions.cpp` alone). (Game)
+3. **Lua VM + Ability/Objective system** — runtime + VFS + boot done (P0-P2); bindings stub-first; scheduler/real bindings (P3 backlog). (~3.2k LOC in `LuaFunctions.cpp` alone). (Game)
 4. **NounDatabase typed asset loading** — creature/NPC stats + AI defs not typed; spawning uses hardcoded noun IDs. (Game)
 5. **`SetSquad` from real user data** — PrepareGameStart ignores the account loadout, hardcodes one creature for all 3 slots. (RakNet/Game/SporeNet)
 6. **Unified `User` session object** — C# scatters account/creatures/squads/auth-token/room/game across `AccountModel`+`Client`+`GameService`; no single authoritative session entity, no `mId`/`mState`. (SporeNet)
@@ -119,9 +119,9 @@ Largest module (~21.7k LOC) and the dominant gap. C# implements only the happy-p
 | `Locomotion` | `Game/Locomotion.cpp:1` | `LocomotionData` | ⚠️ | wire fields only; no Update sim (projectile/orbit/roll/jump), no SetGoalObject, no collision |
 | `LobParameters` | `Game/Locomotion.h:73` | `LobParams` | ⚠️ | wire only |
 | `ProjectileParameters` | `Game/Locomotion.h:95` | `ProjectileParams` | ⚠️ | wire only |
-| `Lua`/`GlobalLua`/`LuaThread`/`Coroutine` | `Game/Lua.cpp:1`, `Game/LuaFunctions.cpp:1` | — | ❌ | entire scripting VM + ability engine absent |
-| `Ability` | `Game/Lua.h:293` | — | ❌ | no Activate/Deactivate/Tick/mana/range |
-| `Objective` | `Game/Lua.h:366` | — | ❌ | wire stub exists; coroutine not impl |
+| `Lua`/`GlobalLua`/`LuaThread`/`Coroutine` | `Game/Lua.cpp:1`, `Game/LuaFunctions.cpp:1` | `Adapters/Scripting/` + `Services/Scripting/ScriptEngine.cs` | ⚠️ | **P0-P2 done:** native Lua 5.1.4 DLL (float ABI, u32 bytecode), LuaRuntime sandbox, ScriptVfs (Group!Name + hex-prefix groups), 28 stub-first binding namespaces, GameInstallLocator (`--game-path`), `--lua-smoke` flag. Boot gate: 1,017 chunks, 1.57% failure (missing assets + cross-group refs). **P3 backlog:** scheduler/coroutines, real bindings (RegisterAbility/Modifier/Affix/Condition/Objective, nBit.Or, nUtil.GetAsset). Spec: `docs/superpowers/specs/2026-06-05-lua-scripting-system-design.md`; registrar tables: `docs/architecture/research/LUA_REGISTRAR_TABLES.md`. |
+| `Ability` | `Game/Lua.h:293` | stub namespaces in `Adapters/Scripting/Api/` | ⚠️ | nAbility.RegisterAbility/PreloadAnimation/PreloadAsset/PreloadModifier stubbed (P3); no Activate/Deactivate/Tick/mana/range |
+| `Objective` | `Game/Lua.h:366` | stub namespace in `Adapters/Scripting/Api/` | ⚠️ | nObjective.RegisterObjective stubbed (P3); wire stub exists; coroutine not impl |
 | `OctTree` | `Game/Octree.cpp:1` | — | ❌ | spatial acceleration |
 | `Noun`/`NounDatabase` | `Game/Noun.cpp:1` | — | ❌ | no typed Noun/NPC/PlayerClass/AIDefinition/ClassAttributes/Animation/Phase |
 | `Level`/`Markerset`/`Marker` | `Game/Level.cpp:1` | partial via `AssetDatabase.GetLevelMarkers` | ⚠️ | no typed Level/LevelConfig/DirectorClass/Teleporter/difficulty |

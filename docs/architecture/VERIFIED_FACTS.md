@@ -139,6 +139,21 @@ C# binding contract (bug-compatible — replicate exactly, do NOT fix the trunca
 `ReadId()` → `(uint)Math.Round((double)lua_tonumber(L, n))`. For GUID (uint64): pass as
 hex string, not as a number.
 
+## Lua require: hex-prefix group form (2026-06-05, P0 gate)
+
+Retail ServerData.package Lua chunks use **hex uint group prefixes** in `require` strings — e.g.
+`require("0x3681d755!GlobalDefinitions.lua")` — where the group slot is the raw FNV-1 hash as a
+`0x`-prefixed hex literal, not a human-readable group name.
+
+- **Root cause discovery:** executing 1,017 real ServerData chunks at the P0 gate produced 615
+  cascade failures; all traced to `require` strings with hex prefixes that ScriptVfs was not
+  parsing. Fixed in `ReCap.Server/Adapters/Scripting/ScriptVfs.cs` (`ParseReference`).
+- **Unit test:** `ParsesHexPrefixedGroupForm` (vector test in `ReCap.Tests`).
+- **Cross-reference:** boot group hash `0x3681d755` = FNV-1("lua") — same hash used as the boot
+  group key in `LuaSystem::Initialize` @0x00a0c810 (see "Lua registrar boot group order" entry above).
+- **Contract:** `ScriptVfs.ParseReference(str)` must handle both `"GroupName!File.lua"` (named) and
+  `"0xHEXUINT!File.lua"` (hex-prefix) as equivalent references to the same group slot.
+
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)
 
 These were asserted by old docs; keep until verified, then move up with a cite or kill:

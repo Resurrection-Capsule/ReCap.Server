@@ -42,13 +42,26 @@ Goal: a correct single-player Dungeon path the retail client plays end to end. U
 ```bash
 cd ReCap.Server && dotnet build
 
-# Run (elevated on default port) / custom port (no elevation) / with assets
+# Run (elevated on default port) / custom port (no elevation)
 dotnet run --project ReCap.Server
 dotnet run --project ReCap.Server -- --port=9000
-dotnet run --project ReCap.Server -- --assetdata-path=<path>/AssetData_Binary.package
+
+# Game path (auto-detect chain: CLI → persisted game-path.json → registry → probes)
+dotnet run --project ReCap.Server -- --game-path=<path>/Darkspore
+
+# Smoke-test Lua boot (executes all 10 boot groups, logs pass/fail, exits)
+dotnet run --project ReCap.Server -- --lua-smoke
+
+# --assetdata-path=<path> is a deprecated alias for --game-path
 ```
 
-Target framework: .NET 9.0. Submodules (`lib/RakNexus`, `lib/AssetData.Parser`) must init (`git submodule update --init --recursive`).
+Native Lua DLL (one-time per machine, requires VS Build Tools C++):
+```powershell
+powershell -File native/lua51/build.ps1
+# Produces: native/lua51/out/recaplua51.dll  native/lua51/out/luac.exe  (gitignored)
+```
+
+Target framework: net10.0. Submodules (`lib/RakNexus`, `lib/AssetData.Parser`) must init (`git submodule update --init --recursive`).
 
 Tests: `ReCap.Tests` (xUnit, `dotnet test ReCap.Tests/ReCap.Tests.csproj`) is the M1 golden-harness — byte-level `WriteTo`/reflection asserts vs verified C++ wire (LE). Keep green; assertions must cite VERIFIED_FACTS / C++ `file:line`, never restate old dogma.
 
@@ -64,8 +77,10 @@ ReCap.Server/
 │   │   └── Component/  # IComponent implementations per Blaze subsystem (Auth, GameManager, UserSessions, etc.)
 │   ├── RakNet/       # UDP gameplay protocol — port 42000 (packets, game loop)
 │   ├── Rest/         # HTTP API — port 8033 (launcher, asset serving)
-│   └── Persistence/  # SQLite via EF Core (repository adapters)
+│   ├── Persistence/  # SQLite via EF Core (repository adapters)
+│   └── Scripting/    # Lua 5.1 adapter: LuaNative (P/Invoke float ABI), LuaRuntime (sandbox), ScriptVfs (Group!Name.ext + hex-prefix groups), Api/ (28 stub namespaces)
 ├── Services/         # Business logic (AccountService, GameService, AssetDatabase, etc.)
+│   └── Scripting/    # ScriptEngine — boots 10 Lua groups in client order; --lua-smoke flag
 ├── Models/           # EF Core database models
 ├── Config/           # ServerConfig, SqliteConfig (DbContext with JSON seed data)
 └── Mappers/          # Entity ↔ Model conversions
