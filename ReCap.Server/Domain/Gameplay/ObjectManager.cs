@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using AssetData.Parser.Model;
 using ReCap.Server.Services;
@@ -38,7 +39,10 @@ public sealed class GameObject
 public sealed class ObjectManager
 {
     private readonly AssetDatabase? _db;
-    private readonly Dictionary<uint, GameObject> _objects = new();
+    // Spawns/removes arrive on the RakNet packet thread (PopulateLevel, OnPlayerStart, Lua
+    // MarkForDelete during InvokeAbility) while the game loop enumerates in FlushObjectUpdates —
+    // a plain Dictionary threw "Collection was modified" and killed Update (2026-06-06 15:51 log).
+    private readonly ConcurrentDictionary<uint, GameObject> _objects = new();
 
     public IReadOnlyDictionary<uint, GameObject> Objects => _objects;
 
@@ -106,7 +110,7 @@ public sealed class ObjectManager
         return obj;
     }
 
-    public bool Remove(uint objectId) => _objects.Remove(objectId);
+    public bool Remove(uint objectId) => _objects.TryRemove(objectId, out _);
 
     public void Update(double deltaSeconds)
     {
