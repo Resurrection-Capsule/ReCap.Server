@@ -49,7 +49,7 @@ dotnet run --project ReCap.Server -- --port=9000
 # Game path (auto-detect chain: CLI → persisted game-path.json → registry → probes)
 dotnet run --project ReCap.Server -- --game-path=<path>/Darkspore
 
-# Smoke-test Lua boot (executes all 10 boot groups, logs pass/fail, exits)
+# Smoke-test Lua boot (executes all 10 boot groups, logs pass/fail + stub telemetry, then continues normal startup)
 dotnet run --project ReCap.Server -- --lua-smoke
 
 # --assetdata-path=<path> is a deprecated alias for --game-path
