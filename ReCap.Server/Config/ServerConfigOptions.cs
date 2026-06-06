@@ -52,6 +52,20 @@ public sealed class ServerConfigOptions
         set => _assetDataPath = value;
     }
 
+    string _gameRoot = string.Empty;
+    public string GameRoot
+    {
+        get => _gameRoot;
+        set => _gameRoot = value;
+    }
+
+    string _dataDir = string.Empty;
+    public string DataDir
+    {
+        get => _dataDir;
+        set => _dataDir = value;
+    }
+
 
 
 

@@ -30,6 +30,7 @@ public static class Program
     const string _PORT_ARG = "--port=";
     const string _DB_PATH_ARG = "--database-path=";
     const string _ASSETDATA_PATH_ARG = "--assetdata-path=";
+    const string _GAME_PATH_ARG = "--game-path=";
     const string _RAKNET_VERBOSE_ARG = "--raknet-verbose";
     const string _VERBOSE_ARG = "--verbose";
     const string _LOG_LEVEL_ARG = "--log-level=";
@@ -44,7 +45,8 @@ public static class Program
         PrintBanner();
 #nullable disable
         string databasePath = null;
-        string assetDataPath = null;
+        string cliGamePath = null;
+        string cliAssetDataPath = null;
         int port = Api.DEFAULT_PORT;
         bool luaSmoke = false;
 
@@ -77,15 +79,14 @@ public static class Program
                     databasePath = dbPath;
                 }
             }
+            else if (arg.StartsWith(_GAME_PATH_ARG))
+            {
+                cliGamePath = CommandLineHelper.UnwrapArg(arg.Substring(_GAME_PATH_ARG.Length));
+            }
             else if (arg.StartsWith(_ASSETDATA_PATH_ARG))
             {
-                string gPath = arg.Substring(_ASSETDATA_PATH_ARG.Length);
-                gPath = CommandLineHelper.UnwrapArg(gPath);
-
-                if (File.Exists(gPath))
-                    assetDataPath = gPath;
-                else
-                    Log.Server.Error($"Game path not found: '{gPath}'");
+                Log.Server.Warn("--assetdata-path is deprecated, use --game-path");
+                cliAssetDataPath = CommandLineHelper.UnwrapArg(arg.Substring(_ASSETDATA_PATH_ARG.Length));
             }
             else if (arg == _TELEPORT_MOVEMENT_ARG)
             {
@@ -119,10 +120,18 @@ public static class Program
             serverOpts.ServerDatabaseDirectory = databasePath;
         }
 
-        if (!string.IsNullOrWhiteSpace(assetDataPath))
+        var persistencePath = Path.Combine(serverOpts.ServerDatabaseDirectory, "game-path.json");
+        var install = Services.GameInstallLocator.Resolve(cliGamePath ?? cliAssetDataPath, persistencePath);
+        if (install is not null)
         {
-            Log.Server.Info($"Using AssetData path: '{assetDataPath}'");
-            serverOpts.GamePath = assetDataPath;
+            Log.Server.Info($"Game install: '{install.Root}'");
+            serverOpts.GameRoot = install.Root;
+            serverOpts.DataDir = install.DataDir;
+            serverOpts.GamePath = Path.Combine(install.DataDir, "AssetData_Binary.package");
+        }
+        else
+        {
+            Log.Server.Warn("Game install not found (tried: CLI arg, persisted game-path.json, registry, default probe paths). Use --game-path=<game folder> to set it.");
         }
 
         ServerConfig.Configure(serverOpts);
@@ -254,7 +263,8 @@ public static class Program
         string.Empty,
         $"{_BEFORE_ARG}{_PORT_ARG}<int>         {_AFTER_ARG}Port number",
         $"{_BEFORE_ARG}{_DB_PATH_ARG}<str>{_AFTER_ARG}Path to a directory in which to create/store/access the 'server.db'",
-        $"{_BEFORE_ARG}{_ASSETDATA_PATH_ARG}<str>{_AFTER_ARG}Path to the Darkspore AssetData_Binary.package file",
+        $"{_BEFORE_ARG}{_GAME_PATH_ARG}<str>    {_AFTER_ARG}Path to the Darkspore install folder (or Data/ subfolder, or AssetData_Binary.package)",
+        $"{_BEFORE_ARG}{_ASSETDATA_PATH_ARG}<str>{_AFTER_ARG}[deprecated] Use --game-path instead",
         $"{_BEFORE_ARG}{_LOG_LEVEL_ARG}<lvl>     {_AFTER_ARG}Global log level, or <Category>:<lvl> (e.g. RakNet:verbose)",
         $"{_BEFORE_ARG}{_VERBOSE_ARG}            {_AFTER_ARG}Shortcut for --log-level=debug",
         $"{_BEFORE_ARG}{_RAKNET_VERBOSE_ARG}    {_AFTER_ARG}Shortcut for --log-level=RakNet:verbose",
