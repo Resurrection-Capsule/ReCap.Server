@@ -10,7 +10,7 @@ public class ObjectPlayerMovePacket : IRakNetPacket
 {
     public PacketType Type => PacketType.ObjectPlayerMove;
     public uint ObjectId { get; set; }
-    public LocomotionData Locomotion { get; set; }
+    public LocomotionData? Locomotion { get; set; }
 
     public void ReadFrom(Stream stream)
     {
@@ -19,17 +19,18 @@ public class ObjectPlayerMovePacket : IRakNetPacket
 
     public void WriteTo(Stream stream)
     {
+        var locomotion = Locomotion ?? throw new InvalidOperationException("ObjectPlayerMovePacket.Locomotion not set");
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
 
         writer.Write(ObjectId);
-        writer.Write(Locomotion.GoalFlags);
-        writer.Write(Locomotion.GoalPosition);
-        writer.Write(Locomotion.Facing);
-        writer.Write(Locomotion.ExternalLinearVelocity);
-        writer.Write(Locomotion.ExternalForce);
-        writer.Write(Locomotion.AllowedStopDistance);
-        writer.Write(Locomotion.DesiredStopDistance);
-        writer.Write(Locomotion.TargetPosition);
-        writer.Write(Locomotion.TargetObjectId);
+        writer.Write(locomotion.GoalFlags);
+        writer.Write(locomotion.GoalPosition);
+        writer.Write(locomotion.Facing);
+        writer.Write(locomotion.ExternalLinearVelocity);
+        writer.Write(locomotion.ExternalForce);
+        writer.Write(locomotion.AllowedStopDistance);
+        writer.Write(locomotion.DesiredStopDistance);
+        writer.Write(locomotion.TargetPosition);
+        writer.Write(locomotion.TargetObjectId);
     }
 }

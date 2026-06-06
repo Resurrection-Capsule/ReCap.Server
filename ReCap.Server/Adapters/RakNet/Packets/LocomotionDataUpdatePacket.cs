@@ -10,7 +10,7 @@ public class LocomotionDataUpdatePacket : IRakNetPacket
 {
     public PacketType Type => PacketType.LocomotionDataUpdate;
     public uint ObjectId { get; set; }
-    public LocomotionData Locomotion { get; set; }
+    public LocomotionData? Locomotion { get; set; }
 
     public void ReadFrom(Stream stream)
     {

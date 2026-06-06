@@ -38,7 +38,7 @@ public class AccountRepositoryAdapter
         idByAuthToken[authToken] = accountId;
     }
 
-    public AccountModel getAccountByAuthToken(string authToken)
+    public AccountModel? getAccountByAuthToken(string authToken)
     {
         ulong accountId = 0;
         if (idByAuthToken.TryGetValue(authToken, out accountId))
@@ -50,12 +50,12 @@ public class AccountRepositoryAdapter
         return null;
     }
 
-    public AccountModel getAccountById(ulong id)
+    public AccountModel? getAccountById(ulong id)
     {
         return sqliteConfig.Accounts.SingleOrDefault(b => b.Id == id);
     }
 
-    public AccountModel getAccountByEmail(string email)
+    public AccountModel? getAccountByEmail(string email)
     {
         return sqliteConfig.Accounts.SingleOrDefault(b => b.Email.ToLower() == email.ToLower());
     }

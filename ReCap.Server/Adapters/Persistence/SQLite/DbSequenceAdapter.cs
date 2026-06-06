@@ -18,7 +18,7 @@ public class DbSequenceAdapter
 
     public int Next(string sequenceName, int count = 1)
     {
-        DbSequenceModel sequence = sqliteConfig.DbSequences.SingleOrDefault(b => b.ID == sequenceName);
+        DbSequenceModel? sequence = sqliteConfig.DbSequences.SingleOrDefault(b => b.ID == sequenceName);
         if (sequence is null) {
             sequence = new DbSequenceModel{
                 ID = sequenceName,

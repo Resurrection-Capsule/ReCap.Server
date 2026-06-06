@@ -22,7 +22,7 @@ public class CreaturePartRepositoryAdapter
         sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
-    public CreaturePartModel getCreaturePartById(ulong id)
+    public CreaturePartModel? getCreaturePartById(ulong id)
     {
         return sqliteConfig.CreatureParts.SingleOrDefault(b => b.ID == id);
     }

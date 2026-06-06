@@ -22,8 +22,9 @@ public class HTTPHelper
 
         // Query parameters
         var query = request.QueryString;
-        foreach (string key in query.Keys) {
-            parameters.Add(key, query.Get(key));
+        foreach (string? key in query.Keys) {
+            if (key is null) continue;
+            parameters.Add(key, query.Get(key) ?? string.Empty);
         }
 
         // Multipart form parameters
@@ -35,7 +36,7 @@ public class HTTPHelper
                     parameters.Add(entry.Name, entry.Data);
                 }
             }
-            catch (Exception ex) {}
+            catch (Exception) {}
         }
 
         // Cookies parameters

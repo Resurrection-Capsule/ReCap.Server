@@ -6,7 +6,7 @@ public class Creature
     public int Version { get; set; }
 
     public ulong TemplateID { get; set; }
-    public string TemplateName { get; set; }
+    public string? TemplateName { get; set; }
 
     public ulong AccountID { get; set; }
 

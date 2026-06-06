@@ -23,7 +23,7 @@ public class CreatureTemplateRepositoryAdapter
         return sqliteConfig.CreatureTemplates.ToList();
     }
 
-    public CreatureTemplateModel getTemplateById(ulong id)
+    public CreatureTemplateModel? getTemplateById(ulong id)
     {
         return sqliteConfig.CreatureTemplates.SingleOrDefault(b => b.id == id);
     }

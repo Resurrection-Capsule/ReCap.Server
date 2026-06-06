@@ -38,13 +38,15 @@ public class SqliteConfig : DbContext
         string resDir = ServerConfig.ResourcesDirectory;
         if (this.CreatureTemplates.SingleOrDefault(b => b.id == 1667741389) == null) {
             var templatesStr = File.ReadAllText(Path.Combine(resDir, "creature_templates.json"));
-            var templates = JsonSerializer.Deserialize<List<CreatureTemplateModel>>(templatesStr);
+            var templates = JsonSerializer.Deserialize<List<CreatureTemplateModel>>(templatesStr)
+                ?? throw new InvalidDataException("creature_templates.json: invalid seed data");
             this.CreatureTemplates.AddRange(templates);
             this.SaveChanges();
         }
         if (this.CreaturePartTemplates.SingleOrDefault(b => b.rigblockAssetId == 1) == null) {
             var partsStr = File.ReadAllText(Path.Combine(resDir, "part_templates.json"));
-            var parts = JsonSerializer.Deserialize<List<CreaturePartTemplateModel>>(partsStr);
+            var parts = JsonSerializer.Deserialize<List<CreaturePartTemplateModel>>(partsStr)
+                ?? throw new InvalidDataException("part_templates.json: invalid seed data");
             this.CreaturePartTemplates.AddRange(parts);
             this.SaveChanges();
         }

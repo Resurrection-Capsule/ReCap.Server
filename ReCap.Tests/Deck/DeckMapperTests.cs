@@ -24,6 +24,7 @@ public class DeckMapperTests
 
         var contract = new DeckMapper().toContract(deck, creatures);
 
+        Assert.NotNull(contract.Creatures);
         Assert.Single(contract.Creatures);
         Assert.Equal(1, contract.Slot);
     }

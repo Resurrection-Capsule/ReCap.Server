@@ -116,7 +116,7 @@ public class GameRestController
     }
 
     [RequestMapping(Name="api.account.getAccount")]
-    public byte[] getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
@@ -136,10 +136,10 @@ public class GameRestController
         }
         if (httpMethod == "POST")
         {
-            bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures", null));
-            bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks", null));
-            bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed", null));
-            bool includeStats = Convert.ToBoolean(parameters.GetValueOrDefault("include_stats", null));
+            bool includeCreatures = Convert.ToBoolean(parameters.GetValueOrDefault("include_creatures"));
+            bool includeDecks = Convert.ToBoolean(parameters.GetValueOrDefault("include_decks"));
+            bool includeFeed = Convert.ToBoolean(parameters.GetValueOrDefault("include_feed"));
+            bool includeStats = Convert.ToBoolean(parameters.GetValueOrDefault("include_stats"));
             
             if (includeCreatures || includeDecks || includeFeed || includeStats) {
                 var creatures = creatureService.getCreaturesByAccount(account);
@@ -209,7 +209,7 @@ public class GameRestController
     }
 
     [RequestMapping(Name="api.account.searchAccounts")]
-    public byte[] searchPlayerAccounts(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? searchPlayerAccounts(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
@@ -221,6 +221,7 @@ public class GameRestController
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
+        account.settings ??= new Dictionary<string,string>();
         string[] settings = settingsStr.Split(";");
         foreach (string setting in settings) {
             if (setting.Length > 0) {
@@ -242,7 +243,7 @@ public class GameRestController
     }
 
     [RequestMapping(Name="api.account.unlock")]
-    public byte[] unlockPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? unlockPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
@@ -251,7 +252,7 @@ public class GameRestController
     public byte[] setNewPlayerStats(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         // Darkspore sends this on new accounts expecting an auth response. Redirect it to auth handler.
-        if (parameters.TryGetValue("token", out string token)) {
+        if (parameters.TryGetValue("token", out var token)) {
             parameters["key"] = $"{token}::0";
         }
         return loginPlayerAccount(context, parameters);
@@ -266,19 +267,21 @@ public class GameRestController
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        var creature = creatureService.getCreatureById(creatureId);
+        var creature = creatureService.getCreatureById(creatureId)
+            ?? throw new ForbiddenOperationException("Creature not found");
         if (creature.AccountID != account.Id) {
             throw new ForbiddenOperationException("Creature does not belong to this account");
         }
 
-        var template = creatureService.getCreatureTemplateById(creature.TemplateID);
+        var template = creatureService.getCreatureTemplateById(creature.TemplateID)
+            ?? throw new ForbiddenOperationException("Creature template not found");
 
         var response = creatureMapper.toGetCreatureContract(template, creature, includeAbilities, includeParts);
         return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.getTemplate")]
-    public byte[] getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? getTemplate(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         ulong templateId = (ulong)Convert.ToInt64(parameters["id"]);
         bool includeAbilities = parameters["include_abilities"] == "true";
@@ -299,7 +302,8 @@ public class GameRestController
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        var creature = creatureService.getCreatureById(creatureId);
+        var creature = creatureService.getCreatureById(creatureId)
+            ?? throw new ForbiddenOperationException("Creature not found");
         if (creature.AccountID != account.Id) {
             throw new ForbiddenOperationException("Creature does not belong to this account");
         }
@@ -321,7 +325,9 @@ public class GameRestController
     {
         ulong templateId = (ulong)Convert.ToInt64(parameters["template_id"]);
         var account = accountService.getAccountByAuthToken(parameters["token"]);
-        var creature = creatureService.addCreature(account, creatureService.getCreatureTemplateById(templateId));
+        var template = creatureService.getCreatureTemplateById(templateId)
+            ?? throw new ForbiddenOperationException("Creature template not found");
+        var creature = creatureService.addCreature(account, template);
         accountService.updateAccount(account);
 
         var response = new UnlockCreatureResponseContract{
@@ -357,7 +363,8 @@ public class GameRestController
         string thumbCrc = parameters["thumb_crc"];
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
-        var creature = creatureService.getCreatureById(creatureId);
+        var creature = creatureService.getCreatureById(creatureId)
+            ?? throw new ForbiddenOperationException("Creature not found");
         if (creature.AccountID != account.Id) {
             throw new ForbiddenOperationException("Creature does not belong to this account");
         }
@@ -422,19 +429,19 @@ public class GameRestController
     }
 
     [RequestMapping(Name="api.game.exitGame")]
-    public byte[] exitGame(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? exitGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
     [RequestMapping(Name="api.game.getGame")]
-    public byte[] getGame(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? getGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
 
     [RequestMapping(Name="api.game.getRandomGame")]
-    public byte[] getRandomGame(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? getRandomGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
@@ -525,18 +532,21 @@ public class GameRestController
         foreach (string transaction in transactions) {
             char type = transaction[0];
             ulong partId = (ulong)Convert.ToInt64(transaction[1]);
-            CreaturePartModel part = null;
-            
+            CreaturePartModel? part = null;
+
             if (type == 's') { // sell item
                 part = creaturePartService.getCreaturePartById(partId);
-                creaturePartService.deleteCreaturePart(part);
-
-                account.dna += part.Cost;
+                if (part != null) {
+                    creaturePartService.deleteCreaturePart(part);
+                    account.dna += part.Cost;
+                }
                 part = null;
             }
             else if (type == 'f') { // turn item into detail/flair
                 part = creaturePartService.getCreaturePartById(partId);
-                part.IsFlair = true;
+                if (part != null) {
+                    part.IsFlair = true;
+                }
             }
             else if (type == 'w') { // buy weapon
                 // TODO: Implement buying weapon
@@ -574,7 +584,7 @@ public class GameRestController
     }
 
     [RequestMapping(Name="api.leaderboard.getLeaderboard")]
-    public byte[] getLeaderboard(HttpListenerContext context, Dictionary<string,string> parameters)
+    public byte[]? getLeaderboard(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         return null;
     }
@@ -596,7 +606,7 @@ public class GameRestController
     [RequestMapping(Name="api.status.getStatus")]
     public byte[] getStatus(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string darksporeVersion = parameters.GetValueOrDefault("build", null);
+        string? darksporeVersion = parameters.GetValueOrDefault("build");
         bool includeBroadcasts = parameters["include_broadcasts"] == "true";
 
         var response = new StatusResponseContract{

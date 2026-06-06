@@ -64,7 +64,8 @@ public class ReCapRestController
     public byte[] getCreatureLargePng(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
-        var creature = creatureService.getCreatureById(creatureId);
+        var creature = creatureService.getCreatureById(creatureId)
+            ?? throw new ForbiddenOperationException("Creature not found");
         // We only ship per-template thumbnails, so large falls back to the thumb too.
         return CreatureImage(creature.LargePngBase64, creature.TemplateID);
     }
@@ -73,7 +74,8 @@ public class ReCapRestController
     public byte[] getCreatureThumbPng(HttpListenerContext context, Dictionary<string,string> parameters)
     {
         ulong creatureId = (ulong)Convert.ToInt32(parameters["id"]);
-        var creature = creatureService.getCreatureById(creatureId);
+        var creature = creatureService.getCreatureById(creatureId)
+            ?? throw new ForbiddenOperationException("Creature not found");
         return CreatureImage(creature.ThumbPngBase64, creature.TemplateID);
     }
 

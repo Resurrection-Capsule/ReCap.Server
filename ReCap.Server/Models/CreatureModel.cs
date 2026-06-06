@@ -71,13 +71,13 @@ public class CreatureModel
 }
 
 public class CreatureModelStat {
-    public string statName;
+    public required string statName;
     public int maxValue;
     public int currentValue;
 }
 
 public class CreatureModelAbilityStat {
-    public string key;
-    public string token;
-    public string value;
+    public required string key;
+    public required string token;
+    public required string value;
 }

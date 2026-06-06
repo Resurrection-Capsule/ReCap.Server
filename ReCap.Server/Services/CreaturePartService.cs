@@ -18,7 +18,7 @@ public class CreaturePartService
         creaturePartTemplateRepository = new CreaturePartTemplateRepositoryAdapter(newSqliteConfig);
     }
 
-    public CreaturePartModel getCreaturePartById(ulong id) {
+    public CreaturePartModel? getCreaturePartById(ulong id) {
         return creaturePartRepository.getCreaturePartById(id);
     }
 

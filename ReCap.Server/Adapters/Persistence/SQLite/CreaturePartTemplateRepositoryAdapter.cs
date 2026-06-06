@@ -20,7 +20,7 @@ public class CreaturePartTemplateRepositoryAdapter
         return sqliteConfig.CreaturePartTemplates.ToList();
     }
 
-    public CreaturePartTemplateModel getTemplateById(ulong id)
+    public CreaturePartTemplateModel? getTemplateById(ulong id)
     {
         return sqliteConfig.CreaturePartTemplates.SingleOrDefault(b => b.rigblockAssetId == id);
     }

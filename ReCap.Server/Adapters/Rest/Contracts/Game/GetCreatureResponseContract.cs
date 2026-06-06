@@ -21,7 +21,7 @@ public class GetCreatureResponseContract : GetCreatureTemplateResponseContract {
     public ulong? TemplateID { get; set; }
 
     [XmlElement(ElementName = "gear_score")]
-    public double? GearScore { get; set; }
+    public new double? GearScore { get; set; }
 
     [XmlElement(ElementName = "item_points")]
     public double? ItemPoints { get; set; }

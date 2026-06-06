@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace ReCap.Server.Util;
 
 #nullable disable
@@ -17,29 +15,6 @@ public static class CommandLineHelper
 
         return returnVal;
     }
-    static void RemoveExecutableFromArgs(ref List<string> args)
-    {
-        if (args.Count <= 0)
-            return;
-
-        return;
-        int argCount = args.Count;
-
-        string executablePath = Process.GetCurrentProcess().MainModule.FileName;
-
-        for (int i = 0; i < argCount; i++)
-        {
-            var arg = args[0];
-            arg = UnwrapArg(arg);
-            arg = Environment.ExpandEnvironmentVariables(arg);
-            if (arg == executablePath)
-            {
-                args.RemoveAt(i);
-                i--;
-            }
-        }
-    }
-
 
     const char _QUOT = '"';
     static readonly char[] _ARG_CONTAINERS =

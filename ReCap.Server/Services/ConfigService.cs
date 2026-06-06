@@ -5,7 +5,7 @@ namespace ReCap.Server.Services;
 
 public class ConfigService
 {
-    public static ConfigContract getGameConfig(string darksporeVersion) {
+    public static ConfigContract getGameConfig(string? darksporeVersion) {
         string host = ServerConfig.HostName;
 
         return new ConfigContract{

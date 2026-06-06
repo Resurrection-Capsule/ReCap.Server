@@ -10,7 +10,7 @@ public class ObjectUpdatePacket : IRakNetPacket
 {
     public PacketType Type => PacketType.ObjectUpdate;
     public uint ObjectId { get; set; }
-    public SporelabsObject ObjectData { get; set; }
+    public SporelabsObject? ObjectData { get; set; }
 
     public void ReadFrom(Stream stream)
     {
