@@ -125,13 +125,27 @@ public class RakNetServer
                 var games = gameService.GetAllGames();
                 foreach (var game in games)
                 {
-                    game.Update();
+                    // One game's failure must not kill the update loop for every game —
+                    // ExecuteAsync runs fire-and-forget, so an escaped exception dies silently
+                    // and every scheduled coroutine stalls forever (2026-06-06 Pummel gate).
+                    try
+                    {
+                        game.Update();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.RakNet.Error($"Game {game.Id} Update failed: {ex}");
+                    }
                 }
                 await Task.Delay(50, stoppingToken);
             }
         }
         catch (TaskCanceledException)
         {
+        }
+        catch (Exception ex)
+        {
+            Log.RakNet.Fatal($"Game update loop died: {ex}");
         }
 
         Listener.Stop();
