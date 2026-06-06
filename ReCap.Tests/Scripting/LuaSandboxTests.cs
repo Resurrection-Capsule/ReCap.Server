@@ -19,6 +19,8 @@ public class LuaSandboxTests
     [InlineData("loadlib")]
     [InlineData("package")]
     [InlineData("module")]
+    [InlineData("os")]
+    [InlineData("io")]
     public void BannedGlobalsAreNil(string name) => Assert.True(GlobalIsNil(name));
 
     [Theory]

@@ -1,4 +1,5 @@
 using ReCap.Server.Adapters.Scripting.Native;
+using Serilog.Events;
 
 namespace ReCap.Server.Adapters.Scripting;
 
@@ -94,15 +95,27 @@ internal static class LuaStubs
     [System.Runtime.InteropServices.UnmanagedCallersOnly(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
     internal static int Print(nint L)
     {
+        if (!ReCap.Server.Util.Logging.Log.Lua.IsEnabled(LogEventLevel.Debug))
+            return 0;
         try
         {
             var top = LuaNative.lua_gettop(L);
             var parts = new List<string>(top);
             for (var i = 1; i <= top; i++)
-                parts.Add(LuaNative.ToManagedString(L, i) ?? LuaNative.lua_type(L, i).ToString());
+            {
+                var t = LuaNative.lua_type(L, i);
+                parts.Add(t == LuaNative.LUA_TSTRING
+                    ? LuaNative.ToManagedString(L, i) ?? string.Empty
+                    : t == LuaNative.LUA_TNUMBER
+                        ? LuaNative.lua_tonumber(L, i).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        : t.ToString());
+            }
             ReCap.Server.Util.Logging.Log.Lua.Debug($"[print] {string.Join("\t", parts)}");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            try { ReCap.Server.Util.Logging.Log.Lua.Error($"[stub] print failed: {ex.Message}"); } catch { }
+        }
         return 0;
     }
 }
