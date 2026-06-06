@@ -148,6 +148,8 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (!_game.Objects.Objects.TryGetValue(targetId, out var obj) || obj.MaxHealth <= 0f) return 0f;
         var before = obj.Health;
         obj.Health = Math.Clamp(obj.Health + amount, 0f, obj.MaxHealth);
+        ReCap.Server.Util.Logging.Log.Game.Debug(
+            $"[lua] HealDamage target={targetId} amount={amount:F1} hp {before:F1}→{obj.Health:F1}");
         return obj.Health - before;
     }
 
