@@ -18,6 +18,9 @@ internal static partial class LuaNative
     public const int LUA_TSTRING = 4;
     public const int LUA_TTABLE = 5;
     public const int LUA_TFUNCTION = 6;
+    public const int LUA_TUSERDATA = 7;
+    public const int LUA_TTHREAD = 8;
+    public const int LUA_TNONE = -1;
 
     public const int LUA_OK = 0;
     public const int LUA_YIELD = 1;
@@ -34,7 +37,7 @@ internal static partial class LuaNative
     [LibraryImport(Dll)] internal static partial nint lua_atpanic(nint L, nint panicf);
 
     [LibraryImport(Dll, StringMarshalling = StringMarshalling.Utf8)]
-    internal static partial int luaL_loadbuffer(nint L, byte[] buff, nuint sz, string name);
+    internal static partial int luaL_loadbuffer(nint L, ReadOnlySpan<byte> buff, nuint sz, string name);
     [LibraryImport(Dll)] internal static partial int lua_pcall(nint L, int nargs, int nresults, int errfunc);
     [LibraryImport(Dll)] internal static partial void lua_call(nint L, int nargs, int nresults);
     [LibraryImport(Dll)] internal static partial int lua_resume(nint L, int narg);
@@ -60,7 +63,7 @@ internal static partial class LuaNative
     [LibraryImport(Dll)] internal static partial void lua_pushinteger(nint L, nint n);
     [LibraryImport(Dll, StringMarshalling = StringMarshalling.Utf8)]
     internal static partial void lua_pushstring(nint L, string s);
-    [LibraryImport(Dll)] internal static partial void lua_pushlstring(nint L, byte[] s, nuint len);
+    [LibraryImport(Dll)] internal static partial void lua_pushlstring(nint L, ReadOnlySpan<byte> s, nuint len);
     [LibraryImport(Dll)] internal static partial void lua_pushboolean(nint L, int b);
     [LibraryImport(Dll)] internal static partial void lua_pushcclosure(nint L, nint fn, int n);
     [LibraryImport(Dll)] internal static partial void lua_pushlightuserdata(nint L, nint p);

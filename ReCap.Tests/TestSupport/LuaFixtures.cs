@@ -16,7 +16,11 @@ public static class LuaFixtures
         try
         {
             var p = Process.Start(new ProcessStartInfo(luac, $"-s -o \"{outFile}\" \"{src}\"") { RedirectStandardError = true })!;
-            p.WaitForExit();
+            if (!p.WaitForExit(30_000))
+            {
+                p.Kill(entireProcessTree: true);
+                throw new InvalidOperationException("luac timed out");
+            }
             if (p.ExitCode != 0)
                 throw new InvalidOperationException($"luac failed: {p.StandardError.ReadToEnd()}");
             return File.ReadAllBytes(outFile);
