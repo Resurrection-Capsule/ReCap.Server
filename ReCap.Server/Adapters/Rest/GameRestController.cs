@@ -118,7 +118,19 @@ public class GameRestController
     [RequestMapping(Name="api.account.getAccount")]
     public byte[]? getPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        var account = accountService.getAccountByAuthToken(parameters["token"]);
+        AccountModel account;
+        try
+        {
+            account = accountService.getAccountByAuthToken(parameters["token"]);
+        }
+        catch (ForbiddenOperationException)
+        {
+            // C++ game_account_getAccount bails with an empty body on an unknown/stale token
+            // (API.cpp:1423-1428, literal "// Send some error?" TODO). A stale cookie after a
+            // server restart must not explode into a 500 through the reflection dispatcher.
+            ReCap.Server.Util.Logging.Log.Rest.Warn("getAccount: unknown auth token — empty response (C++ parity)");
+            return Array.Empty<byte>();
+        }
 
         string httpMethod = context.Request.HttpMethod;
         if (httpMethod == "GET")
