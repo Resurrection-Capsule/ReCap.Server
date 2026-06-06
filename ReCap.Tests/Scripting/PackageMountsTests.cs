@@ -24,6 +24,6 @@ public class PackageMountsTests
     public void PackagePathsAreDataRelative()
     {
         Assert.Equal("ServerData.package", WellKnownPackage.ServerData.RelativePath);
-        Assert.Equal(Path.Combine("Locale", "en-us", "Text.package"), WellKnownPackage.LocaleTextEnUs.RelativePath);
+        Assert.Equal(Path.Combine("Locale", "pt-br", "Text.package"), WellKnownPackage.LocaleText.RelativePath);
     }
 }
