@@ -24,6 +24,7 @@ public sealed class GameObject
     public bool PlayerControlled { get; set; }
     public float Health { get; set; }
     public float MaxHealth { get; set; }
+    public uint TargetId { get; set; }
     public AssetValue? AIDefinition { get; set; }
     // Mirrors C++ Locomotion::GoalFlags. Default 0x020 = stop/teleport bit (set by Locomotion::Stop() in ctor).
     public uint GoalFlags { get; set; } = 0x020;

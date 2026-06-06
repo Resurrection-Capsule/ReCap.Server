@@ -46,6 +46,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private readonly Dictionary<byte, IReadOnlyList<SquadCreature>> _playerSquads = new();
     public GameState State { get; private set; } = GameState.Initializing;
 
+    public Services.Scripting.GameScriptContext? ScriptContext { get; set; }
+
     // Mirrors C++ teleportMovement (Server.cpp:76). Default false = smooth movement (0x91
     // flags 0x001; own-hero walk is client-side, enabled by D-017/D-017b ClassAttributes).
     // CLI --teleport-movement re-enables the D-015 snap contract (0x90 + 0x91 flags 0x21)
@@ -60,6 +62,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         var delta = (now - _lastTick).TotalSeconds;
         _lastTick = now;
         Objects.Update(delta);
+        ScriptContext?.Tick();
         FlushObjectUpdates();
 
         foreach (var player in Players.Values)
@@ -1082,5 +1085,18 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             _objectLocomotion[objectId] = locomotion;
         }
         return locomotion;
+    }
+
+    internal bool TryGetObjectPosition(uint objectId, out Vector3 pos)
+    {
+        if (!Objects.Objects.TryGetValue(objectId, out var obj)) { pos = default; return false; }
+        if (_playerCharacterObjectIds.ContainsValue(objectId) &&
+            _objectLocomotion.TryGetValue(objectId, out var loco))
+        {
+            pos = loco.PartialGoalPosition != default ? loco.PartialGoalPosition : obj.Position;
+            return true;
+        }
+        pos = obj.Position;
+        return true;
     }
 }

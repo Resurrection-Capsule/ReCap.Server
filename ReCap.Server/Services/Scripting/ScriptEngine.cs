@@ -70,9 +70,11 @@ public sealed class ScriptEngine(ScriptVfs vfs)
         }
     }
 
-    public LuaRuntime CreateBootedRuntime()
+    public LuaRuntime CreateBootedRuntime() => CreateBootedRuntime("boot");
+
+    public LuaRuntime CreateBootedRuntime(string contextTag)
     {
-        var runtime = LuaRuntime.CreateSandboxedState(name => vfs.GetChunk(ScriptVfs.ParseReference(name)));
+        var runtime = LuaRuntime.CreateSandboxedState(name => vfs.GetChunk(ScriptVfs.ParseReference(name)), contextTag);
         ExecuteBootScripts(runtime);
         return runtime;
     }

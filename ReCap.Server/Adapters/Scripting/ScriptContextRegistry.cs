@@ -1,10 +1,23 @@
 namespace ReCap.Server.Adapters.Scripting;
 
+public interface IScriptGameBridge
+{
+    bool TryGetPosition(uint objectId, out float x, out float y, out float z);
+    float GetHitPoints(uint objectId);
+    float GetMaxHitPoints(uint objectId);
+    bool ObjectExists(uint objectId);
+    byte GetTeam(uint objectId);
+    uint GetTargetId(uint objectId);
+}
+
+public readonly record struct AbilityInvocation(uint AgentId, uint TargetId, float CursorX, float CursorY, float CursorZ, int Rank);
+
 public sealed class ScriptStateContext
 {
     public required ScriptRegistry Registry { get; init; }
     public LuaCoroutineScheduler? Scheduler { get; set; }
-    public object? GameBridge { get; set; }
+    public IScriptGameBridge? GameBridge { get; set; }
+    public AbilityInvocation? CurrentInvocation { get; set; }
 }
 
 public static class ScriptContextRegistry
