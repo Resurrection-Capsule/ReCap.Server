@@ -20,6 +20,8 @@ public sealed class ScriptVfs(PackageMounts mounts)
         var dot = rest.LastIndexOf('.');
         var name = dot >= 0 ? rest[..dot] : rest;
         var ext = dot >= 0 ? rest[(dot + 1)..] : "lua";
+        while (name.EndsWith(".lua", StringComparison.OrdinalIgnoreCase))
+            name = name[..^4];
         uint groupId = 0u;
         if (group is not null)
         {
@@ -37,7 +39,13 @@ public sealed class ScriptVfs(PackageMounts mounts)
         var chunks = EnsureIndex();
         if (chunks is null) return null;
         if (key.GroupId != 0)
-            return chunks.TryGetValue((key.GroupId, key.InstanceId), out var exact) ? exact : null;
+        {
+            if (chunks.TryGetValue((key.GroupId, key.InstanceId), out var exact))
+                return exact;
+            foreach (var ((_, i), bytes) in chunks)
+                if (i == key.InstanceId) return bytes;
+            return null;
+        }
         foreach (var ((g, i), bytes) in chunks)
             if (i == key.InstanceId) return bytes;
         return null;

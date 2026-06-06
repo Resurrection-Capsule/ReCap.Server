@@ -1,12 +1,13 @@
 using ReCap.Server.Adapters.Persistence;
 using ReCap.Server.Adapters.Scripting;
 using ReCap.Server.Services.Scripting;
+using Xunit.Abstractions;
 
 namespace ReCap.Tests.Scripting;
 
-public class ScriptEngineBootTests
+public class ScriptEngineBootTests(ITestOutputHelper output)
 {
-    private static string? FindDataDir()
+    internal static string? FindDataDir()
     {
         var env = Environment.GetEnvironmentVariable("RECAP_GAME_DATA");
         if (env is not null && File.Exists(Path.Combine(env, "ServerData.package"))) return env;
@@ -23,8 +24,12 @@ public class ScriptEngineBootTests
         var engine = new ScriptEngine(vfs);
         using var rt = LuaRuntime.CreateSandboxedState(n => vfs.GetChunk(ScriptVfs.ParseReference(n)));
         var report = engine.ExecuteBootScripts(rt);
-        Assert.True(report.Total >= 1000, $"expected ~1042 chunks, executed {report.Total}");
-        Assert.True(report.Failures.Count < report.Total / 10,
-            $"boot failures {report.Failures.Count}/{report.Total}:\n{string.Join("\n", report.Failures.Take(20))}");
+        output.WriteLine($"Total={report.Total} Failures={report.Failures.Count} MissingRequires={report.MissingRequires.Count}");
+        foreach (var m in report.MissingRequires)
+            output.WriteLine($"  [retail-missing] {m}");
+        Assert.True(report.Total >= 1000, $"expected ~1018 chunks, executed {report.Total}");
+        Assert.Empty(report.Failures);
+        Assert.True(report.MissingRequires.Count <= 13,
+            $"retail-missing grew: {report.MissingRequires.Count}\n{string.Join("\n", report.MissingRequires)}");
     }
 }

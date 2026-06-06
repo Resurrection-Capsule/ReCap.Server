@@ -153,9 +153,11 @@ public static class Program
                 BootReport smokeReport;
                 using (var smokeRt = LuaRuntime.CreateSandboxedState(n => vfs.GetChunk(ScriptVfs.ParseReference(n))))
                     smokeReport = engine.ExecuteBootScripts(smokeRt);
-                Log.Lua.Info($"[lua-smoke] total={smokeReport.Total} failures={smokeReport.Failures.Count}");
+                Log.Lua.Info($"[lua-smoke] total={smokeReport.Total} failures={smokeReport.Failures.Count} retail-missing={smokeReport.MissingRequires.Count}");
                 foreach (var f in smokeReport.Failures.Take(10))
                     Log.Lua.Info($"[lua-smoke] FAIL: {f}");
+                foreach (var m in smokeReport.MissingRequires.Take(20))
+                    Log.Lua.Warn($"[lua-smoke] MISSING: {m}");
                 var snap = StubTelemetry.Snapshot();
                 Log.Lua.Info($"[lua-smoke] stub-telemetry count={snap.Count}");
                 foreach (var entry in snap)
