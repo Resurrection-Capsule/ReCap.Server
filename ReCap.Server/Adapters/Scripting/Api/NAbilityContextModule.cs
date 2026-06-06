@@ -20,7 +20,8 @@ public static unsafe class NAbilityContextModule
     {
         try
         {
-            var inv = ScriptContextRegistry.Get(L)?.CurrentInvocation;
+            var ctx = ScriptContextRegistry.Get(L);
+            var inv = ctx?.GetInvocation(L);
             LuaNative.lua_pushnumber(L, inv.HasValue ? (float)inv.Value.AgentId : 0f);
             return 1;
         }
@@ -36,7 +37,8 @@ public static unsafe class NAbilityContextModule
     {
         try
         {
-            var inv = ScriptContextRegistry.Get(L)?.CurrentInvocation;
+            var ctx = ScriptContextRegistry.Get(L);
+            var inv = ctx?.GetInvocation(L);
             LuaNative.lua_pushnumber(L, inv.HasValue ? (float)inv.Value.TargetId : 0f);
             return 1;
         }
@@ -52,7 +54,8 @@ public static unsafe class NAbilityContextModule
     {
         try
         {
-            var inv = ScriptContextRegistry.Get(L)?.CurrentInvocation;
+            var ctx = ScriptContextRegistry.Get(L);
+            var inv = ctx?.GetInvocation(L);
             if (inv.HasValue)
             {
                 LuaNative.lua_pushnumber(L, inv.Value.CursorX);
@@ -81,7 +84,8 @@ public static unsafe class NAbilityContextModule
     {
         try
         {
-            var inv = ScriptContextRegistry.Get(L)?.CurrentInvocation;
+            var ctx = ScriptContextRegistry.Get(L);
+            var inv = ctx?.GetInvocation(L);
             LuaNative.lua_pushnumber(L, inv.HasValue ? (float)inv.Value.Rank : 0f);
             return 1;
         }

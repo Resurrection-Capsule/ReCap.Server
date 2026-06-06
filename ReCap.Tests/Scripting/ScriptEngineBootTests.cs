@@ -7,7 +7,9 @@ namespace ReCap.Tests.Scripting;
 
 public class ScriptEngineBootTests(ITestOutputHelper output)
 {
-    internal static string? FindDataDir()
+    internal static string? FindDataDir() => FindDataDirShared();
+
+    internal static string? FindDataDirShared()
     {
         var env = Environment.GetEnvironmentVariable("RECAP_GAME_DATA");
         if (env is not null && File.Exists(Path.Combine(env, "ServerData.package"))) return env;

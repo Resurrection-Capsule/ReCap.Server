@@ -49,7 +49,7 @@ public class GameBridgeTests
     {
         using var rt = Make();
         var ctx = ScriptContextRegistry.Get(rt.L)!;
-        ctx.CurrentInvocation = new AbilityInvocation(AgentId: 10, TargetId: 77, CursorX: 4f, CursorY: 5f, CursorZ: 6f, Rank: 2);
+        ctx.SetInvocation(rt.L, new AbilityInvocation(AgentId: 10, TargetId: 77, CursorX: 4f, CursorY: 5f, CursorZ: 6f, Rank: 2));
         Assert.True(rt.EvalBool(LuaFixtures.Compile("""
             local x, y, z = nAbility.GetTargetPosition()
             return nAbility.GetAgentID() == 10 and nAbility.GetTargetID() == 77 and x == 4 and z == 6

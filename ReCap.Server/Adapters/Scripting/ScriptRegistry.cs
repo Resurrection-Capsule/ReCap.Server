@@ -2,7 +2,7 @@ namespace ReCap.Server.Adapters.Scripting;
 
 public enum ScriptKind { Ability, Modifier, Affix, Condition, Objective }
 
-public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate);
+public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate, int TickNumParams = 0);
 
 public sealed class ScriptRegistry
 {
@@ -19,4 +19,10 @@ public sealed class ScriptRegistry
         _entries.TryGetValue((kind, hash), out var e) ? e : null;
 
     public int Count(ScriptKind kind) => _entries.Keys.Count(k => k.Item1 == kind);
+
+    public IEnumerable<ScriptEntry> AllWithTick(ScriptKind kind) =>
+        _entries.Where(kv => kv.Key.Item1 == kind && kv.Value.HasTick).Select(kv => kv.Value);
+
+    public IEnumerable<ScriptEntry> AllEntries(ScriptKind kind) =>
+        _entries.Where(kv => kv.Key.Item1 == kind).Select(kv => kv.Value);
 }

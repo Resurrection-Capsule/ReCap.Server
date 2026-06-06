@@ -24,6 +24,7 @@ public sealed class LuaCoroutineScheduler(nint mainState)
 
     public nint Spawn(nint callerL, uint objectId, int fnIndex, int argCount)
     {
+        if (objectId != 0 && _byObject.ContainsKey(objectId)) return 0;
         var threadL = LuaNative.lua_newthread(mainState);
         var threadRef = LuaNative.luaL_ref(mainState, LuaNative.LUA_REGISTRYINDEX);
         LuaNative.lua_pushvalue(callerL, fnIndex);
@@ -33,14 +34,34 @@ public sealed class LuaCoroutineScheduler(nint mainState)
             LuaNative.lua_pushvalue(callerL, fnIndex + 1 + i);
             LuaNative.lua_xmove(callerL, threadL, 1);
         }
+        RegisterAndResume(threadL, threadRef, objectId, argCount, beforeFirstResume: null);
+        return threadL;
+    }
+
+    // Moves valuesOnTop stack values (fn first, then args) from callerL to a new thread.
+    // beforeFirstResume is invoked after thread registration but before the first resume,
+    // allowing the caller to set per-thread state (e.g. SetInvocation) before Lua runs.
+    public nint SpawnFromStack(nint callerL, uint objectId, int valuesOnTop, Action<nint>? beforeFirstResume = null)
+    {
+        if (objectId != 0 && _byObject.ContainsKey(objectId)) return 0;
+        var threadL = LuaNative.lua_newthread(mainState);
+        var threadRef = LuaNative.luaL_ref(mainState, LuaNative.LUA_REGISTRYINDEX);
+        var argCount = valuesOnTop - 1;
+        LuaNative.lua_xmove(callerL, threadL, valuesOnTop);
+        RegisterAndResume(threadL, threadRef, objectId, argCount, beforeFirstResume);
+        return threadL;
+    }
+
+    private void RegisterAndResume(nint threadL, int threadRef, uint objectId, int argCount, Action<nint>? beforeFirstResume)
+    {
         var entry = new ThreadEntry { ThreadL = threadL, ThreadRef = threadRef, ObjectId = objectId };
         _threads[threadL] = entry;
         if (objectId != 0) _byObject[objectId] = threadL;
         var context = ScriptContextRegistry.Get(mainState);
         if (context is not null) ScriptContextRegistry.Register(threadL, context);
         LuaRuntime.InstallWatchdog(threadL);
+        beforeFirstResume?.Invoke(threadL);
         Resume(entry, argCount);
-        return threadL;
     }
 
     public void RegisterYield(nint threadL, bool sleeping, double? wakeAt)
@@ -85,6 +106,8 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         _threads.Remove(entry.ThreadL);
         if (entry.ObjectId != 0 && _byObject.TryGetValue(entry.ObjectId, out var l) && l == entry.ThreadL)
             _byObject.Remove(entry.ObjectId);
+        var context = ScriptContextRegistry.Get(entry.ThreadL);
+        context?.RemoveInvocation(entry.ThreadL);
         ScriptContextRegistry.Unregister(entry.ThreadL);
         LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, entry.ThreadRef);
     }
