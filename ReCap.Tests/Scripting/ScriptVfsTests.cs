@@ -28,6 +28,14 @@ public class ScriptVfsTests
     }
 
     [Fact]
+    public void ParsesHexPrefixedGroupForm()
+    {
+        var key = ScriptVfs.ParseReference("0x3681d755!GlobalDefinitions.lua");
+        Assert.Equal(0x3681D755u, key.GroupId);
+        Assert.Equal(ScriptVfs.Hash("GlobalDefinitions"), key.InstanceId);
+    }
+
+    [Fact]
     public void ParsesBareNameAgainstSearchGroups()
     {
         var key = ScriptVfs.ParseReference("Affix_EnemyHealthRegen");
