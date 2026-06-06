@@ -59,7 +59,12 @@ public sealed class ObjectManager
             var attrs = _db.ResolveClassAttributesForCreature(nounId);
             if (attrs is not null)
             {
-                maxHealth = attrs.FindByName("maxHealth").AsFloat();
+                // C++ Object::Initialize non-player path reads ClassAttributes baseHealth
+                // (Object.cpp:677-680); the player path gets MaxHealth from Character save
+                // data instead — our PlayerClass maxHealth read approximates that at gs=0.
+                maxHealth = playerControlled
+                    ? attrs.FindByName("maxHealth").AsFloat()
+                    : attrs.FindByName("baseHealth").AsFloat();
                 strength = attrs.FindByName("baseStrength").AsFloat();
                 dexterity = attrs.FindByName("baseDexterity").AsFloat();
                 mind = attrs.FindByName("baseMind").AsFloat();
