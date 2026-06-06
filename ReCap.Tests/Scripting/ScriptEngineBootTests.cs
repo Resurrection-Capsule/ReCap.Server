@@ -27,6 +27,12 @@ public class ScriptEngineBootTests(ITestOutputHelper output)
         output.WriteLine($"Total={report.Total} Failures={report.Failures.Count} MissingRequires={report.MissingRequires.Count}");
         foreach (var m in report.MissingRequires)
             output.WriteLine($"  [retail-missing] {m}");
+        var registry = ScriptContextRegistry.Get(rt.L)?.Registry;
+        if (registry is not null)
+        {
+            foreach (ScriptKind kind in Enum.GetValues<ScriptKind>())
+                output.WriteLine($"  registry[{kind}]={registry.Count(kind)}");
+        }
         Assert.True(report.Total >= 1000, $"expected ~1018 chunks, executed {report.Total}");
         Assert.Empty(report.Failures);
         Assert.True(report.MissingRequires.Count <= 13,
