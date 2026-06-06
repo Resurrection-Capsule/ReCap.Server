@@ -24,6 +24,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     public DateTime StartTime { get; } = DateTime.UtcNow;
     public ulong Id { get; } = id;
+    public GameType Type { get; } = gameType;
     public int MaxPlayers { get; }
     public double GameClock = 999999999;
     public AssetDatabase? Assets { get; } = assetDatabase;
@@ -36,8 +37,6 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private DateTime _lastTick = DateTime.UtcNow;
 
-    private int PlayersConnected = 0;
-    private bool ReadyForStart = false;
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
     private readonly Dictionary<uint, LocomotionData> _objectLocomotion = new();
@@ -166,12 +165,12 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             PlayerType = 0,
             GameplayIndex = player.Slot
         };
-        player.Client.SendPacket(helloPlayer);
+        player.Client?.SendPacket(helloPlayer);
     }
 
     private void OnPartyMergeComplete(Player player)
     {
-        player.Client.SendPacket(new PartyMergeCompletePacket());
+        player.Client?.SendPacket(new PartyMergeCompletePacket());
     }
 
     private void OnPlayerJoined(Player joiningPlayer)
@@ -182,16 +181,16 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         foreach (var player in Players)
         {
             if (player.Value.Slot != joiningPlayer.Slot)
-                player.Value.Client.SendPacket(playerJoinedPacket);
+                player.Value.Client?.SendPacket(playerJoinedPacket);
 
             otherPlayerJoinedPacket.Slot = player.Value.Slot;
-            joiningPlayer.Client.SendPacket(otherPlayerJoinedPacket);
+            joiningPlayer.Client?.SendPacket(otherPlayerJoinedPacket);
         }
 
         foreach (var bot in Bots)
         {
             otherPlayerJoinedPacket.Slot = bot.Value.Slot;
-            joiningPlayer.Client.SendPacket(otherPlayerJoinedPacket);
+            joiningPlayer.Client?.SendPacket(otherPlayerJoinedPacket);
         }
     }
 
@@ -874,6 +873,55 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     // C++ Instance::SwapCharacter: set current deck index, broadcast PlayerCharacterDeploy,
     // send LPU. Without it the client never binds an active hero and fades out.
+    // Client slot semantics (Ghidra BuildAbilityCommandStruct @0x004d8a80 + slot resolver
+    // FUN_009c7180): type byte = 8 - (slot < 5); slots 0-4 = the CURRENT hero's PlayerClass
+    // ability fields [basic, special1, special2, special3, passive]; slots 6/7/8 (type 8)
+    // recurse into the squad character (client charIdx 4) — not modeled yet, ack-only.
+    private void InvokeAbilityCommand(RakNetClient sender, byte commandType, uint slotIndex, uint targetId, Vector3 cursor, int rank)
+    {
+        var player = GetPlayerByClient(sender);
+        if (player is null || ScriptContext is null) return;
+
+        if (commandType == 8)
+        {
+            Log.Game.Info($"UseSquadAbility slot={slotIndex}: squad character not modeled yet — ack only");
+            return;
+        }
+
+        if (!_playerSquads.TryGetValue(player.Slot, out var squad) || squad.Count == 0)
+        {
+            Log.Game.Warn($"Ability cast: no resolved squad for player slot={player.Slot}");
+            return;
+        }
+
+        int deckIndex = player.PlayerData?.CurrentDeckIndex ?? 0;
+        if (deckIndex >= squad.Count) deckIndex = 0;
+        var creature = squad[deckIndex];
+
+        var abilitySlots = Assets?.ResolveAbilitySlots(creature.Noun);
+        if (abilitySlots is null)
+        {
+            Log.Game.Warn($"Ability cast: no PlayerClass ability slots for noun=0x{creature.Noun:X8}");
+            return;
+        }
+        if (slotIndex >= abilitySlots.Length || abilitySlots[slotIndex] == 0)
+        {
+            Log.Game.Warn($"Ability cast: empty ability slot {slotIndex} for noun=0x{creature.Noun:X8}");
+            return;
+        }
+
+        var abilityHash = abilitySlots[slotIndex];
+        var heroObjectId = _playerCharacterObjectIds.GetValueOrDefault(player.Slot);
+        var entry = ScriptContext.Registry.Find(Adapters.Scripting.ScriptKind.Ability, abilityHash);
+        var invoked = ScriptContext.InvokeAbility(abilityHash, heroObjectId, targetId, cursor.X, cursor.Y, cursor.Z, rank);
+        var outcome = invoked ? "invoked"
+            : entry is null ? "refused: not in registry"
+            : !entry.HasTick ? "refused: no tick in __index chain (channeled/vtable family — pending dispatch contract)"
+            : "refused: agent thread busy";
+        Log.Game.Info($"Cast slot={slotIndex} ability='{entry?.Name ?? "?"}' hash=0x{abilityHash:X8} " +
+                      $"agent={heroObjectId} target=0x{targetId:X} rank={rank} → {outcome}");
+    }
+
     private void SwapCharacter(RakNetClient client, Player player, int deckIndex, uint objectId)
     {
         if (player.PlayerData != null)
@@ -954,15 +1002,16 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         else if (packet.CommandType is 7 or 8)
         {
             // UseCharacterAbility / UseSquadAbility (44B ActionCommandAbilityData,
-            // C++ Types.h:855, client emit @0x004d8a80). v1: parse + response type=2 —
+            // C++ Types.h:855, client emit @0x004d8a80). Response stays type=2 —
             // clears the client's 3s pending lock (FUN_004d9150) without arming the
-            // case-1 ability path (which drives locomotion/FX from response fields).
-            // Real ability resolution is Simulation-phase work.
+            // case-1 ability path (which drives locomotion/FX from response fields;
+            // that arming is Simulation-phase work).
             var (targetId, cursorPos, targetPos, index, rank, userData) = packet.ReadAbilityData();
             SendActionCommandResponse(sender, packet.CommandStamp);
-            Log.Game.Info($"Ability type={packet.CommandType} slot={index} rank={rank} target=0x{targetId:X} " +
-                          $"cursor=({cursorPos.X:F1},{cursorPos.Y:F1},{cursorPos.Z:F1}) " +
-                          $"targetPos=({targetPos.X:F1},{targetPos.Y:F1},{targetPos.Z:F1}) userData=0x{userData:X} (stub)");
+            Log.Game.Debug($"Ability type={packet.CommandType} slot={index} rank={rank} target=0x{targetId:X} " +
+                           $"cursor=({cursorPos.X:F1},{cursorPos.Y:F1},{cursorPos.Z:F1}) " +
+                           $"targetPos=({targetPos.X:F1},{targetPos.Y:F1},{targetPos.Z:F1}) userData=0x{userData:X}");
+            InvokeAbilityCommand(sender, packet.CommandType, index, targetId, cursorPos, rank);
         }
         else if (packet.CommandType == 9)
         {
@@ -1075,6 +1124,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             Overlay = overlay,
             Scale = scale
         });
+    }
+
+    // Lua nGameObject.SetAnimationState (client @0x009fc000 broadcasts via SporeNet message).
+    public void BroadcastAnimationState(uint objectId, uint state)
+    {
+        foreach (var player in Players.Values)
+            if (player.Client is { } client)
+                SendAnimationState(client, objectId, state);
     }
 
     private LocomotionData GetObjectLocomotion(uint objectId)

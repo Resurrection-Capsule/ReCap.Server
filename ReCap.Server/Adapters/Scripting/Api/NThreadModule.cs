@@ -13,7 +13,30 @@ public static unsafe class NThreadModule
             ("Sleep", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&Sleep),
             ("WaitForever", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForever),
             ("WaitForXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForXSeconds),
+            ("WaitUntilTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitUntilTime),
             ("WakeUp", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WakeUp));
+    }
+
+    // Retail @0x00a02280: arg1 = absolute SIM time (seconds, clamped >= 0); optional args 2-3
+    // (cast-speed object + overdrive scale) deferred. Yields until the scheduler clock reaches it.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitUntilTime(nint L)
+    {
+        try
+        {
+            var scheduler = ScriptContextRegistry.Get(L)?.Scheduler;
+            var rawTime = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? (double)LuaNative.lua_tonumber(L, 1)
+                : 0.0;
+            var wakeAt = Math.Max(0.0, rawTime);
+            scheduler?.RegisterYield(L, sleeping: false, wakeAt: Math.Max(scheduler.Now, wakeAt));
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitUntilTime failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]

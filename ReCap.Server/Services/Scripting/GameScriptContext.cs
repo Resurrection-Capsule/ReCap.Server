@@ -11,6 +11,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     private readonly LuaCoroutineScheduler _scheduler;
     private readonly ScriptRegistry _registry;
     private double _clockSeconds;
+    private uint _nextAbilityInstanceId;
 
     public GameScriptContext(Game game, ScriptEngine engine)
     {
@@ -44,7 +45,14 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (_scheduler.HasThreadForObject(agentId)) return false;
 
         var L = _runtime.L;
-        var invocation = new AbilityInvocation(agentId, targetId, cursorX, cursorY, cursorZ, rank);
+        // TargetInRangeAtStart mirrors the client's cached at-cast flag (@0x00a410a0 reads a
+        // byte stamped at ability start, not a live range test): true when the cast carried a
+        // live target. Range-vs-distance refinement needs the ability's range prop (later).
+        var targetInRange = targetId != 0 && _game.Objects.Objects.ContainsKey(targetId);
+        var invocation = new AbilityInvocation(agentId, targetId, cursorX, cursorY, cursorZ, rank,
+            AbilityHash: abilityHash,
+            InstanceId: ++_nextAbilityInstanceId,
+            TargetInRangeAtStart: targetInRange);
 
         LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
         LuaNative.lua_getfield(L, -1, "tick");
@@ -92,4 +100,28 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
     public uint GetTargetId(uint objectId) =>
         _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.TargetId : 0u;
+
+    public bool TryGetAttributeValue(uint objectId, int attributeId, out float value)
+    {
+        value = 0f;
+        return _game.Objects.Objects.TryGetValue(objectId, out var o)
+            && o.Attributes.TryGetValue(attributeId, out value);
+    }
+
+    public IReadOnlyDictionary<int, float>? GetAttributeTable(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.Attributes : null;
+
+    public bool TryGetOrientation(uint objectId, out float x, out float y, out float z, out float w)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+        {
+            x = o.Orientation.X; y = o.Orientation.Y; z = o.Orientation.Z; w = o.Orientation.W;
+            return true;
+        }
+        x = y = z = 0f; w = 1f;
+        return false;
+    }
+
+    public void BroadcastAnimationState(uint objectId, uint stateHash) =>
+        _game.BroadcastAnimationState(objectId, stateHash);
 }

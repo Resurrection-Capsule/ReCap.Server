@@ -61,6 +61,11 @@ public sealed class LuaRuntime : IDisposable
         Api.NThreadModule.Register(L);
         Api.NGameObjectModule.Register(L);
         Api.NAbilityContextModule.Register(L);
+        Api.NAttributeModule.Register(L);
+        Api.NEventModule.Register(L);
+        Api.NDebugModule.Register(L);
+        Api.NObjectManagerModule.Register(L);
+        Api.NTimeManagerModule.Register(L);
         LuaNative.lua_getfield(L, LuaNative.LUA_GLOBALSINDEX, "math");
         LuaNative.lua_pushstring(L, "random");
         unsafe { LuaNative.lua_pushcclosure(L, (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LuaStubs.MathRandom, 0); }

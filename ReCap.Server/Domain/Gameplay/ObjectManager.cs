@@ -25,6 +25,10 @@ public sealed class GameObject
     public float Health { get; set; }
     public float MaxHealth { get; set; }
     public uint TargetId { get; set; }
+    // kAttribute id → value. CONFIRMED ids (Ghidra GetAttributeValue @0x009feca0 switch sites):
+    // 0=Strength 1=Dexterity 2=Mind 4=MaxHealth. Remaining ids of the 116-wide domain are
+    // unverified — reads of unknown ids return 0 and are debug-logged for harvesting.
+    public Dictionary<int, float> Attributes { get; } = new();
     public AssetValue? AIDefinition { get; set; }
     // Mirrors C++ Locomotion::GoalFlags. Default 0x020 = stop/teleport bit (set by Locomotion::Stop() in ctor).
     public uint GoalFlags { get; set; } = 0x020;
@@ -46,6 +50,7 @@ public sealed class ObjectManager
     public GameObject Spawn(uint objectId, uint nounId, Vector3 position, float scale, byte team, bool playerControlled)
     {
         float maxHealth = 0f;
+        float strength = 0f, dexterity = 0f, mind = 0f;
         AssetValue? aiDef = null;
         AssetValue? noun = null;
 
@@ -53,7 +58,12 @@ public sealed class ObjectManager
         {
             var attrs = _db.ResolveClassAttributesForCreature(nounId);
             if (attrs is not null)
+            {
                 maxHealth = attrs.FindByName("maxHealth").AsFloat();
+                strength = attrs.FindByName("baseStrength").AsFloat();
+                dexterity = attrs.FindByName("baseDexterity").AsFloat();
+                mind = attrs.FindByName("baseMind").AsFloat();
+            }
 
             noun = _db.GetNoun(nounId);
             if (noun is not null)
@@ -76,6 +86,10 @@ public sealed class ObjectManager
             MaxHealth = maxHealth,
             AIDefinition = aiDef
         };
+        obj.Attributes[0] = strength;
+        obj.Attributes[1] = dexterity;
+        obj.Attributes[2] = mind;
+        obj.Attributes[4] = maxHealth;
 
         // Mirrors C++ Object::Initialize (Object.cpp:560-562): only nouns with hasLocomotion=true
         // get CreateLocomotionData → UpdateLocomotion dirty → ObjectTeleport on first tick.

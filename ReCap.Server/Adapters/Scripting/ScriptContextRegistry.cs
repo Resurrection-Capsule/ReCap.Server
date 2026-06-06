@@ -8,13 +8,21 @@ public interface IScriptGameBridge
     bool ObjectExists(uint objectId);
     byte GetTeam(uint objectId);
     uint GetTargetId(uint objectId);
+    bool TryGetAttributeValue(uint objectId, int attributeId, out float value);
+    IReadOnlyDictionary<int, float>? GetAttributeTable(uint objectId);
+    bool TryGetOrientation(uint objectId, out float x, out float y, out float z, out float w);
+    void BroadcastAnimationState(uint objectId, uint stateHash);
 }
 
-public readonly record struct AbilityInvocation(uint AgentId, uint TargetId, float CursorX, float CursorY, float CursorZ, int Rank);
+public readonly record struct AbilityInvocation(
+    uint AgentId, uint TargetId, float CursorX, float CursorY, float CursorZ, int Rank,
+    uint AbilityHash = 0, uint InstanceId = 0, bool TargetInRangeAtStart = false);
 
 public sealed class ScriptStateContext
 {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, AbilityInvocation> _invocations = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, IReadOnlyDictionary<int, float>> _attributeSnapshots = new();
+    private uint _nextSnapshotHandle;
 
     public required ScriptRegistry Registry { get; init; }
     public LuaCoroutineScheduler? Scheduler { get; set; }
@@ -29,6 +37,19 @@ public sealed class ScriptStateContext
     }
 
     internal void RemoveInvocation(nint threadL) => _invocations.TryRemove(threadL, out _);
+
+    // Retail snapshot contract (client GetAgentAttributeSnapshot @0x00a417a0 /
+    // GetAttributeValue_FromSnapshot @0x009fede0): the snapshot is an opaque numeric HANDLE
+    // referencing a frozen attribute array; values read back raw, no modifier recompute.
+    public uint StoreAttributeSnapshot(IReadOnlyDictionary<int, float> attributes)
+    {
+        var handle = System.Threading.Interlocked.Increment(ref _nextSnapshotHandle);
+        _attributeSnapshots[handle] = attributes;
+        return handle;
+    }
+
+    public bool TryGetAttributeSnapshot(uint handle, out IReadOnlyDictionary<int, float> attributes)
+        => _attributeSnapshots.TryGetValue(handle, out attributes!);
 }
 
 public static class ScriptContextRegistry
