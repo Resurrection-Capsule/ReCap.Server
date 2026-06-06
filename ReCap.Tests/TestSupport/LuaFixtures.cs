@@ -4,7 +4,7 @@ namespace ReCap.Tests.TestSupport;
 
 public static class LuaFixtures
 {
-    public static byte[] Compile(string luaSource)
+    public static byte[] Compile(string luaSource, bool strip = true)
     {
         var root = FindRepoRoot();
         var luac = Path.Combine(root, "native", "lua51", "out", "luac.exe");
@@ -15,7 +15,8 @@ public static class LuaFixtures
         File.WriteAllText(src, luaSource);
         try
         {
-            var p = Process.Start(new ProcessStartInfo(luac, $"-s -o \"{outFile}\" \"{src}\"") { RedirectStandardError = true })!;
+            var stripFlag = strip ? "-s " : "";
+            var p = Process.Start(new ProcessStartInfo(luac, $"{stripFlag}-o \"{outFile}\" \"{src}\"") { RedirectStandardError = true })!;
             if (!p.WaitForExit(30_000))
             {
                 p.Kill(entireProcessTree: true);

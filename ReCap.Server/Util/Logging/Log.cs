@@ -9,4 +9,5 @@ public static class Log
     public static LogCategory Db { get; } = new(LogCategories.Db);
     public static LogCategory Assets { get; } = new(LogCategories.Assets);
     public static LogCategory Game { get; } = new(LogCategories.Game);
+    public static LogCategory Lua { get; } = new(LogCategories.Lua);
 }
