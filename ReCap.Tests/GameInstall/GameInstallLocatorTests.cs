@@ -23,6 +23,7 @@ public class GameInstallLocatorTests
             root,
             Path.Combine(root, "Data"),
             Path.Combine(root, "Data", "AssetData_Binary.package"),
+            Path.Combine(root, "Data") + Path.DirectorySeparatorChar,
         })
         {
             var result = GameInstallLocator.Normalize(input);

@@ -13,6 +13,7 @@ public static class GameInstallLocator
         if (File.Exists(path))
             path = Path.GetDirectoryName(path)!;
         if (!Directory.Exists(path)) return null;
+        path = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         foreach (var candidate in new[] { path, Path.Combine(path, "Data"), Path.GetDirectoryName(path) ?? path })
         {
             var dataDir = Path.GetFileName(candidate).Equals("Data", StringComparison.OrdinalIgnoreCase)
