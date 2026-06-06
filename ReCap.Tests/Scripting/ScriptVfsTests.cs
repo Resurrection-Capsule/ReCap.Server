@@ -62,13 +62,16 @@ public class ScriptVfsTests
         var mounts = new PackageMounts(dataDir);
         var vfs = new ScriptVfs(mounts);
 
-        var luaGroup = ScriptVfs.Hash("Lua");
-        var luaChunks = vfs.GetGroup(luaGroup);
-        Assert.True(luaChunks.Count >= 1, $"Expected at least 1 lua chunk in Lua group, got {luaChunks.Count}");
+        var abilitiesGroup = vfs.GetGroup(0x7153BBB1u);
+        Assert.True(abilitiesGroup.Count >= 480, $"Expected Abilities >= 480, got {abilitiesGroup.Count}");
 
-        var abilitiesGroup = ScriptVfs.Hash("Abilities");
-        var abilitiesChunks = vfs.GetGroup(abilitiesGroup);
-        var total = luaChunks.Count + abilitiesChunks.Count;
-        Assert.True(total >= 100, $"Expected total Lua+Abilities chunks >= 100, got {total}");
+        var modifiersGroup = vfs.GetGroup(0xFC0FF8F5u);
+        Assert.True(modifiersGroup.Count >= 400, $"Expected Modifiers >= 400, got {modifiersGroup.Count}");
+
+        var luaGroup = vfs.GetGroup(0x3681D755u);
+        Assert.True(luaGroup.Count >= 85, $"Expected Lua >= 85, got {luaGroup.Count}");
+
+        var behaviorsGroup = vfs.GetGroup(0xC130A42Au);
+        Assert.True(behaviorsGroup.Count >= 30, $"Expected behaviors >= 30, got {behaviorsGroup.Count}");
     }
 }
