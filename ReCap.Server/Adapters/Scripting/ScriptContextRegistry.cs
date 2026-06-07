@@ -7,6 +7,7 @@ public interface IScriptGameBridge
     float GetMaxHitPoints(uint objectId);
     bool ObjectExists(uint objectId);
     byte GetTeam(uint objectId);
+    void SetTeam(uint objectId, byte team);
     uint GetTargetId(uint objectId);
     bool IsPlayerControlled(uint objectId);
     bool TryGetAttributeValue(uint objectId, int attributeId, out float value);

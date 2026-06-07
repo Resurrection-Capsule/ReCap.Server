@@ -28,7 +28,9 @@ public static unsafe class NGameObjectModule
             ("TakeDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TakeDamage),
             ("MarkForDelete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MarkForDelete),
             ("SetIsVisible", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetIsVisible),
-            ("SetStealthType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetStealthType));
+            ("SetStealthType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetStealthType),
+            ("SetTeam", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTeam),
+            ("IsModifierActive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsModifierActive));
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,
@@ -221,6 +223,39 @@ public static unsafe class NGameObjectModule
         LuaNative.lua_rawseti(L, -2, 1);
         LuaNative.lua_pushnumber(L, max);
         LuaNative.lua_rawseti(L, -2, 2);
+        return 1;
+    }
+
+    // SetTeam(objectId, team) → 0 returns; server-side team reassignment (charm/conversion).
+    // Targeting validation (ValidateHostileTarget) reads team server-side; client visual team
+    // reflection lands with the object-stream phase.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetTeam(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+            {
+                var id = (uint)System.Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var team = (byte)System.Math.Round((double)LuaNative.lua_tonumber(L, 2));
+                bridge.SetTeam(id, team);
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    // IsModifierActive(objectId, modifierId) → 1 bool. v1: modifier tracking not built → false.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int IsModifierActive(nint L)
+    {
+        LuaNative.lua_pushboolean(L, 0);
         return 1;
     }
 

@@ -18,7 +18,9 @@ internal sealed class FakeBridge : IScriptGameBridge
     public float GetHitPoints(uint id) => id == 10 ? 80f : 0f;
     public float GetMaxHitPoints(uint id) => id == 10 ? 100f : 0f;
     public bool ObjectExists(uint id) => id == 10;
-    public byte GetTeam(uint id) => 2;
+    private byte _team = 2;
+    public byte GetTeam(uint id) => _team;
+    public void SetTeam(uint objectId, byte team) => _team = team;
     public uint GetTargetId(uint id) => 77;
     public bool IsPlayerControlled(uint id) => id == 10;
     public bool TryGetAttributeValue(uint id, int attributeId, out float value)
@@ -171,6 +173,32 @@ public class GameBridgeTests
             local w = nGameObject.GetWeaponDamage(10)
             local miss = nGameObject.GetWeaponDamage(99)
             return w[1] == 1 and w[2] == 5 and miss[1] == 0 and miss[2] == 0
+            """)));
+    }
+
+    [Fact]
+    public void GetGameTimeReturnsSchedulerClock()
+    {
+        using var rt = Make();
+        ScriptContextRegistry.Get(rt.L)!.Scheduler!.Tick(5.0);
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("return nGameSimulator.GetGameTime() == 5")));
+    }
+
+    [Fact]
+    public void IsModifierActiveReturnsFalse()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return nGameObject.IsModifierActive(10, 123) == false")));
+    }
+
+    [Fact]
+    public void SetTeamMutatesTeamReadBack()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nGameObject.SetTeam(10, 3)
+            return nGameObject.GetTeam(10) == 3
             """)));
     }
 
