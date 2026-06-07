@@ -5,8 +5,9 @@ namespace ReCap.Tests.Scripting;
 
 internal sealed class FakeBridge : IScriptGameBridge
 {
-    // kAttribute ids: 0=Strength 1=Dexterity 2=Mind 4=MaxHealth (VERIFIED_FACTS C3 addendum).
-    public Dictionary<int, float> Attributes { get; } = new() { [0] = 12f, [1] = 8f, [2] = 5f, [4] = 100f };
+    // kAttribute ids: 0=Strength 1=Dexterity 2=Mind 4=MaxHealth, 101=MinWeaponDamage 102=MaxWeaponDamage.
+    public Dictionary<int, float> Attributes { get; } = new()
+        { [0] = 12f, [1] = 8f, [2] = 5f, [4] = 100f, [101] = 1f, [102] = 5f };
 
     public bool TryGetPosition(uint id, out float x, out float y, out float z)
     { x = 1.5f; y = 2.5f; z = 3.5f; return id == 10; }
@@ -15,6 +16,7 @@ internal sealed class FakeBridge : IScriptGameBridge
     public bool ObjectExists(uint id) => id == 10;
     public byte GetTeam(uint id) => 2;
     public uint GetTargetId(uint id) => 77;
+    public bool IsPlayerControlled(uint id) => id == 10;
     public bool TryGetAttributeValue(uint id, int attributeId, out float value)
     {
         value = 0f;
@@ -144,6 +146,27 @@ public class GameBridgeTests
             for i, id in ipairs(hits) do count = count + 1 last = id end
             local empty = nObjectManager.GetObjectsInRadius(0, 0, 0, 1)
             return count == 2 and last == 77 and #empty == 0
+            """)));
+    }
+
+    [Fact]
+    public void IsPlayerControlledObjectFollowsBridge()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return nPlayer.IsPlayerControlledObject(10) == true and nPlayer.IsPlayerControlledObject(99) == false")));
+    }
+
+    [Fact]
+    public void GetWeaponDamageReturnsMinMaxTable()
+    {
+        using var rt = Make();
+        // Melee GetDamage path: basic + player-controlled → nGameObject.GetWeaponDamage(agent)
+        // returns a {[1]=min,[2]=max} table (disasm template_ability_melee 2026-06-07).
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local w = nGameObject.GetWeaponDamage(10)
+            local miss = nGameObject.GetWeaponDamage(99)
+            return w[1] == 1 and w[2] == 5 and miss[1] == 0 and miss[2] == 0
             """)));
     }
 

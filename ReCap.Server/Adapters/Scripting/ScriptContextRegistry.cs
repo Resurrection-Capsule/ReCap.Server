@@ -8,6 +8,7 @@ public interface IScriptGameBridge
     bool ObjectExists(uint objectId);
     byte GetTeam(uint objectId);
     uint GetTargetId(uint objectId);
+    bool IsPlayerControlled(uint objectId);
     bool TryGetAttributeValue(uint objectId, int attributeId, out float value);
     IReadOnlyDictionary<int, float>? GetAttributeTable(uint objectId);
     bool TryGetOrientation(uint objectId, out float x, out float y, out float z, out float w);

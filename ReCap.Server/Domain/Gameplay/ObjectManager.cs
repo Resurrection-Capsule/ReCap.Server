@@ -99,6 +99,14 @@ public sealed class ObjectManager
         obj.Attributes[1] = dexterity;
         obj.Attributes[2] = mind;
         obj.Attributes[4] = maxHealth;
+        // C++ Object::Initialize player path SetWeaponDamage(1,5) base (Object.cpp:608-662, mirrored
+        // on the wire at Game.cs MinWeaponDamage/MaxWeaponDamage); melee GetDamage reads these
+        // (kAttribute 101/102) when the agent is player-controlled. NPC weapon damage = parts, deferred.
+        if (playerControlled)
+        {
+            obj.Attributes[101] = 1f;
+            obj.Attributes[102] = 5f;
+        }
 
         // Mirrors C++ Object::Initialize (Object.cpp:560-562): only nouns with hasLocomotion=true
         // get CreateLocomotionData → UpdateLocomotion dirty → ObjectTeleport on first tick.

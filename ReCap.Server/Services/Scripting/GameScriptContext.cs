@@ -107,6 +107,9 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public byte GetTeam(uint objectId) =>
         _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.Team : (byte)0;
 
+    public bool IsPlayerControlled(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) && o.PlayerControlled;
+
     public uint GetTargetId(uint objectId) =>
         _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.TargetId : 0u;
 

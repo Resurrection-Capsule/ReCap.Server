@@ -15,6 +15,7 @@ public static unsafe class NGameObjectModule
             ("IsAlive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsAlive),
             ("GetTeam", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetTeam),
             ("GetTargetID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetTargetID),
+            ("GetWeaponDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetWeaponDamage),
             ("GetCenterPoint", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetCenterPoint),
             ("GetOrientation", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetOrientation),
             ("GetFacing", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetFacing),
@@ -135,6 +136,39 @@ public static unsafe class NGameObjectModule
         {
             return 0;
         }
+    }
+
+    // kAttribute ids 101/102 (source enum, part-attribute idx 0x65/0x66 — VERIFIED_FACTS).
+    private const int MinWeaponDamageAttr = 101;
+    private const int MaxWeaponDamageAttr = 102;
+
+    // GetWeaponDamage(agentId) → {[1]=min,[2]=max} table (disasm template_ability_melee GetDamage
+    // 2026-06-07: result is consumed as result[1]/result[2]). Reads the object's weapon-damage
+    // attributes; absent → 0.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetWeaponDamage(nint L)
+    {
+        float min = 0f, max = 0f;
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+            {
+                var id = ReadId(L);
+                bridge.TryGetAttributeValue(id, MinWeaponDamageAttr, out min);
+                bridge.TryGetAttributeValue(id, MaxWeaponDamageAttr, out max);
+            }
+        }
+        catch
+        {
+            min = max = 0f;
+        }
+        LuaNative.lua_createtable(L, 2, 0);
+        LuaNative.lua_pushnumber(L, min);
+        LuaNative.lua_rawseti(L, -2, 1);
+        LuaNative.lua_pushnumber(L, max);
+        LuaNative.lua_rawseti(L, -2, 2);
+        return 1;
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
