@@ -36,6 +36,8 @@ public static class Program
     const string _LOG_LEVEL_ARG = "--log-level=";
     const string _TELEPORT_MOVEMENT_ARG = "--teleport-movement";
     const string _LUA_SMOKE_ARG = "--lua-smoke";
+    const string _WEBKIT_LOG_ARG = "--webkit-log=";
+    const string _LOCALE_ARG = "--locale=";
     static async Task Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -47,6 +49,8 @@ public static class Program
         string databasePath = null;
         string cliGamePath = null;
         string cliAssetDataPath = null;
+        string cliWebKitLog = null;
+        string cliLocale = null;
         int port = Api.DEFAULT_PORT;
         bool luaSmoke = false;
 
@@ -88,6 +92,10 @@ public static class Program
                 Log.Server.Warn("--assetdata-path is deprecated, use --game-path");
                 cliAssetDataPath = CommandLineHelper.UnwrapArg(arg.Substring(_ASSETDATA_PATH_ARG.Length));
             }
+            else if (arg.StartsWith(_LOCALE_ARG))
+            {
+                cliLocale = CommandLineHelper.UnwrapArg(arg.Substring(_LOCALE_ARG.Length));
+            }
             else if (arg == _TELEPORT_MOVEMENT_ARG)
             {
                 Domain.Gameplay.Game.TeleportMovement = true;
@@ -96,6 +104,10 @@ public static class Program
             else if (arg == _LUA_SMOKE_ARG)
             {
                 luaSmoke = true;
+            }
+            else if (arg.StartsWith(_WEBKIT_LOG_ARG))
+            {
+                cliWebKitLog = CommandLineHelper.UnwrapArg(arg.Substring(_WEBKIT_LOG_ARG.Length));
             }
         }
 
@@ -137,6 +149,10 @@ public static class Program
 
         ServerConfig.Configure(serverOpts);
 
+        Config.LocaleSettings.SetCurrent(
+            Config.LocaleSettings.Resolve(cliLocale, new Config.RegistryLocaleSource()));
+        Log.Server.Info($"Locale: {Config.LocaleSettings.Current.Code}");
+
         AssetDatabase? assetDatabase = null;
         if (!string.IsNullOrWhiteSpace(ServerConfig.GamePath))
         {
@@ -169,6 +185,23 @@ public static class Program
 
         CancellationTokenSource source = new CancellationTokenSource();
         CancellationToken token = source.Token;
+
+        // Optional WebKit log bridge: tail the ReCap.WebKit DLL's log into the WebKit category.
+        // Off unless the user opted in (--log-level=WebKit:debug). Path: --webkit-log=<file> or
+        // the default under the resolved game install.
+        if (Log.WebKit.IsEnabled(LogEventLevel.Debug))
+        {
+            var webkitLog = cliWebKitLog ?? (install is not null ? WebKitLogTail.DefaultPath(install.Root) : null);
+            if (!string.IsNullOrWhiteSpace(webkitLog))
+            {
+                Log.Server.Info($"WebKit log bridge: tailing '{webkitLog}'");
+                WebKitLogTail.Start(webkitLog, token);
+            }
+            else
+            {
+                Log.Server.Warn("WebKit log bridge enabled but no log path (set --webkit-log=<file> or --game-path).");
+            }
+        }
 
         var dbConfig = new SqliteConfig();
         dbConfig.Start();
@@ -265,10 +298,12 @@ public static class Program
         $"{_BEFORE_ARG}{_PORT_ARG}<int>         {_AFTER_ARG}Port number",
         $"{_BEFORE_ARG}{_DB_PATH_ARG}<str>{_AFTER_ARG}Path to a directory in which to create/store/access the 'server.db'",
         $"{_BEFORE_ARG}{_GAME_PATH_ARG}<str>    {_AFTER_ARG}Path to the Darkspore install folder (or Data/ subfolder, or AssetData_Binary.package)",
+        $"{_BEFORE_ARG}{_LOCALE_ARG}<code>      {_AFTER_ARG}Active locale dir code (en-us/pt-br/...); default: registry then en-us",
         $"{_BEFORE_ARG}{_ASSETDATA_PATH_ARG}<str>{_AFTER_ARG}[deprecated] Use --game-path instead",
         $"{_BEFORE_ARG}{_LOG_LEVEL_ARG}<lvl>     {_AFTER_ARG}Global log level, or <Category>:<lvl> (e.g. RakNet:verbose)",
         $"{_BEFORE_ARG}{_VERBOSE_ARG}            {_AFTER_ARG}Shortcut for --log-level=debug",
         $"{_BEFORE_ARG}{_RAKNET_VERBOSE_ARG}    {_AFTER_ARG}Shortcut for --log-level=RakNet:verbose",
+        $"{_BEFORE_ARG}{_WEBKIT_LOG_ARG}<str>    {_AFTER_ARG}Path to ReCap.WebKit.log (default: <game>/DarksporeBin/ReCapWebKit/). Tailed only when --log-level=WebKit:debug",
     }.AsReadOnly();
     static void PrintHelp()
     {

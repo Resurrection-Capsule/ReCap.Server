@@ -172,7 +172,7 @@ public class AuthenticationComponent : IComponent
         var userAdded = new NotifyUserAdded();
         CopyExtendedDataToNotification(client, userAdded.ExtendedData, addr);
         userAdded.UserInfo.AccountId = client.UserId;
-        userAdded.UserInfo.AccountLocale = 0x656E5553;
+        userAdded.UserInfo.AccountLocale = ReCap.Server.Config.LocaleSettings.Current.BlazeId;
         userAdded.UserInfo.BlazeId = client.UserId;
         userAdded.UserInfo.Name = account.Username;
 

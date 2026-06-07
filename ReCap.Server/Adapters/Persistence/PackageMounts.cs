@@ -10,7 +10,7 @@ public sealed record WellKnownPackage(string RelativePath)
     public static readonly WellKnownPackage AssetDataBinary = new("AssetData_Binary.package");
     public static readonly WellKnownPackage ServerData = new("ServerData.package");
     public static readonly WellKnownPackage Web = new("Web.package");
-    public static readonly WellKnownPackage LocaleText = new(Path.Combine("Locale", "pt-br", "Text.package"));
+    public static WellKnownPackage LocaleText => new(LocaleSettings.Current.TextPackageRelativePath);
 }
 
 public sealed class PackageMounts(string dataDir)

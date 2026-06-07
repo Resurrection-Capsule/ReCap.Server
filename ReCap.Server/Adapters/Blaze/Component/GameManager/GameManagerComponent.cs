@@ -168,7 +168,7 @@ public class GameManagerComponent : IComponent
             SlotId = 0,
             SlotType = SlotType.Public,
             GameId = game.Id,
-            AccountLocale = 0x656E5553,
+            AccountLocale = ReCap.Server.Config.LocaleSettings.Current.BlazeId,
             PlayerName = client.Username,
             PlayerId = client.UserId,
             JoinedGameTimestamp = CurrentUnixTime,

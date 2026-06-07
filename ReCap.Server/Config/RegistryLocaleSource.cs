@@ -9,6 +9,7 @@ public sealed class RegistryLocaleSource : ILocaleSource
             ?? ReadValue(@"SOFTWARE\Electronic Arts\Darkspore");
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static string? ReadValue(string subKey)
     {
         try

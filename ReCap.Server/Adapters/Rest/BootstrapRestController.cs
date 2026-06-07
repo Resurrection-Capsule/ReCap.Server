@@ -51,23 +51,7 @@ public class BootstrapRestController
         }
         if (includePatches)
         {
-            // TODO: Should we use the original Patches? I don't think so
-            // response.Patches = new ConfigPatchesContract{
-            //     Target = "test",
-            //     Date = "test2",
-            //     FromVersion = "test3",
-            //     ToVersion = "test4",
-            //     ID = "test5",
-            //     Description = "test6",
-            //     ApplicationInstructions = "test6",
-            //     Locale = "pt-BR",
-            //     Shipping = "true",
-            //     FileUrl = "test.zip",
-            //     ArchiveSize = "1000",
-            //     UncompressedSize = "2000",
-            //     Hashes = "0123456789abcdef",
-            //     HashesList = new string[] {}
-            // };
+            // No patches are served (the client picks its own locale; server-sent locale is ignored).
         }
 
         return XmlHelper.Serialize(response);

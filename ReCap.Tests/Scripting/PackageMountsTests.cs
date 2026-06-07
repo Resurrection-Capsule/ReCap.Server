@@ -24,6 +24,7 @@ public class PackageMountsTests
     public void PackagePathsAreDataRelative()
     {
         Assert.Equal("ServerData.package", WellKnownPackage.ServerData.RelativePath);
-        Assert.Equal(Path.Combine("Locale", "pt-br", "Text.package"), WellKnownPackage.LocaleText.RelativePath);
+        // LocaleText now follows the single source of truth (active locale), not a hardcoded code.
+        Assert.Equal(ReCap.Server.Config.LocaleSettings.Current.TextPackageRelativePath, WellKnownPackage.LocaleText.RelativePath);
     }
 }
