@@ -16,6 +16,7 @@ public static unsafe class NGameObjectModule
             ("GetTeam", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetTeam),
             ("GetTargetID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetTargetID),
             ("GetWeaponDamage", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetWeaponDamage),
+            ("GetObjectDirection", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetObjectDirection),
             ("GetCenterPoint", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetCenterPoint),
             ("GetOrientation", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetOrientation),
             ("GetFacing", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetFacing),
@@ -228,6 +229,41 @@ public static unsafe class NGameObjectModule
     {
         // Stealth component state lands with the Simulation phase; arity contract (0 returns) holds.
         return 0;
+    }
+
+    // GetObjectDirection(fromId, toId) → 3 floats: normalized direction from→to (melee tick
+    // disasm CALL 36 3 4 = 2 args/3 returns; feeds hitEffect "facing"). Missing object → (0,0,0).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetObjectDirection(nint L)
+    {
+        float dx = 0f, dy = 0f, dz = 0f;
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+            {
+                var from = (uint)System.Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var to = (uint)System.Math.Round((double)LuaNative.lua_tonumber(L, 2));
+                if (bridge.TryGetPosition(from, out var fx, out var fy, out var fz)
+                    && bridge.TryGetPosition(to, out var tx, out var ty, out var tz))
+                {
+                    dx = tx - fx; dy = ty - fy; dz = tz - fz;
+                    var len = System.MathF.Sqrt(dx * dx + dy * dy + dz * dz);
+                    if (len > 1e-6f) { dx /= len; dy /= len; dz /= len; }
+                    else { dx = 0f; dy = 0f; dz = 0f; }
+                }
+            }
+        }
+        catch
+        {
+            dx = 0f; dy = 0f; dz = 0f;
+        }
+        LuaNative.lua_pushnumber(L, dx);
+        LuaNative.lua_pushnumber(L, dy);
+        LuaNative.lua_pushnumber(L, dz);
+        return 3;
     }
 
     // Retail contracts (Ghidra 2026-06-06): GetCenterPoint @0x009fb7f0 (3 floats, lua error on

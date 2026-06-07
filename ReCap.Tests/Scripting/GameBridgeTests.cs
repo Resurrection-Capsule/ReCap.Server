@@ -10,7 +10,11 @@ internal sealed class FakeBridge : IScriptGameBridge
         { [0] = 12f, [1] = 8f, [2] = 5f, [4] = 100f, [101] = 1f, [102] = 5f };
 
     public bool TryGetPosition(uint id, out float x, out float y, out float z)
-    { x = 1.5f; y = 2.5f; z = 3.5f; return id == 10; }
+    {
+        if (id == 10) { x = 1.5f; y = 2.5f; z = 3.5f; return true; }
+        if (id == 20) { x = 1.5f; y = 2.5f; z = 8.5f; return true; }
+        x = 0f; y = 0f; z = 0f; return false;
+    }
     public float GetHitPoints(uint id) => id == 10 ? 80f : 0f;
     public float GetMaxHitPoints(uint id) => id == 10 ? 100f : 0f;
     public bool ObjectExists(uint id) => id == 10;
@@ -167,6 +171,18 @@ public class GameBridgeTests
             local w = nGameObject.GetWeaponDamage(10)
             local miss = nGameObject.GetWeaponDamage(99)
             return w[1] == 1 and w[2] == 5 and miss[1] == 0 and miss[2] == 0
+            """)));
+    }
+
+    [Fact]
+    public void GetObjectDirectionReturnsNormalizedVectorFromToTarget()
+    {
+        using var rt = Make();
+        // 10=(1.5,2.5,3.5) → 20=(1.5,2.5,8.5): delta (0,0,5) → normalized (0,0,1). Missing → (0,0,0).
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local x, y, z = nGameObject.GetObjectDirection(10, 20)
+            local mx, my, mz = nGameObject.GetObjectDirection(10, 99)
+            return x == 0 and y == 0 and z == 1 and mx == 0 and my == 0 and mz == 0
             """)));
     }
 
