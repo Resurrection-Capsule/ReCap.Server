@@ -65,47 +65,99 @@ public static unsafe class NGameObjectModule
     }
 
     // Caller contract (melee tick disasm, CALL 36 12 4 = 11 args / 3 returns):
-    // TakeDamage(snapshotHandle, targetId, damage, damageType, damageSource, coefficient,
-    // descriptors, damageMultiplier, dirX, dirY, dirZ) → (damageDealt|nil, damageDealt, isCrit).
-    // First return is the script's hit gate (TEST). Modifier chain / crit / direction knockback
-    // land with the Simulation phase.
+    // TakeDamage(snapshotHandle, targetId, damageTable{min,max}, damageType, damageSource,
+    // coefficient, descriptors, damageMultiplier, dirX, dirY, dirZ) → (true, damageDealt, isCrit).
+    // Engine (C++ Object.cpp:1377): baseDamage = Random(min,max); crit from snapshot; subtract HP.
+    // arg3 MUST be a table — a number raises a Lua error. Coefficient/multiplier/damageType/
+    // damageSource/descriptors/defense are accepted but unscaled in the reference (spec L-1/L-2).
+    // Missing target → 0 Lua return values (nil gate).
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int TakeDamage(nint L)
     {
+        bool argError = false;
+        uint targetId = 0;
+        float min = 0f, max = 0f;
+        IReadOnlyDictionary<int, float>? snapshot = null;
+        IScriptGameBridge? bridge = null;
         try
         {
-            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            var ctx = ScriptContextRegistry.Get(L);
+            bridge = ctx?.GameBridge;
             if (bridge is null || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+                return 0;
+            targetId = (uint)System.Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            if (!bridge.ObjectExists(targetId))
+                return 0;
+            if (LuaNative.lua_type(L, 3) != LuaNative.LUA_TTABLE)
             {
-                LuaNative.lua_pushnil(L);
-                LuaNative.lua_pushnumber(L, 0f);
-                LuaNative.lua_pushboolean(L, 0);
-                return 3;
-            }
-            var targetId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
-            var damage = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, 3) : 0f;
-            var dealt = -bridge.ApplyHeal(targetId, -Math.Abs(damage));
-            if (dealt > 0f)
-            {
-                LuaNative.lua_pushnumber(L, dealt);
-                LuaNative.lua_pushnumber(L, dealt);
-                LuaNative.lua_pushboolean(L, 0);
+                argError = true;
             }
             else
             {
-                LuaNative.lua_pushnil(L);
-                LuaNative.lua_pushnumber(L, 0f);
-                LuaNative.lua_pushboolean(L, 0);
+                LuaNative.lua_rawgeti(L, 3, 1);
+                min = (float)LuaNative.lua_tonumber(L, -1);
+                LuaNative.lua_settop(L, -2);
+                LuaNative.lua_rawgeti(L, 3, 2);
+                max = (float)LuaNative.lua_tonumber(L, -1);
+                LuaNative.lua_settop(L, -2);
+                if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+                {
+                    var handle = (uint)System.Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                    if (handle != 0) ctx!.TryGetAttributeSnapshot(handle, out snapshot);
+                }
             }
-            return 3;
         }
         catch
         {
-            LuaNative.lua_pushnil(L);
-            LuaNative.lua_pushnumber(L, 0f);
-            LuaNative.lua_pushboolean(L, 0);
-            return 3;
+            return 0;
         }
+
+        if (argError)
+        {
+            LuaNative.lua_pushstring(L, "Expected a table for damage range in TakeDamage!");
+            return LuaNative.lua_error(L);
+        }
+
+        var damage = RollDamage(min, max);
+        var isCrit = ApplyCrit(snapshot, ref damage);
+        float dealt = 0f;
+        try { dealt = damage > 0f ? -bridge!.ApplyHeal(targetId, -damage) : 0f; }
+        catch { dealt = 0f; }
+
+        LuaNative.lua_pushboolean(L, 1);
+        LuaNative.lua_pushnumber(L, dealt);
+        LuaNative.lua_pushboolean(L, isCrit ? 1 : 0);
+        return 3;
+    }
+
+    // Crit attrs (C++ Object::CheckCritical, Attributes.h): AutoCrit=19, CriticalRating=10,
+    // CriticalDamageIncrease=22. Reference TakeDamage applies NO coefficient/multiplier/defense
+    // scaling (spec divergence L-1/L-2) — damage is the rolled range modified only by crit.
+    private static float RollDamage(float min, float max)
+    {
+        if (max <= min) return min;
+        return min + System.Random.Shared.NextSingle() * (max - min);
+    }
+
+    private static bool ApplyCrit(IReadOnlyDictionary<int, float>? snapshot, ref float damage)
+    {
+        if (snapshot is null) return false;
+        bool crit;
+        if (snapshot.TryGetValue(19, out var autoCrit) && autoCrit > 0f)
+        {
+            crit = true;
+        }
+        else
+        {
+            snapshot.TryGetValue(10, out var criticalRating);
+            crit = System.Random.Shared.NextSingle() < criticalRating / 100f;
+        }
+        if (crit)
+        {
+            snapshot.TryGetValue(22, out var critIncrease);
+            damage *= critIncrease + 1f;
+        }
+        return crit;
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]

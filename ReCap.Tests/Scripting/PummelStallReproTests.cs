@@ -52,5 +52,7 @@ public class PummelStallReproTests(ITestOutputHelper output)
         output.WriteLine($"ticksUsed={ticksUsed} errors={ctx.Scheduler.ErrorCount} enemyHp={enemy.Health}");
         Assert.True(ticksUsed >= 0, "thread never completed within 200 ticks (10s sim) — in-game stall reproduced");
         Assert.Equal(0, ctx.Scheduler.ErrorCount);
+        Assert.True(enemy.Health < 375f,
+            $"Pummel dealt no damage — enemy still {enemy.Health}hp (weapon-damage → TakeDamage path)");
     }
 }

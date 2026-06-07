@@ -171,6 +171,33 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void TakeDamageRollsTableAndAppliesToTarget()
+    {
+        using var rt = Make();
+        // {5,5} → deterministic roll 5; snapshot handle 0 → no crit. FakeBridge target 10 hp 80→75.
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local hit, dealt, crit = nGameObject.TakeDamage(0, 10, {5, 5}, 0, 0, 0, 0, 1)
+            return hit == true and dealt == 5 and crit == false
+            """)));
+    }
+
+    [Fact]
+    public void TakeDamageMissingTargetReturnsNoValues()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return select('#', nGameObject.TakeDamage(0, 99, {5, 5})) == 0")));
+    }
+
+    [Fact]
+    public void TakeDamageNonTableDamageRaisesError()
+    {
+        using var rt = Make();
+        Assert.Throws<LuaScriptException>(() =>
+            rt.Execute(LuaFixtures.Compile("nGameObject.TakeDamage(0, 10, 5)"), "td"));
+    }
+
+    [Fact]
     public void HealDamageAppliesClampedAndReturnsTwoValues()
     {
         using var rt = Make();
