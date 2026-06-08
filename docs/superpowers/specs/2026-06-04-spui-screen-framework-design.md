@@ -58,7 +58,7 @@ Two endpoints. JSON. Stateless on the DLL side; the server may keep per-session 
 
 **Screen fetch** — on trigger:
 
-```
+```json
 GET /recap/ui/screen?name=register&locale=en-us
 → {
     "screen": "register",
@@ -74,7 +74,7 @@ GET /recap/ui/screen?name=register&locale=en-us
 
 **Action round-trip** — on widget click:
 
-```
+```json
 POST /recap/ui/action
   { "screen": "register", "action": "submit",
     "fields": { "0x10000001": "jean", "0x10000002": "123" } }

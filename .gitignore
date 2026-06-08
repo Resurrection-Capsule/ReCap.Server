@@ -7,7 +7,7 @@ obj/
 
 # Local tooling
 .claude/
-
+tools/
 # Reverse-engineering artifacts
 dll_strings.txt
 exe_rtti.txt
