@@ -10,4 +10,5 @@ public static class Log
     public static LogCategory Assets { get; } = new(LogCategories.Assets);
     public static LogCategory Game { get; } = new(LogCategories.Game);
     public static LogCategory Lua { get; } = new(LogCategories.Lua);
+    public static LogCategory WebKit { get; } = new(LogCategories.WebKit);
 }

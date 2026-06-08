@@ -10,6 +10,7 @@ public static class LogCategories
     public const string Assets = "Assets";
     public const string Game = "Game";
     public const string Lua = "Lua";
+    public const string WebKit = "WebKit";
 
-    public static readonly string[] All = { Server, RakNet, Blaze, Rest, Db, Assets, Game, Lua };
+    public static readonly string[] All = { Server, RakNet, Blaze, Rest, Db, Assets, Game, Lua, WebKit };
 }
