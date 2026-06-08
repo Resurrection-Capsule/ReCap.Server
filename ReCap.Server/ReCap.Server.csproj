@@ -17,8 +17,8 @@
     <PackageReference Include="Serilog.Expressions" Version="5.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <ProjectReference Include="..\lib\RakNexus\RakNexus.csproj" />
-    <ProjectReference Include="..\lib\AssetData.Parser\src\Core\AssetData.Parser.csproj" />
+    <PackageReference Include="RakNexus" Version="1.0.0" />
+    <PackageReference Include="AssetData.Parser.Core" Version="1.0.1" />
 
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
     <PackageReference Include="HttpMultipartParser" Version="8.4.0" />

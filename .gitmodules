@@ -1,6 +1,0 @@
-[submodule "lib/RakNexus"]
-	path = lib/RakNexus
-	url = https://github.com/JeanxPereira/RakNexus.git
-[submodule "lib/AssetData.Parser"]
-	path = lib/AssetData.Parser
-	url = https://github.com/JeanxPereira/AssetData.Parser.git

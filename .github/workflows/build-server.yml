@@ -2,14 +2,18 @@ name: Build Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  packages: read
 
 env:
   DOTNET_CONFIG: Release
+  # Auth for restoring org packages (RakNexus, AssetData.Parser.Core) from GitHub Packages.
+  NuGetPackageSourceCredentials_github: Username=actions;Password=${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
@@ -25,21 +29,17 @@ jobs:
     steps:
     - name: Check out sources
       uses: actions/checkout@v4
-      with:
-        submodules: 'true'
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4.0.1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0'
+        dotnet-version: '10.0.x'
 
     - name: Build server
-      run: |
-        cd ReCap.Server
-        dotnet build ReCap.Server.csproj --configuration ${{env.DOTNET_CONFIG}} --runtime ${{matrix.runtime}}
+      run: dotnet build ReCap.Server/ReCap.Server.csproj --configuration ${{ env.DOTNET_CONFIG }} --runtime ${{ matrix.runtime }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ReCapServer-${{matrix.runtime}}
-        path: ReCap.Server/bin/${{env.DOTNET_CONFIG}}/net8.0/${{matrix.runtime}}
+        name: ReCapServer-${{ matrix.runtime }}
+        path: ReCap.Server/bin/${{ env.DOTNET_CONFIG }}/net10.0/${{ matrix.runtime }}
