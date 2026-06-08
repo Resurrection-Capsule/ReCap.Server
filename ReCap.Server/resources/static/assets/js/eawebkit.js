@@ -55,12 +55,25 @@ var Utils = {
 
 
 
-// Originally, we used .onload, but Darkspore 5.3.0.15 never
-// calls .onload, and the readyState here never changes to 4,
-// so it's done that way for backwards compatibility. We also
-// can't add .onerror, because 5.3.0.15 will always call it
+// Original EAWebKit (Darkspore 5.3.0.15) never called .onload and never
+// reached readyState 4, so this used to fire the callback on ANY
+// onreadystatechange with status 200. The ReCap webview engine (Chromium)
+// fires onreadystatechange at readyState 2/3 too — with an empty body —
+// so that legacy form called back with "" and JSON.parse blew up.
+// Fire once, on either DONE signal, whichever the engine delivers.
 
 var HTTP = {
+	attachCallback: function(xmlHttp, callback) {
+		var fired = false;
+		var fire = function () {
+			if (fired || xmlHttp.status !== 200 || callback === undefined) return;
+			if (xmlHttp.readyState !== 4) return;
+			fired = true;
+			callback(xmlHttp.responseText);
+		};
+		xmlHttp.onreadystatechange = fire;
+		xmlHttp.onload = fire;
+	},
 	get: function(url, obj, callback) {
 		var params = obj;
 		if (params !== undefined && typeof params === 'object') {
@@ -72,22 +85,14 @@ var HTTP = {
 			params = str.join("&");
 		}
 
-		var xmlHttp = new XMLHttpRequest(); 
-		xmlHttp.onreadystatechange = function () {
-			if (xmlHttp.status === 200 && callback !== undefined) {
-				callback(xmlHttp.responseText);
-			}
-		};
+		var xmlHttp = new XMLHttpRequest();
+		HTTP.attachCallback(xmlHttp, callback);
 		xmlHttp.open("GET", url + (params === undefined ? "" : ("?" + params)), true);
 		xmlHttp.send(null);
 	},
 	post: function(url, obj, callback) {
-		var xmlHttp = new XMLHttpRequest(); 
-		xmlHttp.onreadystatechange = function () {
-			if (xmlHttp.status === 200 && callback !== undefined) {
-				callback(xmlHttp.responseText);
-			}
-		};
+		var xmlHttp = new XMLHttpRequest();
+		HTTP.attachCallback(xmlHttp, callback);
 		xmlHttp.open("POST", url, true);
 		xmlHttp.setRequestHeader("Content-Type", "application/json");
 		xmlHttp.send(JSON.stringify(obj));

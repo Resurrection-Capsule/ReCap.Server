@@ -13,7 +13,8 @@
     background-size: 1px 48px;
     z-index: 1;
 }
-.dsbutton:hover:not(:active) {
+.dsbutton:hover:not(:active),
+.dsbutton.rhover:not(:active) {
     background: url("../images/button/button-hover-center.png") repeat-x;
 	color: #fff;
 }
@@ -29,12 +30,13 @@
     background-size: 26px 48px;
     z-index: 2;
 }
-.dsbutton:hover:not(:active) .left-side {
+.dsbutton:hover:not(:active) .left-side,
+.dsbutton.rhover:not(:active) .left-side {
     background: url("../images/button/button-hover-left.png") no-repeat;
 }
 .dsbutton .text {
     position: absolute;
-    font-family: 'EA Pirulen Rg DS';
+    font-family: 'EA Pirulen Rg DS', 'PirulenRg-Regular';
     top: 13px;
     right: 0;
     left: 0;
@@ -53,10 +55,12 @@
     background-size: 26px 48px;
     z-index: 2;
 }
-.dsbutton:hover:not(:active) .right-side {
+.dsbutton:hover:not(:active) .right-side,
+.dsbutton.rhover:not(:active) .right-side {
     background: url("../images/button/button-hover-right.png") no-repeat;
 }
-.dsbutton:hover:not(:active) {
+.dsbutton:hover:not(:active),
+.dsbutton.rhover:not(:active) {
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
