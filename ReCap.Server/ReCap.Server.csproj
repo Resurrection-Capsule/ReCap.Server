@@ -35,7 +35,11 @@
   </ItemGroup>
 
   <Target Name="RecapLuaGuard" BeforeTargets="Build">
-    <Error Condition="!Exists('..\native\lua51\out\recaplua51.dll')" Text="recaplua51.dll missing - run native/lua51/build.ps1 once (requires VS Build Tools C++)." />
+    <!-- recaplua51.dll is a Windows-only runtime (P/Invoke) artifact, not needed to compile.
+         Hard error for local dev; warn-only under CI ($(CI)=true on GitHub Actions), where
+         Linux/macOS runners cannot build it via native/lua51/build.ps1. -->
+    <Error Condition="!Exists('..\native\lua51\out\recaplua51.dll') And '$(CI)' != 'true'" Text="recaplua51.dll missing - run native/lua51/build.ps1 once (requires VS Build Tools C++)." />
+    <Warning Condition="!Exists('..\native\lua51\out\recaplua51.dll') And '$(CI)' == 'true'" Text="recaplua51.dll missing (CI build): native Lua runtime not bundled; the running server requires it." />
   </Target>
 
 </Project>
