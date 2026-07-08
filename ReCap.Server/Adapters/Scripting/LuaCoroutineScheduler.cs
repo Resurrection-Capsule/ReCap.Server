@@ -12,6 +12,7 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         public uint ObjectId { get; set; }
         public bool Sleeping { get; set; }
         public double? WakeAtSeconds { get; set; }
+        public Func<bool>? WakeWhen { get; set; }
     }
 
     private readonly Dictionary<nint, ThreadEntry> _threads = [];
@@ -68,11 +69,12 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         Resume(entry, argCount);
     }
 
-    public void RegisterYield(nint threadL, bool sleeping, double? wakeAt)
+    public void RegisterYield(nint threadL, bool sleeping, double? wakeAt, Func<bool>? wakeWhen = null)
     {
         if (!_threads.TryGetValue(threadL, out var entry)) return;
         entry.Sleeping = sleeping;
         entry.WakeAtSeconds = wakeAt;
+        entry.WakeWhen = wakeWhen;
     }
 
     public void WakeObject(uint objectId)
@@ -87,10 +89,22 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         foreach (var entry in _threads.Values.ToList())
         {
             if (entry.Sleeping) continue;
-            if (entry.WakeAtSeconds is double wake && nowSeconds < wake) continue;
+            if (entry.WakeWhen is not null)
+            {
+                var predicateReady = SafeEvaluate(entry.WakeWhen);
+                var timeoutReady = entry.WakeAtSeconds is double w && nowSeconds >= w;
+                if (!predicateReady && !timeoutReady) continue;
+            }
+            else if (entry.WakeAtSeconds is double wake && nowSeconds < wake) continue;
             entry.WakeAtSeconds = null;
+            entry.WakeWhen = null;
             Resume(entry, 0);
         }
+    }
+
+    private static bool SafeEvaluate(Func<bool> predicate)
+    {
+        try { return predicate(); } catch { return false; }
     }
 
     private void Resume(ThreadEntry entry, int argCount)
