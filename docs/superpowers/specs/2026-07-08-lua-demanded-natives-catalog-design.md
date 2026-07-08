@@ -36,6 +36,14 @@ before it drives an implementation decision.
 `Ability: started=283 completed=283 errored=181` / `Modifier: started=99 completed=66 errored=37`
 → demanded natives: **27** (down from 31; combat + death path closed the difference).
 
+**Wave 1 landed 2026-07-08 (9 natives) → demanded 27 → 18.** Implemented: nBit.Mask,
+nPlayer.GetPlayerIdForObject, nGameObject.ResetAnimationState, nGameObject.SetAttributeSnapshot,
+nThreadData.GetPrivateTable, nThreadData.SetGUID, nAbility.ReleaseAgent, nThread.WaitForHitpointsAbove,
+nThread.WaitForFadeOutInXSeconds — plus reusable scheduler predicate (`WakeWhen`). Plan:
+`docs/superpowers/plans/2026-07-08-lua-natives-wave1-mechanical.md`. GetModifiedMoveSpeed /
+WaitForJumpComplete / WaitForNearGoal were moved into Wave 2 (their predicates read locomotion state).
+Remaining 18 = Wave 2 (locomotion) + Wave 3 (modifier/FX) + Wave 4 (spawn).
+
 | Bucket | Count | Natives |
 |---|---|---|
 | Mechanical | 10 | nThreadData.GetPrivateTable/SetGUID, nAbility.ReleaseAgent, nGameObject.ResetAnimationState/GetModifiedMoveSpeed/SetAttributeSnapshot, nThread.WaitFor{HitpointsAbove,FadeOutInXSeconds,JumpComplete,NearGoal} |
