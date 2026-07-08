@@ -248,4 +248,15 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         distance = 0f;
         return false;
     }
+
+    private uint _nextAttrModHandle;
+    // DEFERRED: retail layers attribute modifiers (recomputed by GetAttributeValue); ReCap applies an
+    // additive delta directly to GameObject.Attributes (add-vs-mult unverified) and records the reversal
+    // for a future RemoveAttributeModifier (not yet demanded). Handle 0 = object missing.
+    public uint AddAttributeModifier(uint objectId, int attributeId, float value)
+    {
+        if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return 0;
+        o.Attributes[attributeId] = (o.Attributes.TryGetValue(attributeId, out var cur) ? cur : 0f) + value;
+        return ++_nextAttrModHandle;
+    }
 }

@@ -108,6 +108,7 @@ public class SchedulerPredicateTests
         public void SetNavCollision(uint id, bool collidable) { }
         public float GetModifiedMoveSpeed(uint id) => 10f;
         public bool TryGetGoalDistance(uint id, out float d) { d = 20f; return true; }
+        public uint AddAttributeModifier(uint id, int a, float v) => 0;
     }
 
     [Fact]

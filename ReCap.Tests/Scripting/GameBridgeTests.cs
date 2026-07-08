@@ -64,6 +64,14 @@ internal sealed class FakeBridge : IScriptGameBridge
     public void SetNavCollision(uint id, bool collidable) => LastNav = (id, collidable);
     public float GetModifiedMoveSpeed(uint id) => id == 10 ? 7.5f : 0f;
     public bool TryGetGoalDistance(uint id, out float d) { d = id == 10 ? 20f : 0f; return id == 10; }
+
+    public uint AddAttributeModifier(uint objectId, int attributeId, float value)
+    {
+        if (objectId != 10) return 0;
+        Attributes[attributeId] = (Attributes.TryGetValue(attributeId, out var cur) ? cur : 0f) + value;
+        return ++_nextAttrModHandle;
+    }
+    private uint _nextAttrModHandle;
 }
 
 public class GameBridgeTests
@@ -470,5 +478,18 @@ public class GameBridgeTests
             """)));
         Assert.Equal((10u, 3f, 4f, 5f), b.LastTarget);
         Assert.Equal((10u, false), b.LastNav);
+    }
+
+    [Fact]
+    public void AddAttributeModifierAppliesDeltaAndReturnsHandle()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local before = nAttribute.GetAttributeValue(10, 0)   -- Strength 12
+            local h = nAttribute.AddAttributeModifier(10, 0, 5)
+            local after = nAttribute.GetAttributeValue(10, 0)
+            local miss = nAttribute.AddAttributeModifier(99, 0, 5)
+            return before == 12 and after == 17 and h > 0 and miss == 0
+            """)));
     }
 }

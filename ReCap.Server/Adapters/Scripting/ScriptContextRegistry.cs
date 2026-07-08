@@ -27,6 +27,7 @@ public interface IScriptGameBridge
     void SetNavCollision(uint objectId, bool collidable);
     float GetModifiedMoveSpeed(uint objectId);
     bool TryGetGoalDistance(uint objectId, out float distance);
+    uint AddAttributeModifier(uint objectId, int attributeId, float value);
 }
 
 public readonly record struct AbilityInvocation(

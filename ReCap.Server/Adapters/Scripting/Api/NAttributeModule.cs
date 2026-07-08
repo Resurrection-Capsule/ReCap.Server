@@ -10,7 +10,8 @@ public static unsafe class NAttributeModule
     {
         LuaApiModule.RegisterNamespace(L, "nAttribute",
             ("GetAttributeValue", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeValue),
-            ("GetAttributeValue_FromSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeValueFromSnapshot));
+            ("GetAttributeValue_FromSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeValueFromSnapshot),
+            ("AddAttributeModifier", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAttributeModifier));
     }
 
     // Retail contracts (Ghidra 2026-06-06):
@@ -65,6 +66,31 @@ public static unsafe class NAttributeModule
 
             Util.Logging.Log.Lua.Debug($"nAttribute.GetAttributeValue_FromSnapshot miss handle={handle} id={attributeId}");
             LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AddAttributeModifier(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            var handle = bridge is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER
+                ? bridge.AddAttributeModifier(
+                    (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)),
+                    (int)Math.Round((double)LuaNative.lua_tonumber(L, 2)),
+                    (float)LuaNative.lua_tonumber(L, 3))
+                : 0u;
+            LuaNative.lua_pushnumber(L, handle);
             return 1;
         }
         catch
