@@ -16,7 +16,58 @@ public static unsafe class NThreadModule
             ("WaitUntilTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitUntilTime),
             ("WakeUp", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WakeUp),
             ("WaitForHitpointsAbove", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForHitpointsAbove),
-            ("WaitForFadeOutInXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForFadeOutInXSeconds));
+            ("WaitForFadeOutInXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForFadeOutInXSeconds),
+            ("WaitForNearGoal", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForNearGoal),
+            ("WaitForJumpComplete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForJumpComplete));
+    }
+
+    // DEFERRED (no server-side movement integration): resume on a time estimate, not a live position
+    // predicate. WaitForNearGoal args 3-5 (-1,10,true) roles unconfirmed; arg4 treated as timeout cap.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitForNearGoal(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var scheduler = ctx?.Scheduler;
+            var bridge = ctx?.GameBridge;
+            if (scheduler is not null && bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+            {
+                var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var threshold = LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER ? (float)LuaNative.lua_tonumber(L, 2) : 0f;
+                var timeout = LuaNative.lua_type(L, 4) == LuaNative.LUA_TNUMBER ? (double)LuaNative.lua_tonumber(L, 4) : 10.0;
+                var remaining = bridge.TryGetGoalDistance(objId, out var dist) ? Math.Max(0f, dist - threshold) : 0f;
+                var speed = Math.Max(0.01f, bridge.GetModifiedMoveSpeed(objId));
+                var estimate = Math.Min(remaining / speed, timeout);
+                scheduler.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + estimate);
+            }
+            else return 0;
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitForNearGoal failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
+    }
+
+    // DEFERRED default jump duration (real source: jump anim/locomotion tuning, not yet parsed).
+    private const double DefaultJumpDurationSeconds = 0.6;
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitForJumpComplete(nint L)
+    {
+        try
+        {
+            var scheduler = ScriptContextRegistry.Get(L)?.Scheduler;
+            scheduler?.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + DefaultJumpDurationSeconds);
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitForJumpComplete failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
     }
 
     // catalog §Mechanical: yield until GetHitPoints(objId) > threshold OR timeout (0 = no timeout).

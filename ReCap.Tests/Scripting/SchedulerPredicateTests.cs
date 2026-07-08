@@ -106,7 +106,26 @@ public class SchedulerPredicateTests
         public void SetFacing(uint id, float x, float y, float z) { }
         public void StopLocomotion(uint id) { }
         public void SetNavCollision(uint id, bool collidable) { }
-        public float GetModifiedMoveSpeed(uint id) => 5f;
-        public bool TryGetGoalDistance(uint id, out float d) { d = 0f; return false; }
+        public float GetModifiedMoveSpeed(uint id) => 10f;
+        public bool TryGetGoalDistance(uint id, out float d) { d = 20f; return true; }
+    }
+
+    [Fact]
+    public void WaitForNearGoalResumesAfterEstimatedTravelTime()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        ctx.GameBridge = new MutableHpBridge(); // goalDistance 20, moveSpeed 10 → ~2s travel
+        var scheduler = ctx.Scheduler!;
+        rt.Execute(LuaFixtures.Compile("""
+            nThread.CreateThreadForObject(10, function()
+                nThread.WaitForNearGoal(10, 0, -1, 10, true)
+            end)
+            """), "wng");
+
+        scheduler.Tick(1.0);
+        Assert.True(scheduler.HasThreadForObject(10));  // ~2s estimate not elapsed
+        scheduler.Tick(3.5);
+        Assert.False(scheduler.HasThreadForObject(10)); // elapsed → resumed
     }
 }
