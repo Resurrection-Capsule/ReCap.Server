@@ -44,6 +44,8 @@ nThread.WaitForFadeOutInXSeconds — plus reusable scheduler predicate (`WakeWhe
 WaitForJumpComplete / WaitForNearGoal were moved into Wave 2 (their predicates read locomotion state).
 Remaining 18 = Wave 2 (locomotion) + Wave 3 (modifier/FX) + Wave 4 (spawn).
 
+**Wave 2 landed 2026-07-08 (9 natives) → demanded 18 → 9.** Implemented: nLocomotion.{Stop,SlideToPoint,MoveToCircleEdge,TurnToFace}, nGameObject.{SetTargetPosition,SetNavCollision,GetModifiedMoveSpeed}, nThread.{WaitForNearGoal,WaitForJumpComplete} — plus the client-verified `0x95 LocomotionDataUnreliableUpdate` packet (objId+goalPos), `FlushObjectUpdates` goal→0x95 routing, GameObject locomotion fields, and `IScriptGameBridge` locomotion API. Plan: `docs/superpowers/plans/2026-07-08-lua-natives-wave2-locomotion.md`. Deferred (flagged): visible turn-in-place (TurnToFace server-side only), per-noun move speed / jump duration (named constants pending LocomotionTuning parse), real arrival detection (time-estimate, no server-side movement integration yet). Remaining 9 = Wave 3 (modifier/FX: nModifier×5 + nAttribute.AddAttributeModifier + nGameObject.AddEffect) + Wave 4 (spawn: nObjectManager×2).
+
 | Bucket | Count | Natives |
 |---|---|---|
 | Mechanical | 10 | nThreadData.GetPrivateTable/SetGUID, nAbility.ReleaseAgent, nGameObject.ResetAnimationState/GetModifiedMoveSpeed/SetAttributeSnapshot, nThread.WaitFor{HitpointsAbove,FadeOutInXSeconds,JumpComplete,NearGoal} |
