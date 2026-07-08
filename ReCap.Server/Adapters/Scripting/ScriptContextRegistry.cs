@@ -28,6 +28,7 @@ public interface IScriptGameBridge
     float GetModifiedMoveSpeed(uint objectId);
     bool TryGetGoalDistance(uint objectId, out float distance);
     uint AddAttributeModifier(uint objectId, int attributeId, float value);
+    uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId);
 }
 
 public readonly record struct AbilityInvocation(

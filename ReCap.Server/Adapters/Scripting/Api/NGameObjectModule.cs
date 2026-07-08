@@ -35,7 +35,8 @@ public static unsafe class NGameObjectModule
             ("SetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAttributeSnapshot),
             ("SetTargetPosition", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetPosition),
             ("SetNavCollision", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetNavCollision),
-            ("GetModifiedMoveSpeed", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetModifiedMoveSpeed));
+            ("GetModifiedMoveSpeed", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetModifiedMoveSpeed),
+            ("AddEffect", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddEffect));
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,
@@ -567,6 +568,32 @@ public static unsafe class NGameObjectModule
                 ? bridge.GetModifiedMoveSpeed((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)))
                 : 0f;
             LuaNative.lua_pushnumber(L, speed);
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
+    }
+
+    // nGameObject.AddEffect(objId, serverEventDefHandle, [initiatorId]) -> effect-instance handle;
+    // emits 0x9B attached FX (catalog §Modifier/FX). Effect handle is for a future RemoveEffect (deferred).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AddEffect(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is null || LuaNative.lua_type(L, 1) != LuaNative.LUA_TNUMBER || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            {
+                LuaNative.lua_pushnumber(L, 0f);
+                return 1;
+            }
+            var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            var effect = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            var initiator = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 3)) : 0u;
+            LuaNative.lua_pushnumber(L, bridge.EmitEffect(objId, effect, initiator));
             return 1;
         }
         catch

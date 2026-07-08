@@ -1152,6 +1152,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         Objects.Remove(objectId);
     }
 
+    // nGameObject.AddEffect → 0x9B ServerEvent (client OnGmsServerEvent @0x0053ec80). Attached FX
+    // recipe {6 ServerEventDef, 7 ObjectId} (+ AttackerId when an initiator is given).
+    public void BroadcastServerEvent(ServerEventPacket packet) => BroadcastToAllPlayers(packet);
+
     // Lua nGameObject.SetAnimationState (client @0x009fc000 broadcasts via SporeNet message).
     public void BroadcastAnimationState(uint objectId, uint state)
     {

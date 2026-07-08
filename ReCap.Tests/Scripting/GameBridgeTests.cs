@@ -72,6 +72,14 @@ internal sealed class FakeBridge : IScriptGameBridge
         return ++_nextAttrModHandle;
     }
     private uint _nextAttrModHandle;
+
+    public List<(uint ObjectId, uint Effect, uint Initiator)> Effects { get; } = [];
+    public uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId)
+    {
+        if (serverEventDef == 0) return 0;
+        Effects.Add((objectId, serverEventDef, initiatorId));
+        return (uint)Effects.Count;
+    }
 }
 
 public class GameBridgeTests
@@ -491,5 +499,21 @@ public class GameBridgeTests
             local miss = nAttribute.AddAttributeModifier(99, 0, 5)
             return before == 12 and after == 17 and h > 0 and miss == 0
             """)));
+    }
+
+    [Fact]
+    public void AddEffectEmitsAndReturnsHandle()
+    {
+        using var rt = Make();
+        var b = (FakeBridge)ScriptContextRegistry.Get(rt.L)!.GameBridge!;
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local fx = nAbility.PreloadAsset("boom.ServerEventDef", "Owner")
+            local h = nGameObject.AddEffect(10, fx, 20)
+            return h > 0
+            """)));
+        Assert.Single(b.Effects);
+        Assert.Equal(10u, b.Effects[0].ObjectId);
+        Assert.Equal(20u, b.Effects[0].Initiator);
+        Assert.True(b.Effects[0].Effect != 0);
     }
 }

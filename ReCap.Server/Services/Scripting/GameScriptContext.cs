@@ -259,4 +259,17 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         o.Attributes[attributeId] = (o.Attributes.TryGetValue(attributeId, out var cur) ? cur : 0f) + value;
         return ++_nextAttrModHandle;
     }
+
+    private uint _nextEffectHandle;
+    public uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId)
+    {
+        if (serverEventDef == 0) return 0;
+        _game.BroadcastServerEvent(new ReCap.Server.Adapters.RakNet.Packets.ServerEventPacket
+        {
+            ServerEventDef = serverEventDef,
+            ObjectId = objectId,
+            AttackerId = initiatorId,
+        });
+        return ++_nextEffectHandle;
+    }
 }

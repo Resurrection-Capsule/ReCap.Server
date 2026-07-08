@@ -109,6 +109,7 @@ public class SchedulerPredicateTests
         public float GetModifiedMoveSpeed(uint id) => 10f;
         public bool TryGetGoalDistance(uint id, out float d) { d = 20f; return true; }
         public uint AddAttributeModifier(uint id, int a, float v) => 0;
+        public uint EmitEffect(uint id, uint fx, uint init) => 0;
     }
 
     [Fact]
