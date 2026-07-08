@@ -20,6 +20,13 @@ public interface IScriptGameBridge
     float ApplyHeal(uint targetId, float amount);
     void MarkForDelete(uint objectId);
     void SetVisible(uint objectId, bool visible);
+    void SetLocomotionGoal(uint objectId, float x, float y, float z, float stopDistance);
+    void SetLocomotionTarget(uint objectId, float x, float y, float z);
+    void SetFacing(uint objectId, float x, float y, float z);
+    void StopLocomotion(uint objectId);
+    void SetNavCollision(uint objectId, bool collidable);
+    float GetModifiedMoveSpeed(uint objectId);
+    bool TryGetGoalDistance(uint objectId, out float distance);
 }
 
 public readonly record struct AbilityInvocation(

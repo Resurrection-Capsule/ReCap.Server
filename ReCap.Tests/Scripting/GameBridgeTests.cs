@@ -50,6 +50,20 @@ internal sealed class FakeBridge : IScriptGameBridge
     public void SetVisible(uint objectId, bool visible) { }
     public List<uint> AnimResets { get; } = [];
     public void ResetAnimationState(uint objectId) => AnimResets.Add(objectId);
+
+    // locomotion (Wave 2)
+    public (uint Id, float X, float Y, float Z, float Stop)? LastGoal;
+    public (uint Id, float X, float Y, float Z)? LastTarget;
+    public (uint Id, float X, float Y, float Z)? LastFacing;
+    public uint? Stopped;
+    public (uint Id, bool Collidable)? LastNav;
+    public void SetLocomotionGoal(uint id, float x, float y, float z, float stop) => LastGoal = (id, x, y, z, stop);
+    public void SetLocomotionTarget(uint id, float x, float y, float z) => LastTarget = (id, x, y, z);
+    public void SetFacing(uint id, float x, float y, float z) => LastFacing = (id, x, y, z);
+    public void StopLocomotion(uint id) => Stopped = id;
+    public void SetNavCollision(uint id, bool collidable) => LastNav = (id, collidable);
+    public float GetModifiedMoveSpeed(uint id) => id == 10 ? 7.5f : 0f;
+    public bool TryGetGoalDistance(uint id, out float d) { d = id == 10 ? 20f : 0f; return id == 10; }
 }
 
 public class GameBridgeTests
@@ -59,6 +73,15 @@ public class GameBridgeTests
         var rt = LuaRuntime.CreateSandboxedState();
         ScriptContextRegistry.Get(rt.L)!.GameBridge = new FakeBridge();
         return rt;
+    }
+
+    [Fact]
+    public void BridgeExposesLocomotionApi()
+    {
+        var b = new FakeBridge();
+        b.SetLocomotionGoal(10, 1, 2, 3, 0.5f);
+        Assert.Equal((10u, 1f, 2f, 3f, 0.5f), b.LastGoal);
+        Assert.Equal(7.5f, b.GetModifiedMoveSpeed(10));
     }
 
     [Fact]

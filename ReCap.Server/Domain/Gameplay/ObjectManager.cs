@@ -49,6 +49,8 @@ public sealed class GameObject
     // by GetModifiedMoveSpeed's wind-down estimate; replace when tuning is parsed.
     public float MoveSpeed { get; set; } = DefaultMoveSpeed;
     public bool NavCollisionDisabled { get; set; }
+    // Wave-2 stop-distance for the arrival estimate (WaitForNearGoal); not on the wire.
+    public float DesiredStopDistance { get; set; }
 
     public const float DefaultMoveSpeed = 5.0f;
     public ObjectDirtyFlags DirtyFlags { get; set; }

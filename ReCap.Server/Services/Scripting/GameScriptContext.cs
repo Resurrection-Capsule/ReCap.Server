@@ -191,4 +191,61 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     {
         // GameObject visibility flag lands with the object-stream phase; accept silently for now.
     }
+
+    public void SetLocomotionGoal(uint objectId, float x, float y, float z, float stopDistance)
+    {
+        if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return;
+        // Mirror C++ Locomotion::SetGoalPosition (GoalFlags=0x001, clears stale target/facing).
+        o.GoalPosition = new System.Numerics.Vector3(x, y, z);
+        o.TargetPosition = System.Numerics.Vector3.Zero;
+        o.Facing = System.Numerics.Vector3.Zero;
+        o.GoalFlags = 0x001;
+        o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
+        // stopDistance retained server-side for the arrival estimate only (0x95 carries goal, not stop dist).
+        o.DesiredStopDistance = stopDistance;
+    }
+
+    public void SetLocomotionTarget(uint objectId, float x, float y, float z)
+    {
+        if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return;
+        o.TargetPosition = new System.Numerics.Vector3(x, y, z);
+        o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
+    }
+
+    public void SetFacing(uint objectId, float x, float y, float z)
+    {
+        // Server-side only in Wave 2 (visible turn-in-place deferred — see plan).
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+            o.Facing = new System.Numerics.Vector3(x, y, z);
+    }
+
+    public void StopLocomotion(uint objectId)
+    {
+        if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return;
+        o.TargetPosition = System.Numerics.Vector3.Zero;
+        o.Facing = System.Numerics.Vector3.Zero;
+        o.GoalFlags = 0x020;
+        o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
+    }
+
+    public void SetNavCollision(uint objectId, bool collidable)
+    {
+        // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+            o.NavCollisionDisabled = !collidable;
+    }
+
+    public float GetModifiedMoveSpeed(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.MoveSpeed : 0f;
+
+    public bool TryGetGoalDistance(uint objectId, out float distance)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+        {
+            distance = System.Numerics.Vector3.Distance(o.Position, o.GoalPosition);
+            return true;
+        }
+        distance = 0f;
+        return false;
+    }
 }

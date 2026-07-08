@@ -101,5 +101,12 @@ public class SchedulerPredicateTests
         public float ApplyHeal(uint id, float a) => 0f;
         public void MarkForDelete(uint id) { }
         public void SetVisible(uint id, bool v) { }
+        public void SetLocomotionGoal(uint id, float x, float y, float z, float stop) { }
+        public void SetLocomotionTarget(uint id, float x, float y, float z) { }
+        public void SetFacing(uint id, float x, float y, float z) { }
+        public void StopLocomotion(uint id) { }
+        public void SetNavCollision(uint id, bool collidable) { }
+        public float GetModifiedMoveSpeed(uint id) => 5f;
+        public bool TryGetGoalDistance(uint id, out float d) { d = 0f; return false; }
     }
 }
