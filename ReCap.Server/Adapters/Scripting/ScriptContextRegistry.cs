@@ -29,6 +29,7 @@ public interface IScriptGameBridge
     bool TryGetGoalDistance(uint objectId, out float distance);
     uint AddAttributeModifier(uint objectId, int attributeId, float value);
     uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId);
+    uint CreateObject(uint nounId, float x, float y, float z);
 }
 
 public readonly record struct AbilityInvocation(
@@ -114,6 +115,19 @@ public sealed class ScriptStateContext
         _guidSlots.TryRemove(threadL, out _);
         _privateTableRefs.TryRemove(threadL, out _);
     }
+
+    // nObjectManager.AttachTriggerVolume records: sphere (objectId, radius) + captured Lua callback
+    // registry refs. Trigger FIRING (onEnter/exit/stay) is deferred — no server-side collision system;
+    // the refs are held for a future firing pass and freed by lua_close on game teardown.
+    private uint _nextTriggerHandle;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, (uint ObjectId, float Radius, int[] Callbacks)> _triggerVolumes = new();
+    public uint RegisterTriggerVolume(uint objectId, float radius, int[] callbackRefs)
+    {
+        var handle = System.Threading.Interlocked.Increment(ref _nextTriggerHandle);
+        _triggerVolumes[handle] = (objectId, radius, callbackRefs);
+        return handle;
+    }
+    public int TriggerVolumeCount => _triggerVolumes.Count;
 }
 
 public static class ScriptContextRegistry

@@ -80,6 +80,14 @@ internal sealed class FakeBridge : IScriptGameBridge
         Effects.Add((objectId, serverEventDef, initiatorId));
         return (uint)Effects.Count;
     }
+
+    public List<(uint Noun, float X, float Y, float Z)> CreatedObjects { get; } = [];
+    private uint _nextCreatedId;
+    public uint CreateObject(uint nounId, float x, float y, float z)
+    {
+        CreatedObjects.Add((nounId, x, y, z));
+        return ++_nextCreatedId;
+    }
 }
 
 public class GameBridgeTests
@@ -515,5 +523,26 @@ public class GameBridgeTests
         Assert.Equal(10u, b.Effects[0].ObjectId);
         Assert.Equal(20u, b.Effects[0].Initiator);
         Assert.True(b.Effects[0].Effect != 0);
+    }
+
+    [Fact]
+    public void CreateObjectSpawnsAndReturnsId()
+    {
+        using var rt = Make();
+        var b = (FakeBridge)ScriptContextRegistry.Get(rt.L)!.GameBridge!;
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "local id = nObjectManager.CreateObject(4660, 1, 2, 3) return id > 0")));
+        Assert.Single(b.CreatedObjects);
+        Assert.Equal(4660u, b.CreatedObjects[0].Noun);
+    }
+
+    [Fact]
+    public void AttachTriggerVolumeRegistersAndReturnsHandle()
+    {
+        using var rt = Make();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "local h = nObjectManager.AttachTriggerVolume(10, 5.0, function() end) return h > 0")));
+        Assert.Equal(1, ctx.TriggerVolumeCount);
     }
 }

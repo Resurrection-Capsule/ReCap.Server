@@ -11,7 +11,72 @@ public static unsafe class NObjectManagerModule
         LuaApiModule.RegisterNamespace(L, "nObjectManager",
             ("IsValidObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsValidObject),
             ("GetObjectsInRadius", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetObjectsInRadius),
-            ("GetObjectsInRadius_SortedByDistance", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetObjectsInRadiusSortedByDistance));
+            ("GetObjectsInRadius_SortedByDistance", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetObjectsInRadiusSortedByDistance),
+            ("CreateObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CreateObject),
+            ("AttachTriggerVolume", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AttachTriggerVolume));
+    }
+
+    // nObjectManager.CreateObject(nounAssetHandle, x, y, z, ...) -> new object id. arg1 = asset handle
+    // (nUtil.GetAsset result); orientation/scale/owner args deferred (callers chain SetTeam/etc).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int CreateObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 4) == LuaNative.LUA_TNUMBER)
+            {
+                var noun = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var id = bridge.CreateObject(noun,
+                    (float)LuaNative.lua_tonumber(L, 2), (float)LuaNative.lua_tonumber(L, 3), (float)LuaNative.lua_tonumber(L, 4));
+                LuaNative.lua_pushnumber(L, id);
+                return 1;
+            }
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
+    }
+
+    // nObjectManager.AttachTriggerVolume(objId, radius, [onEnter], [onExit], [onStay]) -> handle.
+    // Sphere-only (Ghidra @0x00a07e00); optional Lua callback closures captured via luaL_ref. Trigger
+    // FIRING is deferred (no server-side collision system); refs held for a future pass, freed by lua_close.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AttachTriggerVolume(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_type(L, 1) != LuaNative.LUA_TNUMBER || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            {
+                LuaNative.lua_pushnumber(L, 0f);
+                return 1;
+            }
+            var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            var radius = (float)LuaNative.lua_tonumber(L, 2);
+            var refs = new List<int>();
+            for (var i = 3; i <= 5; i++)
+                if (LuaNative.lua_type(L, i) == LuaNative.LUA_TFUNCTION)
+                {
+                    LuaNative.lua_pushvalue(L, i);
+                    refs.Add(LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX));
+                }
+            LuaNative.lua_pushnumber(L, ctx.RegisterTriggerVolume(objId, radius, refs.ToArray()));
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
     }
 
     // Retail @0x00a0b220: same args/filter as GetObjectsInRadius, result sorted by distance²

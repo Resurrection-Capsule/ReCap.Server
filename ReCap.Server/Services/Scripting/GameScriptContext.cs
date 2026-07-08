@@ -272,4 +272,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         });
         return ++_nextEffectHandle;
     }
+
+    public uint CreateObject(uint nounId, float x, float y, float z) =>
+        _game.SpawnScriptObject(nounId, new System.Numerics.Vector3(x, y, z));
 }

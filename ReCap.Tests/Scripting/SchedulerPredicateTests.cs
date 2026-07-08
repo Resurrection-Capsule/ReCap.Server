@@ -110,6 +110,7 @@ public class SchedulerPredicateTests
         public bool TryGetGoalDistance(uint id, out float d) { d = 20f; return true; }
         public uint AddAttributeModifier(uint id, int a, float v) => 0;
         public uint EmitEffect(uint id, uint fx, uint init) => 0;
+        public uint CreateObject(uint n, float x, float y, float z) => 0;
     }
 
     [Fact]

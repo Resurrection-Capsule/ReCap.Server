@@ -140,6 +140,10 @@ public sealed class ObjectManager
 
     public bool Remove(uint objectId) => _objects.TryRemove(objectId, out _);
 
+    // True when the AssetDatabase can resolve this noun — used to gate the 0x8C ObjectCreate announce
+    // for Lua-spawned objects (if the server resolves it, the client can too; unresolvable → no wire).
+    public bool NounResolves(uint nounId) => _db?.GetNoun(nounId) is not null;
+
     public void Update(double deltaSeconds)
     {
         if (_objects.Count == 0) return;

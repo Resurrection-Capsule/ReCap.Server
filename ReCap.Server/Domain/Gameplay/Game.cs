@@ -1156,6 +1156,38 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // recipe {6 ServerEventDef, 7 ObjectId} (+ AttackerId when an initiator is given).
     public void BroadcastServerEvent(ServerEventPacket packet) => BroadcastToAllPlayers(packet);
 
+    // nObjectManager.CreateObject: allocate id, spawn server-side, and announce via the existing 0x8C
+    // ObjectCreate (client OnGmsObjectCreate @0x0053f550 — reflection envelope, tolerates optional
+    // fields) using the wire-verified enemy-shape field set {6,7}. Announce is gated on the noun
+    // resolving server-side (unresolvable noun → server-side only, no wire) to avoid a client
+    // noun-load crash. Returns the new object id.
+    public uint SpawnScriptObject(uint nounId, Vector3 position)
+    {
+        var objId = _nextObjectId++;
+        Objects.Spawn(objId, nounId, position, 1f, team: 0, playerControlled: false);
+        if (Objects.NounResolves(nounId))
+        {
+            var objData = new SporelabsObject { Position = position, Orientation = Quaternion.Identity };
+            objData.SetDataBit(6);
+            objData.SetDataBit(7);
+            BroadcastToAllPlayers(new ObjectCreatePacket
+            {
+                ObjectId = objId,
+                CreateData = new GameObjectCreateData
+                {
+                    Noun = nounId,
+                    Position = position,
+                    Scale = 1f,
+                    Team = 0,
+                    HasCollision = false,
+                    PlayerControlled = false
+                },
+                ObjectData = objData
+            });
+        }
+        return objId;
+    }
+
     // Lua nGameObject.SetAnimationState (client @0x009fc000 broadcasts via SporeNet message).
     public void BroadcastAnimationState(uint objectId, uint state)
     {
