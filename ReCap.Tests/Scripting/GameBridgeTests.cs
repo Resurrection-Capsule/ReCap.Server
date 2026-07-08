@@ -127,6 +127,35 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void ModifierContextGettersReadInvocation()
+    {
+        using var rt = Make();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        ctx.SetInvocation(rt.L, new AbilityInvocation(AgentId: 10, TargetId: 77, CursorX: 0f, CursorY: 0f, CursorZ: 0f, Rank: 1,
+            InitiatorId: 20, StackCount: 3));
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            return nModifier.GetMyAgentID() == 10
+               and nModifier.GetMyInitiatorID() == 20
+               and nModifier.GetMyStackCount() == 3
+            """)));
+    }
+
+    [Fact]
+    public void ModifierInitiatorSnapshotAndPreloadReturnHandles()
+    {
+        using var rt = Make();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        // Initiator 10 has attributes in FakeBridge; snapshot handle must round-trip via _FromSnapshot.
+        ctx.SetInvocation(rt.L, new AbilityInvocation(AgentId: 99, TargetId: 0, CursorX: 0f, CursorY: 0f, CursorZ: 0f, Rank: 1,
+            InitiatorId: 10, StackCount: 1));
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local snap = nModifier.GetInitiatorAttributeSnapshot()
+            local h = nModifier.PreloadAsset("some_effect.ServerEventDef", "Owner")
+            return snap > 0 and nAttribute.GetAttributeValue_FromSnapshot(snap, 0) == 12 and h > 0
+            """)));
+    }
+
+    [Fact]
     public void AttributeValueReadsConfirmedIdsAndZeroForUnknown()
     {
         using var rt = Make();

@@ -61,6 +61,7 @@ public sealed class LuaRuntime : IDisposable
         Api.NThreadModule.Register(L);
         Api.NThreadDataModule.Register(L);
         Api.NLocomotionModule.Register(L);
+        Api.NModifierModule.Register(L);
         Api.NGameObjectModule.Register(L);
         Api.NPlayerModule.Register(L);
         Api.NAbilityContextModule.Register(L);

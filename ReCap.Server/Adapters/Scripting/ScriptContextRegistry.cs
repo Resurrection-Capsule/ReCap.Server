@@ -31,7 +31,8 @@ public interface IScriptGameBridge
 
 public readonly record struct AbilityInvocation(
     uint AgentId, uint TargetId, float CursorX, float CursorY, float CursorZ, int Rank,
-    uint AbilityHash = 0, uint InstanceId = 0, bool TargetInRangeAtStart = false);
+    uint AbilityHash = 0, uint InstanceId = 0, bool TargetInRangeAtStart = false,
+    uint InitiatorId = 0, int StackCount = 0);
 
 public sealed class ScriptStateContext
 {
