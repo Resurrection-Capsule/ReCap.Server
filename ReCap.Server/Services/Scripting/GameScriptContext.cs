@@ -112,6 +112,10 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (_game.Objects.Objects.TryGetValue(objectId, out var o)) o.Team = team;
     }
 
+    // Ghidra nPlayer::GetPlayerIdForObject@0x009ff410: object id -> player id (byte obj+0x55).
+    public byte GetPlayerId(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.PlayerId : (byte)0;
+
     public bool IsPlayerControlled(uint objectId) =>
         _game.Objects.Objects.TryGetValue(objectId, out var o) && o.PlayerControlled;
 

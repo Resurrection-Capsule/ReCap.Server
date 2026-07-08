@@ -8,6 +8,7 @@ public interface IScriptGameBridge
     bool ObjectExists(uint objectId);
     byte GetTeam(uint objectId);
     void SetTeam(uint objectId, byte team);
+    byte GetPlayerId(uint objectId);
     uint GetTargetId(uint objectId);
     bool IsPlayerControlled(uint objectId);
     bool TryGetAttributeValue(uint objectId, int attributeId, out float value);

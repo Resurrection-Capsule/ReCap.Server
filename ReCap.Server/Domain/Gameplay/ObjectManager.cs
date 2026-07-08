@@ -22,6 +22,7 @@ public sealed class GameObject
     public Quaternion Orientation { get; set; } = Quaternion.Identity;
     public float Scale { get; set; } = 1f;
     public byte Team { get; set; }
+    public byte PlayerId { get; set; }
     public bool PlayerControlled { get; set; }
     public float Health { get; set; }
     public float MaxHealth { get; set; }

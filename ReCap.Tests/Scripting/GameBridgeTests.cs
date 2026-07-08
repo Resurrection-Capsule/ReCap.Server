@@ -21,6 +21,7 @@ internal sealed class FakeBridge : IScriptGameBridge
     private byte _team = 2;
     public byte GetTeam(uint id) => _team;
     public void SetTeam(uint objectId, byte team) => _team = team;
+    public byte GetPlayerId(uint id) => id == 10 ? (byte)7 : (byte)0;
     public uint GetTargetId(uint id) => 77;
     public bool IsPlayerControlled(uint id) => id == 10;
     public bool TryGetAttributeValue(uint id, int attributeId, out float value)
@@ -209,6 +210,14 @@ public class GameBridgeTests
             nGameObject.SetTeam(10, 3)
             return nGameObject.GetTeam(10) == 3
             """)));
+    }
+
+    [Fact]
+    public void GetPlayerIdForObjectReturnsBridgePlayerId()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return nPlayer.GetPlayerIdForObject(10) == 7 and nPlayer.GetPlayerIdForObject(99) == 0")));
     }
 
     [Fact]
