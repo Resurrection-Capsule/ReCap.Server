@@ -351,4 +351,26 @@ public class GameBridgeTests
                and nAbility.GetAnimationSequenceIndex() == 0
             """)));
     }
+
+    [Fact]
+    public void PrivateTablePersistsAcrossCallsOnSameThread()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local a = nThreadData.GetPrivateTable()
+            a.marker = 99
+            local b = nThreadData.GetPrivateTable()
+            return type(a) == "table" and b.marker == 99
+            """)));
+    }
+
+    [Fact]
+    public void SetGuidRunsWithoutError()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nThreadData.SetGUID(0, 123456)
+            return true
+            """)));
+    }
 }
