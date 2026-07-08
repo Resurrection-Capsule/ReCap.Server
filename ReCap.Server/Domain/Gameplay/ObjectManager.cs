@@ -37,6 +37,20 @@ public sealed class GameObject
     public AssetValue? AIDefinition { get; set; }
     // Mirrors C++ Locomotion::GoalFlags. Default 0x020 = stop/teleport bit (set by Locomotion::Stop() in ctor).
     public uint GoalFlags { get; set; } = 0x020;
+    // Locomotion goal state (mirrors C++ Locomotion component). GoalPosition drives the 0x95
+    // smooth-move broadcast; TargetPosition is the homing target (SetTargetPosition); Facing is
+    // set by TurnToFace (server-side only in Wave 2). NavCollisionDisabled mirrors client obj+0x284
+    // (SetNavCollision writes the inverted collidable flag; server-side pathfinding state, no wire).
+    public Vector3 GoalPosition { get; set; }
+    public Vector3 TargetPosition { get; set; }
+    public Vector3 Facing { get; set; }
+    // DEFERRED: real per-noun move speed comes from the LocomotionTuning asset (Ghidra
+    // LocomotionTuning @0x00f798e0), not yet parsed. Default is a placeholder tuning value used only
+    // by GetModifiedMoveSpeed's wind-down estimate; replace when tuning is parsed.
+    public float MoveSpeed { get; set; } = DefaultMoveSpeed;
+    public bool NavCollisionDisabled { get; set; }
+
+    public const float DefaultMoveSpeed = 5.0f;
     public ObjectDirtyFlags DirtyFlags { get; set; }
 }
 
