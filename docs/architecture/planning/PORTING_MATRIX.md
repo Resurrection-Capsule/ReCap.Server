@@ -1,240 +1,212 @@
-# Porting Matrix — C++ ↔ C# class/handler parity
+# Porting Matrix — module status (C# vs client contract, C++ as floor)
 
-Master index of **what is ported, partial, missing, or unknown** across every C++ module versus the ReCap C# server. This is the macro view that drives [`PORTING_PLAN.md`](PORTING_PLAN.md) (sequenced code work) and the deep-dive doc families (`components/`, `systems/`, `data-model/`, `http/`).
+Master index of **what is ported, partial, missing, or unknown** across every module. Macro view that drives the sequenced code work and the deep-dive doc families (`components/`, `systems/`, `data-model/`, `http/`).
 
-> **Generated:** 2026-05-25, via 6 parallel read-only agents (one per C++ module). Sonnet-class pass — class/handler inventory + status, not byte-level. Deep-dives per subsystem land separately.
+> **Refreshed:** 2026-07-08, via 6 parallel read-only agents (one per module) after the combat/Lua waves. Supersedes the 2026-05-25 snapshot.
 >
-> **C++ root:** `C:\CodingProjects\Personal\ReCapCpp\darkspore_server\source`. C++ cites are relative to it (e.g. `Game/Instance.cpp:452`). C# cites relative to `ReCap.Server/`.
+> **★ Methodology shift (2026-07-08):** the C++ reference is **dalkon's reverse-engineered approximation** — itself incomplete and hardcoded in many places (whole components stubbed to `return true`, `#if 0`'d bodies, hardcoded ids, debug fixtures). So **"C++ parity" is a FLOOR, not the target.** The **retail client (Ghidra) is the real contract**; where the C++ reference is itself a stub, a row is flagged `⚠️C++ stub`/`⚠️C++ hardcoded` and reaching C++ parity there is *insufficient* — those need client-contract verification (Ghidra/wire), not C++ transcription. This follows the project's evidence-over-dogma rule; VERIFIED_FACTS (Ghidra) supersede stale C++ assumptions.
+>
+> **★ C++ path corrected:** the reference tree is `C:\CodingProjects\Personal\ReCap.Cpp\darkspore_server\source` (**with a dot** before `Cpp`) — the old `ReCapCpp` path is wrong and still lingers in CLAUDE.md, the `cpp-ref`/`cpp-trace` skills, and the `recap-cpp-tracer` agent (fix pending). During this refresh, the 3 agents using the stale path (RakNet/Core/Game) could not read C++ and assessed C#-current + Ghidra facts only; SporeNet/HTTP/Blaze read the corrected path.
 
 ## Status legend
 
 | Symbol | Meaning |
 |---|---|
-| ✅ | Ported — functionally equivalent C# class/handler exists |
+| ✅ | Ported — functionally equivalent C# exists |
 | ⚠️ | Partial — C# exists but missing commands/fields/methods |
 | ❌ | Missing — no C# counterpart |
 | ❓ | Unknown — can't determine, or C#-only with no C++ match |
-| N/A | Intentionally replaced by .NET BCL (no port needed) |
+| N/A | Intentionally replaced by .NET BCL |
+| ⚠️C++ | The **C++ reference itself** is a stub/hardcoded/disabled here — parity is not a valid target; needs client contract |
 
 ---
 
 ## Executive summary
 
-| Module | C++ LOC | C# coverage | Biggest gap |
+| Module | C# coverage (2026-07-08) | Δ since 05-25 | Biggest remaining gap |
 |---|---|---|---|
-| [RakNet](#raknet) | 5.2k | opcodes 100%; handlers ~70%; Send* ~40% | ~25 outbound `Send*` (loot/modifier/combat/ability/reconnect/cashout) missing |
-| [Blaze](#blaze) | 8.9k | ~65% handler surface | GameManager lifecycle (CreateGame/JoinGame/matchmaking), CensusData, Playgroups |
-| [Game](#game) | 21.7k | **~25%** | Entire combat engine: ObjectManager, Attributes, Lua bindings (P3), AI, NounDatabase, Locomotion sim |
-| [SporeNet](#sporenet) | 3.3k | ~80% data model | Unified `User` session object, Room/Vendor/Feed, AssociationLists persistence |
-| [HTTP](#http) | 1.1k | path-level full; ~7/20 game-api stubs `null` | `/qos/*`, `/game/service/png`, deck/game/leaderboard stubs |
-| [Core/QoS/Network](#core) | 1.9k | utils mostly via BCL | `QoS::Server`, `Scheduler` (AddTask/CancelTask) |
+| [RakNet](#raknet) | opcodes 100%; inbound handlers **~85%**; outbound Send* **~55%** | ⬆ from 70%/40% | loot/modifier/cooldown/combat-event/cashout Send* family |
+| [Blaze](#blaze) | **~35-40%** of C++-wired handler surface | ⬇ (old "65%" over-counted declared vs wired) | GameManager lifecycle, Util config/settings, Playgroups; CensusData absent (but C++ is an empty shell) |
+| [Game](#game) | **~45%** | ⬆ from ~25% | **AI/AgentBlackboard (ObjectManager.Update is a no-op)**, NounDatabase typed assets, OctTree/Collision |
+| [SporeNet](#sporenet) | ~80-85% data-model parity | ⬆ (Part.CreatureId, Room domain, rebuilt Deck) | unified `User` session object; Vendor (C++ stub); Feed persistence |
+| [HTTP](#http) | ~14/22 `/game/api` methods | ⬆ (deck.updateDecks, offer-list, game:// webview) | `/qos/*`, `/game/service/png`, launcher status, account.unlock |
+| [Core/QoS/Network](#core) | utils mostly BCL; FNV+logging now ✅ | ⬆ 2 rows | `QoS::Server`, general `Scheduler` |
 
-**Headline:** Login/lobby/handshake path is largely ported. The **Game module (combat engine) is the dominant gap** — ~75% unimplemented, and it's the largest module. Everything past "hero stands in dungeon" (damage, abilities, AI, loot, objectives, cashout) is absent.
+**Headline:** The login/lobby/handshake path and now the **core combat loop** work — damage, ability casting, movement (teleport + smooth 0x95), death (0x8E), FX (0x9B), level population, real decks are all live and client-verified. The dominant gap **shifted**: it is no longer "nothing past hero-stands-in-dungeon" but **enemy behaviour** — enemies spawn but never act (`ObjectManager.Update()` is a literal no-op) — plus typed NounDatabase, spatial/collision, and the reward layer (loot/cashout).
 
-### Cross-module blockers (highest leverage)
+### Cross-module blockers (re-ranked 2026-07-08, highest leverage)
 
-1. **Game/ObjectManager + Object lifecycle** — no server-side entity create/update/delete/death pipeline. Blocks all dungeon state. (Game)
-2. **Attributes + combat math** (`TakeDamage`/`Heal`/crit/damage distribution) — no damage possible. Blocks abilities + AI. (Game)
-3. **Lua VM + Ability/Objective system** — runtime + VFS + boot done (P0-P2); bindings stub-first; scheduler/real bindings (P3 backlog). (~3.2k LOC in `LuaFunctions.cpp` alone). (Game)
-4. **NounDatabase typed asset loading** — creature/NPC stats + AI defs not typed; spawning uses hardcoded noun IDs. (Game)
-5. **`SetSquad` from real user data** — PrepareGameStart ignores the account loadout, hardcodes one creature for all 3 slots. (RakNet/Game/SporeNet)
-6. **Unified `User` session object** — C# scatters account/creatures/squads/auth-token/room/game across `AccountModel`+`Client`+`GameService`; no single authoritative session entity, no `mId`/`mState`. (SporeNet)
-7. **QoS::Server + `/qos/*` endpoints** — NAT/firewall probing absent on UDP and HTTP; may block matchmaking/login. (Core/HTTP)
+1. **AI + AgentBlackboard** (Game) — `ObjectManager.Update()` is a documented no-op; enemies spawn (client-verified) but have no aggro/gambit/decided-movement. The single biggest gap for a playable dungeon.
+2. **NounDatabase typed assets** (Game) — blocks AI consumption (`GameObject.AIDefinition` is read but never used), full 116-attribute fidelity, and per-noun move-speed tuning (placeholder constant today).
+3. **OctTree / spatial query + Collision** (Game) — `QueryObjectsInRadius` is O(n); no collision → `AttachTriggerVolume` refs never fire, no generic trigger volumes.
+4. **Reward loop: Loot + CrystalDrag + CashOut** (Game/RakNet) — `LootData`/`CashOutData` absent, ChainCashOut arm missing; the end of the dungeon loop.
+5. **GameManager real game-lifecycle + matchmaking** (Blaze/Game) — but C++'s own `CreateGame` hardcodes `gameId=1` with `NotifyGameSetup` commented out; **needs client contract (Ghidra), not a C++ port.**
+6. **Unified `User` session object** (SporeNet) — account/creatures/auth-token/room/game scattered across `AccountModel`+`Client`; no single `mId`/`mState`.
+7. **QoS::Server + `/qos/*`** (Core/HTTP) — NAT/firewall probing absent; may block matchmaking.
 
 ---
 
 ## RakNet
 
-UDP gameplay transport + packet dispatch. Opcode enum (`PacketType.cs`) mirrors C++ `Types.h::PacketID` exactly (all 49 values, 0x7F–0xCC). Inbound gameplay handlers mostly wired; outbound `Send*` universe severely incomplete.
+UDP gameplay transport + dispatch. Opcode enum (`Adapters/RakNet/PacketType.cs`) mirrors client wire values 0x7F–0xCC. Since 05-25: action-command slots 6–13 fully wired, death path (0x8E), ability cast wiring (registry lookup + invoke), smooth-move (0x95). *(C++ tree not read this pass — stale path; C++ cites carried from prior snapshot.)*
 
-| C++ handler | C++ file:line | C# dispatch site | Status | Notes |
+| C++ handler | C++ file:line | C# dispatch | Status | Notes |
 |---|---|---|---|---|
-| `OnNewIncomingConnection` | `RakNet/Server.cpp:565` | `RakNetServer.OnSessionOnNewIncomingConnection` | ✅ | Sends `ConnectedPacket` (0x82) |
-| `OnHelloPlayerRequest` | `RakNet/Server.cpp:596` | `Game.AttachPlayer` | ⚠️ | HelloPlayer + PartyMergeComplete done; `SetCatalyst×8` + catalyst bonuses missing; no `mId` |
-| `OnPlayerStatusUpdate` | `RakNet/Server.cpp:643` | `Game.HandlePlayerStatusUpdate` | ⚠️ | status=8→Dungeon ✅; `BeamOut` (status=20) ❌ |
-| `OnActionCommandMsgs` | `RakNet/Server.cpp:688` | `Game.HandleActionCommand` | ⚠️ | Move/Stop/Swap (cmd 3/4/5) ✅; UseAbility (7/8), CatalystPickup (9), Cancel (10), Interactable (11), Dance/Taunt (12/13) ❌ |
-| `OnChainPlayerMsgs` | `RakNet/Server.cpp:988` | `Game.HandleChainPlayerMsgs` | ⚠️ | vote init + PreDungeon + StayInParty ✅; `SetSquad` from real data ❌ (hardcoded) |
-| `OnCrystalDragMessage` | `RakNet/Server.cpp:1026` | — | ❌ | empty `PacketActivator` stub; no logic |
-| `OnLootDropMessage` | `RakNet/Server.cpp:1093` | — | ❌ | empty `PacketActivator` stub; no logic |
-| `OnDebugPing` | `RakNet/Server.cpp:1136` | `Game.HandleDebugPing` | ⚠️ | Spaceship/ChainVoting/Dungeon arms ✅; ChainCashOut arm ❌; `SwapCharacter` post-OnPlayerStart ❌ |
-| `PrepareGameStart` | `RakNet/Server.cpp:1210` | inlined in `HandleChainPlayerMsgs` | ⚠️ | GamePrepareForStart + state→PreDungeon ✅; `SetSquad` real data ❌ |
-| `RemoveClient` | `RakNet/Server.cpp:516` | `RakNetServer.OnSessionDisconnected` | ✅ | dict removal only; no Game detach |
+| `OnNewIncomingConnection` | `RakNet/Server.cpp:565` | `RakNetServer` | ✅ | sends `ConnectedPacket` (0x82) |
+| `OnHelloPlayerRequest` | `RakNet/Server.cpp:596` | `Game.AttachPlayer` | ⚠️ | HelloPlayer + PartyMergeComplete; `SetCatalyst×8`/catalyst bonuses missing |
+| `OnPlayerStatusUpdate` | `RakNet/Server.cpp:643` | `Game.HandlePlayerStatusUpdate` | ⚠️ | status=8→Dungeon ✅; `BeamOut` (20) ❌ |
+| `OnActionCommandMsgs` | `RakNet/Server.cpp:688` | `Game.HandleActionCommand` | ✅ **(was ⚠️)** | ALL types dispatched: 3/4/5 move/stop/swap, 6 overdrive (ack), 7/8 UseAbility (→InvokeAbility), 9 CatalystPickup, 10 Cancel, 11 Interactable, 12/13 Dance/Taunt |
+| `OnChainPlayerMsgs` | `RakNet/Server.cpp:988` | `Game.HandleChainPlayerMsgs` | ✅ **(was ⚠️)** | `SetSquad` from real deck (D-014), no longer hardcoded |
+| `OnCrystalDragMessage` | `RakNet/Server.cpp:1026` | `Game.HandleCrystalDrag` | ✅ **(was ❌)** | replies `CrystalMessage` type=3 reject (correct for empty grid) |
+| `OnLootDropMessage` | `RakNet/Server.cpp:1093` | `Game.HandlePacket` | ⚠️ **(was ❌)** | dispatched + logged; no loot logic (⚠️C++ side also an unmapped stub) |
+| `OnDebugPing` | `RakNet/Server.cpp:1136` | `Game.HandleDebugPing` | ⚠️ | Spaceship/ChainVoting/Dungeon ✅; `ChainCashOut` arm ❌ |
+| `PrepareGameStart` | `RakNet/Server.cpp:1210` | inlined in `HandleChainPlayerMsgs` | ✅ **(was ⚠️)** | real `SetSquad` wired |
+| `RemoveClient` | `RakNet/Server.cpp:516` | `RakNetServer.OnSessionDisconnected` | ✅ | dict removal; no Game detach |
+| `ObjectDelete` (0x8E, outbound) | *(server-authored)* | `Game.OnObjectDeath` | ✅ **(NEW)** | D-025 death path; Ghidra-verified flat u32 id array |
 
-**Top missing:** `OnCrystalDragMessage`, `OnLootDropMessage`, ChainCashOut DebugPing arm, `SwapCharacter(player,1)` post-deploy, `BeamOut`, ability command arms, real `SetSquad`. **~25 outbound `Send*` absent:** ObjectDelete, Modifier{Created,Updated,Deleted}, CooldownUpdate, CombatEvent, ServerEvent, AttributeDataUpdate, CombatantDataUpdate, InteractableDataUpdate, AgentBlackboardUpdate, LootDataUpdate, ActionCommandMessages, ChainCashOutMessages, ReconnectPlayer, ObjectJump, ObjectTeleport, ForcePhysicsUpdate, PhysicsChanged, LocomotionDataUnreliableUpdate, AnimationState, ObjectGfxState, CrystalMessage, ObjectiveAdd/Update.
+**Outbound Send* now real:** ObjectDelete (0x8E), ServerEvent (0x9B), ObjectTeleport (0x90), Locomotion{,Unreliable}Update (0x94/0x95), SetAnimationState (0xA5), ActionCommandResponse (0xA8), InteractableDataUpdate (0x98), CombatantDataUpdate (0x97), AttributeDataUpdate (0x96), CrystalMessage (0xC3), PlayerCharacterDeploy (0xA7), ObjectCreate/Update.
+**Still unsent:** Modifier{Created,Updated,Deleted} (0xA2-A4), CooldownUpdate (0xC1), CombatEvent (0xBA), AgentBlackboardUpdate (0x99), Loot* (0x9A,0x9D-9F), ForcePhysics/PhysicsChanged (0x92/0x93), ObjectJump (0x8F), ObjectGfxState (0xA6), ChainCashOut/ReconnectPlayer, ObjectiveAdd (0xCA).
 
 ---
 
 ## Blaze
 
-EA login/lobby over TCP. All 9 active components present; handler depth ranges from full (Redirector, Auth) to stub-only (Playgroups, Rooms). Infrastructure (TDF codec, Packet, SSL/RC4-TLS, BlazeServer) fully ported and cleaner than C++.
+EA login/lobby over TCP. All 9 active components present; infra (TDF, Packet, SSL/RC4-TLS, BlazeServer) fully ported and cleaner than C++. **Coverage restated to ~35-40%** of C++-*wired* handlers — the old "65%" conflated declared `PacketID` enum sizes with actually-wired cases (traced per `ParsePacket` switch this pass).
 
-| C++ class | C++ file:line | C# counterpart | Status | Key gaps |
+| C++ component | C# counterpart | Status | C#/C++ wired | Key gaps |
 |---|---|---|---|---|
-| `AuthComponent` | `Blaze/Component/AuthComponent.cpp:309` | `AuthenticationComponent` | ⚠️ | C++ 10 handlers (incl. `GetAuthToken`, `SilentLogin`, `LoginPersona`); C# adds 3 TOS cmds |
-| `GameManagerComponent` | `Blaze/Component/GameManagerComponent.cpp:580` | `GameManagerComponent` | ⚠️ | C# handles 3/11; missing `CreateGame`, `DestroyGame`, `JoinGame`, `RemovePlayer`, `StartMatchmaking`, `CancelMatchmaking` |
-| `UserSessionComponent` | `Blaze/Component/UserSessionComponent.cpp:75` | `UserSessionsComponent` | ⚠️ | extra C# handlers are stubs; no game-critical gap |
-| `UtilComponent` | `Blaze/Component/UtilComponent.cpp:82` | `UtilComponent` | ⚠️ | C# 3/9; missing `FetchClientConfig`, `GetTelemetryServer`, `UserSettingsSave`, `UserSettingsLoadAll` |
-| `MessagingComponent` | `Blaze/Component/MessagingComponent.cpp:81` | `MessagingComponent` | ⚠️ | C# 2/5; missing `SendMessage`, `TouchMessages`, `GetMessages` |
-| `PlaygroupsComponent` | `Blaze/Component/PlaygroupsComponent.cpp:85` | `PlaygroupsComponent` | ⚠️ | C# 1/12 + no notifications; join/leave/destroy inoperable |
-| `RoomsComponent` | `Blaze/Component/RoomsComponent.cpp:187` | `RoomsComponent` | ⚠️ | C# 2/4; missing `JoinRoom`, all Notify* |
-| `AssociationComponent` | `Blaze/Component/AssociationComponent.cpp:134` | `AssociationListsComponent` | ⚠️ | C# 1/3; missing `AddUsersToList`, `RemoveUsersFromList` |
-| `RedirectorComponent` | `Blaze/Component/RedirectorComponent.cpp:123` | `RedirectorComponent` | ✅ | full |
-| `CensusDataComponent` | `Blaze/Component/CensusDataComponent.cpp:47` | — | ❌ | component 0x0A entirely absent (3 commands) |
-| `Component` (base) | `Blaze/Component.cpp:14` | `IComponent` | ✅ | interface + dict dispatch, cleaner |
-| `Client` | `Blaze/Client.h:20` | `Client` | ✅ | session/user binding |
-| `TDF::Packet`/`Parser` | `Blaze/TDF.h:94` | `TdfEncoder`/`TdfDecoder` | ✅ | split encode/decode; +TdfMap/TdfVector |
-| `Blaze::Packet` | `Blaze/Packet.h:24` | `Packet` | ✅ | wire-identical |
-| `Blaze::Server` | `Blaze/Server.h:13` | `BlazeServer` | ✅ | hosts redirector(TLS)+lobby from one class |
-| `Functions.h` structs | `Blaze/Functions.h:11` | `Shared.cs` (partial) | ⚠️ | `ReplicatedGameData`, `ReplicatedGamePlayer`, `PlaygroupInfo`, `PlayerConnectionStatus` not ported |
-| SSL layer | `Blaze/Server.h:29` | `Ssl/*.cs` | ✅ | explicit RC4-TLS 1.0 via BouncyCastle |
-| — (C#-only) | — | `GameReportingComponent` (0x1C) | ❓ | no C++ match, stub only |
-| — (C#-only) | — | `UnknownComponent1` (0x2678) | ❓ | handles unidentified cmd 0x200 |
+| `AuthComponent` | `AuthenticationComponent` | ✅ | 10+3 / 10 | covers all wired + 3 extras. ⚠️C++ only wires 10 of 44 declared (persona/entitlements/console-linking unhandled in C++ too) |
+| `GameManagerComponent` | `GameManagerComponent` | ⚠️ | 3 / 10 | missing CreateGame/DestroyGame/JoinGame/RemovePlayer/StartMatchmaking/etc. **⚠️⚠️C++ hardcoded**: CreateGame always returns gameId=1, NotifyGameSetup commented, JoinGame hardcodes slot=1, matchmaking is a `// TODO`. C#'s gameId=1 faithfully mirrors it → **real lifecycle needs client contract (Ghidra)** |
+| `UserSessionComponent` | `UserSessionsComponent` | ✅ | 5 / 3 | covers wired + 2 extra. ⚠️C++ wires 3 of 17 declared |
+| `UtilComponent` | `UtilComponent` | ⚠️ | 3 / 8 | missing `FetchClientConfig`, `GetTelemetryServer`, `SetClientMetrics`, `UserSettingsLoadAll`, `UserSettingsSave` — **real C++ handlers, genuine C# gap** |
+| `MessagingComponent` | `MessagingComponent` | ⚠️ | 2 / 5 | missing SendMessage/TouchMessages/GetMessages |
+| `PlaygroupsComponent` | `PlaygroupsComponent` | ⚠️ | 1 / 11 | only CreatePlaygroup; join/leave/destroy/kick inoperable; no notifications |
+| `RoomsComponent` | `RoomsComponent` | ⚠️ | 3 / 4 | **CHANGED**: `JoinRoom` (0x14) now implemented (real create/join); only `SelectPseudoRoomUpdates` missing |
+| `AssociationComponent` | `AssociationListsComponent` | ⚠️ | 1 / 3 | `GetLists` returns hardcoded fake entries; missing Add/RemoveUsersToList. ⚠️C++ Add/Remove are empty bodies too → client contract needed |
+| `RedirectorComponent` | `RedirectorComponent` | ✅ | 1 / 1 | full |
+| `CensusDataComponent` (0x0A) | — | ❌ | 0 / 3 | absent in C#. **⚠️⚠️⚠️C++ is a near-total no-op shell** (all 3 cases commented out, NotifyServerCensusData disabled) → porting "to parity" = porting nothing; build from client contract |
+| infra: `Component`/`Client`/`TDF`/`Packet`/`Server`/SSL | `IComponent`/`Client`/`Tdf*`/`Packet`/`BlazeServer`/`Ssl/*` | ✅ | — | wire-identical, cleaner |
+| `Functions.h` structs | `Shared.cs` (partial) | ⚠️ | — | `ReplicatedGameData`/`ReplicatedGamePlayer`/`PlaygroupInfo`/`PlayerConnectionStatus` not ported (payload for NotifyGameSetup/JoinGame) |
+| — (C#-only) | `GameReportingComponent` (0x1C), `UnknownComponent1` (0x2678) | ❓ | — | no C++ match; stubs |
 
-**Top missing:** GameManager game-lifecycle cmds, UtilComponent `FetchClientConfig`/UserSettings, CensusData component, Playgroups near-total, `ReplicatedGameData`/`ReplicatedGamePlayer` structs (payload for `NotifyGameSetup`/`JoinGame`).
+**Top missing:** GameManager real lifecycle (but via client contract, not C++), Util config/UserSettings, CensusData (from client contract), Playgroups near-total, `ReplicatedGameData`/`ReplicatedGamePlayer`.
 
 ---
 
 ## Game
 
-Largest module (~21.7k LOC) and the dominant gap. C# implements only the happy-path network flow (connect → vote → predungeon → dungeon entry). The entire combat engine is absent.
+Largest module (~21.7k LOC C++), **~45%** (up from ~25%). Combat, death, and a real Lua-driven ability engine now exist and are client-verified for the core loop.
 
 | C++ class | C++ file:line | C# counterpart | Status | Key gaps |
 |---|---|---|---|---|
-| `Instance` (game loop, Send*, tasks, loot) | `Game/Instance.cpp:1` | `Game` (`Domain/Gameplay/Game.cs`) | ⚠️ | no AddTask/MoveObject/UseAbility/SwapCharacter/DropLoot/BeamOut/InteractWith/Send{ServerEvent,CombatEvent,Cooldown,Gfx,Anim}/LoadLevel |
+| `Instance` (loop/Send*/tasks/loot) | `Game/Instance.cpp:1` | `Game` | ⚠️ **(was near-empty)** | tick, movement, cast dispatch, emotes, teleporter triggers, death broadcast real; no CashOut/DropLoot/full BeamOut/AddTask |
 | `GameManager` | `Game/GameManager.cpp:1` | `GameService` | ⚠️ | no matchmaking/Criteria/Rule/RemoveGame |
-| `ObjectManager` | `Game/ObjectManager.cpp:1` | — | ❌ | no object lifecycle, spatial query, LoS, MarkForDeletion |
-| `TriggerVolume` | `Game/ObjectManager.h:19` | — | ❌ | absent |
-| `Object`/`cGameObject` | `Game/Object.cpp:1` | `SporelabsObject` | ⚠️ | only wire-serialization; no Combatant/Interactable/Loot/Blackboard/Effect/Modifier/AI, no TakeDamage/Heal/OnDeath, no cooldowns/physics |
-| `CombatantData` | `Game/Object.h:60` | — | ❌ | |
-| `InteractableData` | `Game/Object.h:77` | — | ❌ | |
-| `LootData` | `Game/Object.h:105` | — | ❌ | |
-| `AgentBlackboard` | `Game/Object.h:155` | — | ❌ | |
-| `EffectList` | `Game/Object.h:36` | — | ❌ | |
-| `Modifier` | `Game/Object.h:190` | — | ❌ | |
-| `AI` (inner) | `Game/Object.h:217` | — | ❌ | aggro, gambit execution |
-| `Player` | `Game/Player.cpp:1` | `Player` + `LabsPlayerData` | ⚠️ | no SetSquad (hardcoded nouns), SwapCharacter, ability rank lookup, XP/level, overdrive, UpdateCatalystBonuses |
-| `Character` | `Game/Character.cpp:1` | `LabsCharacterData` | ⚠️ | no mPartAttributes from assets, ranks hardcoded, no live HP, no ResetUpdateBits |
-| `Catalyst` | `Game/Catalyst.cpp:1` | `LabsCatalystData` | ⚠️ | NounId+Rarity + wire only; no Type/Color enums, no construction from LootData |
-| `Attributes` (114-attr array) | `Game/Attributes.cpp:1` | — | ❌ | no attribute system → no damage/heal math |
-| `Locomotion` | `Game/Locomotion.cpp:1` | `LocomotionData` | ⚠️ | wire fields only; no Update sim (projectile/orbit/roll/jump), no SetGoalObject, no collision |
-| `LobParameters` | `Game/Locomotion.h:73` | `LobParams` | ⚠️ | wire only |
-| `ProjectileParameters` | `Game/Locomotion.h:95` | `ProjectileParams` | ⚠️ | wire only |
-| `Lua`/`GlobalLua`/`LuaThread`/`Coroutine` | `Game/Lua.cpp:1`, `Game/LuaFunctions.cpp:1` | `Adapters/Scripting/` + `Services/Scripting/ScriptEngine.cs` | ⚠️ | **P0-P2 done:** native Lua 5.1.4 DLL (float ABI, u32 bytecode), LuaRuntime sandbox, ScriptVfs (Group!Name + hex-prefix groups), 28 stub-first binding namespaces, GameInstallLocator (`--game-path`), `--lua-smoke` flag. **P3 done (2026-06-06):** boot fidelity 1,017 chunks / 0 hard failures / 13 retail-missing tagged; registrars real (Register{Ability,Modifier,Affix,Condition,Objective} + Preload* + nBit + nUtil.GetAsset); ScriptContextRegistry + ScriptRegistry (FNV key, skip-if-exists); coroutine scheduler (nThread: Sleep/WaitForever/WaitForXSeconds/WakeUp/CreateThreadForObject); GameScriptContext bridge (object/HP/team/position via C1/C2 contract); gate: 25 retail abilities invoked → 25 completed (9 clean / 16 stub-errored). Boot registry: Ability=477, Modifier=501, Affix=11, Condition=53, Objective=13 (1,055 total). **P4 backlog:** cast wiring (ActionCommand 0x9C slot 7/8 → ability hash lookup), combat natives (PayCooldownAndMana, GetAgentAttributeSnapshot, PlayAnimationSequence, GetAbilityInstanceID, TargetInRangeAtStart, GetAnimationSequenceIndex, nAttribute.GetAttributeValue, nEvent.Notify, nDebug.IsAbilityDebugEnabled), mutator pipeline (nGameObject.TakeDamage/AddEffect → 0x9B ServerEvent out). Spec: `docs/superpowers/specs/2026-06-05-lua-scripting-system-design.md`; registrar tables: `docs/architecture/research/LUA_REGISTRAR_TABLES.md`; tick contract: `docs/architecture/research/LUA_ABILITY_TICK_CONTRACT.md`. |
-| `Ability` | `Game/Lua.h:293` | `Adapters/Scripting/Api/` + `Services/Scripting/GameScriptContext.cs` | ⚠️ | **P3 done:** RegisterAbility real (FNV key, props table ref, HasTick detection); InvokeAbility dispatches 7-arg tick call (self, agentId, targetId, cx, cy, cz, rank) per `LUA_ABILITY_TICK_CONTRACT.md`; tick-capable: 283 abilities + 99 modifiers. **P4 = cast wiring** (ActionCommand 0x9C UseAbility type 7/8 → abilityHash → GameScriptContext.InvokeAbility) + combat natives stub list above + mutators/ServerEvent out. No Activate/Deactivate; mana/range/cooldown via P4 natives. |
-| `Objective` | `Game/Lua.h:366` | stub namespace in `Adapters/Scripting/Api/` | ⚠️ | nObjective.RegisterObjective stubbed (P3); wire stub exists; coroutine not impl |
-| `OctTree` | `Game/Octree.cpp:1` | — | ❌ | spatial acceleration |
-| `Noun`/`NounDatabase` | `Game/Noun.cpp:1` | — | ❌ | no typed Noun/NPC/PlayerClass/AIDefinition/ClassAttributes/Animation/Phase |
-| `Level`/`Markerset`/`Marker` | `Game/Level.cpp:1` | partial via `AssetDatabase.GetLevelMarkers` | ⚠️ | no typed Level/LevelConfig/DirectorClass/Teleporter/difficulty |
-| `ServerEvent`/`ClientEvent`/`CombatEvent` | `Game/ServerEvent.h:85` | — | ❌ | no event serialization (DirectorState stub only) |
+| `ObjectManager` | `Game/ObjectManager.cpp:1` | `ObjectManager` | ⚠️ **(was ❌)** | Spawn/Remove/attribute-seed real; **`Update()` is a no-op stub** — no spatial query/LoS/AI/locomotion sim |
+| `TriggerVolume` | `Game/ObjectManager.h:19` | teleporter triggers + `AttachTriggerVolume` (refs held, firing deferred) | ⚠️ **(was ❌)** | generic collision-based volumes absent |
+| `Object`/`cGameObject` | `Game/Object.cpp:1` | `GameObject` + `SporelabsObject` | ⚠️ **(was wire-only)** | HP/Team/PlayerId/Target/Attributes/Dead/Locomotion-goal modeled; no CombatantData struct, no persistent Modifier list, no cooldowns, no AI/Blackboard |
+| `CombatantData` | `Game/Object.h:60` | folded into `GameObject.Health/MaxHealth/Target` | ⚠️ **(was ❌)** | no mana pool, no sub-object |
+| `InteractableData` | `Game/Object.h:77` | `_interactableTimesUsed` dict | ⚠️ **(was ❌)** | TimesUsed only; no UsesAllowed/Ability gating |
+| `LootData` | `Game/Object.h:105` | — | ❌ | loot phase not started |
+| `AgentBlackboard` | `Game/Object.h:155` | — | ❌ | absent |
+| `EffectList` | `Game/Object.h:36` | `EmitEffect` (fire-and-forget 0x9B) | ⚠️ **(was ❌)** | no active-effect list/duration |
+| `Modifier` | `Game/Object.h:190` | `AddAttributeModifier` (additive delta) | ⚠️ **(was ❌)** | no reversal/expiry; ⚠️ additive-vs-mult unverified (DEFERRED in code) |
+| `AI` (inner) | `Game/Object.h:217` | — | ❌ | **no aggro/gambit — `ObjectManager.Update()` is a no-op. #1 gap.** |
+| `Player` | `Game/Player.cpp:1` | `Player` + `LabsPlayerData` | ⚠️ | real SetSquad + SwapCharacter + ability-slot resolution; no XP/level, overdrive stub, no UpdateCatalystBonuses |
+| `Character` | `Game/Character.cpp:1` | `LabsCharacterData` | ⚠️ | no full `mPartAttributes` from assets (D-001); live HP not mirrored back |
+| `Catalyst` | `Game/Catalyst.cpp:1` | `LabsCatalystData` | ⚠️ | wire only, hardcoded catalysts |
+| `Attributes` (114-attr) | `Game/Attributes.cpp:1` | `GameObject.Attributes` + natives | ⚠️ **(was ❌)** | **damage/heal math works** (client-verified Pummel roll); only ids 0/1/2/4/101/102 populated of 116 |
+| `Locomotion` | `Game/Locomotion.cpp:1` | `LocomotionData` + goal fields + `NLocomotionModule` | ⚠️ **(was wire-only)** | teleport+smooth (0x95) client-verified; no projectile/orbit/roll/jump sim, no collision, MoveSpeed placeholder |
+| `Lua`/`LuaThread`/`Coroutine` | `Game/Lua.cpp`, `LuaFunctions.cpp` | `Adapters/Scripting/` + `Services/Scripting/` | ⚠️ **(biggest change)** | **P0-P4 landed:** native Lua 5.1.4, VFS, 28 namespaces (18 with real natives, ~27 native fns across waves), predicate scheduler, cast wiring live end-to-end, `_luaGate` thread-safe. 10 namespaces still bare stubs (nBehaviorTree, nScenarioManager, nPhysics, nAgent, nGameDirector, nLevel, nJuggernaut, nTuning, nClient, + nCondition/nAffix registrar-only) |
+| `Ability` | `Game/Lua.h:293` | `NAbilityContextModule` + `InvokeAbility` | ⚠️ | register + 7-arg tick dispatch + combat natives all real; no mana/cooldown enforcement (Pay* is a no-op stamp), no Activate/Deactivate |
+| `Objective` | `Game/Lua.h:366` | `nObjective` stub | ⚠️ | 13 registered at boot; no runtime coroutine |
+| `OctTree` | `Game/Octree.cpp:1` | — | ❌ | no spatial index; `QueryObjectsInRadius` is O(n) linear |
+| `Noun`/`NounDatabase` | `Game/Noun.cpp:1` | raw `AssetValue` navigation | ❌ | no typed Noun/NPC/PlayerClass/AIDefinition/ClassAttributes; **AIDefinition read but never consumed** |
+| `Level`/`Markerset` | `Game/Level.cpp:1` | `Chain.PopulateFromLevel` + `Game.PopulateLevel` | ⚠️ **(improved)** | structured 3-pass loader (D-011); no typed Level/LevelConfig/difficulty |
+| `ServerEvent`/`CombatEvent` | `Game/ServerEvent.h:85` | `ServerEventPacket` + `BroadcastServerEvent`/`EmitEffect` | ⚠️ **(was ❌)** | 0x9B client-verified (26-field); no CombatEvent sub-types, no damage-number/combat-log |
 | `CashOutData` | `Game/Instance.h:86` | — | ❌ | ChainCashOut unimplemented |
-| `GameInfo`/`Rule`/`Criteria`/`Matchmaking` | `Game/Instance.h:30` | partial (GameService IDs) | ❌ | no matchmaking structs |
+| `GameInfo`/`Rule`/`Criteria`/`Matchmaking` | `Game/Instance.h:30` | partial | ❌ | no matchmaking structs |
 | `Party`/`PartyManager` | `Game/Party.h:21` | — | ❌ | |
-| `Config` | `Game/Config.cpp:1` | `ServerConfig` | ⚠️ | covers needed keys; enum-key model not replicated |
-| `Collision`/Bounding* | `Game/Collision.cpp:1` | — | ❌ | |
-| `API` (REST, 30+ endpoints) | `Game/API.cpp:1` | `Adapters/Rest/*` | ⚠️ | see [HTTP](#http) |
-| `AssetData::*` (DBPF) | `Game/AssetData/*` | `AssetDatabase` (lib submodule) | ✅ | DBPF read + cache + named lookup |
-| `GameObjectCreateData` | (in Object::WriteTo) | `GameObjectCreateData` | ✅ | full WriteTo + WriteReflection |
+| `Collision`/Bounding* | `Game/Collision.cpp:1` | — | ❌ | no server collision → trigger firing deferred |
+| `AssetData::*` (DBPF) | `Game/AssetData/*` | `AssetDatabase` | ✅ | full |
+| `GameObjectCreateData` | (Object::WriteTo) | `GameObjectCreateData` | ✅ | full |
 
-**Top 8 by porting importance:** (1) ObjectManager+Object lifecycle, (2) Attributes+combat math, (3) Lua VM+Ability/Objective, (4) NounDatabase typed assets, (5) AI+AgentBlackboard, (6) Locomotion simulation, (7) ServerEvent/CombatEvent broadcasting, (8) Level/LevelConfig/CashOutData.
+**Top by importance (re-ordered):** (1) AI+AgentBlackboard, (2) NounDatabase typed assets, (3) OctTree/spatial+Collision, (4) remaining Lua stub namespaces + persistent Modifier/EffectList, (5) Loot/CashOut, (6) ObjectManager lifecycle refinements (LoS, MarkForDeletion sweep), (7) Locomotion sim depth (projectile/jump/collision), (8) Level/LevelConfig typed model.
 
 ---
 
 ## SporeNet
 
-User/account/creature data model. Core entities well-ported (~80% field parity) with EF Core/SQLite persistence. Runtime session constructs and several subsystems absent.
+User/account/creature data model. **~80-85%** field parity. Since 05-25: `Part.CreatureId` present, Room/RoomManager domain added, Deck rebuilt (player-driven, ownership-validated).
 
-| C++ class | C++ file:line | C# counterpart | Status | Key gaps |
-|---|---|---|---|---|
-| `Account` | `SporeNet/User.h:31` | `Account`/`AccountModel` | ✅ | C# adds Email/settings; id int64→ulong |
-| `FeedItem` | `SporeNet/User.h:78` | `FeedItemContract` | ⚠️ | contract-only, no entity/persistence |
-| `Feed` | `SporeNet/User.h:91` | `FeedContract` (XML DTO) | ⚠️ | not persisted |
-| `User` (live session object) | `SporeNet/User.h:111` | fragmented `AccountModel`+`Client` | ⚠️ | no unified object; `mId`/`mState`/`mRoom`/`mGame` scattered/absent; auth token in-memory only |
-| `UserManager` | `SporeNet/User.h:223` | `AccountService` | ⚠️ | no GetAllUsers, no in-memory assoc lookup |
-| `Stats` | `SporeNet/Creature.h:130` | `CreatureModelStat` | ✅ | string-serialized |
-| `AbilityStat` | `SporeNet/Creature.h:138` | `CreatureModelAbilityStat` | ✅ | string-serialized |
-| `TemplateCreature` | `SporeNet/Creature.h:145` | `CreatureTemplateModel` | ⚠️ | element/class as strings; ability[5] split; no domain entity |
-| `TemplateDatabase` | `SporeNet/Creature.h:186` | `CreatureTemplateRepositoryAdapter` | ✅ | JSON→SQLite, equivalent |
-| `Creature` | `SporeNet/Creature.h:200` | `Creature`/`CreatureModel` | ⚠️ | no mCreatorId in domain; GearScoreFlattened not persisted |
-| `Creatures` | `SporeNet/Creature.h:258` | `CreatureService` | ✅ | |
-| `Part` | `SporeNet/Part.h:31` | `CreaturePart`/`CreaturePartModel` | ⚠️ | **missing `mEquippedToCreatureId`**; asset hashes u32→ulong |
-| `Parts` | `SporeNet/Part.h:98` | `CreaturePartService` | ✅ | |
-| `PartRarity` | `SporeNet/Part.h:20` | `CreaturePartRarity` | ✅ | exact |
-| `PartUsage` | `SporeNet/Part.h:15` | int field only | ❌ | C++ enum empty (reserved) |
-| `Squad` | `SporeNet/Squad.h:11` | `Deck`/`DeckModel` | ⚠️ | renamed Squad→Deck; pvp flag via Category string |
-| `Squads` | `SporeNet/Squad.h:46` | `DeckService` | ✅ | |
-| `Room` | `SporeNet/Room.h:84` | `RoomsComponent` (stub) | ❌ | no domain entity, no membership |
-| `RoomView`/`RoomCategory` | `SporeNet/Room.h:27,52` | TDF DTOs | ❌ | wire-only |
-| `RoomManager` | `SporeNet/Room.h:123` | — | ❌ | no lifecycle |
-| `Vendor` | `SporeNet/Vendor.h:15` | — | ❌ | buyback is TODO |
-| `CreatureType`/`CreatureClass` | `SporeNet/Creature.h:62,72` | string fields | ⚠️ | no typed enum |
-| `CreatureParts` | `SporeNet/Creature.h:80` | — | ❌ | approximated by hasHands/hasFeet bools |
-| `SporeNet::Instance` | `SporeNet/Instance.h:12` | DI container | ⚠️ | service-locator → ASP.NET DI |
-| `AssociationLists` | `SporeNet/User.h:199` | `AssociationListsComponent` (stub) | ⚠️ | hardcoded empty, no persistence |
+| C++ class | C# counterpart | Status | Notes |
+|---|---|---|---|
+| `Account`/`Stats`/`AbilityStat`/`TemplateDatabase`/`Parts`/`PartRarity`/`Squads`/`Creatures` | domain + models + services | ✅ | field parity |
+| `Part` | `CreaturePart`/`CreaturePartModel` | ✅ **(CHANGED)** | `CreatureId` (mEquippedToCreatureId) now present + persisted |
+| `Squad` | `Deck`/`DeckModel` | ✅ **(CHANGED)** | player-driven, ownership-validated `updateDeck`; deliberately skips C++'s `// TODO: remove` slot-0 auto-fill hack |
+| `Room`/`RoomView`/`RoomCategory`/`RoomManager` | `RoomManager.cs` | ⚠️ **(was ❌)** | domain + membership + `joinRoom` wired; in-memory only, 4 hardcoded rooms; no leave/destroy. ⚠️C++ `CreateRoomView` has live TODO |
+| `User` (live session) | fragmented `AccountModel`+`Client` | ⚠️ | no unified object; `mId`/`mState`/`mRoom`/`mGame` scattered; auth token in-memory on Client |
+| `UserManager` | `AccountService` | ⚠️ | no GetAllUsers, no assoc-by-token lookup |
+| `TemplateCreature`/`Creature` | models | ⚠️ | element/class as strings; no `mCreatorId`/GearScoreFlattened persisted. ⚠️C++ creature-id gen is `// TODO` per-account sequential (C# EF identity is better) |
+| `Vendor` | — | ❌ | **⚠️⚠️C++ near-total stub**: OnBuy no-op, OnSell never refunds, offer-list hardcodes 50 parts w/ magic stats → **client contract needed**, don't port C++ |
+| `Feed`/`FeedItem` | XML DTOs | ⚠️ | not persisted; ⚠️C++ `WriteCreaturesAPI` is empty TODO |
+| `AssociationLists` | `AssociationListsComponent` | ⚠️ | hardcoded fake friends, no persistence. ⚠️C++ Add/Remove are empty bodies → client contract needed |
+| `CreatureParts`/`CreatureType`/`CreatureClass` | bools/strings | ⚠️/❌ | no typed enums; ⚠️C++ classType→parts mapping is self-flagged provisional |
 
-**Top 5:** `Part.mEquippedToCreatureId` missing; Room/RoomManager absent as domain; Vendor/buyback unimplemented; Feed not persisted; unified `User` session object missing (no `mId`/`mState`).
+**Top gaps (real, not C++-floor):** unified `User` session object; Room persistence + leave/destroy; Feed persistence.
+**Do NOT chase to C++ parity (C++ itself stub):** Vendor economy, AssociationLists add/remove, leaderboard — need Ghidra/wire.
 
 ---
 
 ## HTTP
 
-REST API (launcher, bootstrap, asset serving). All 5 C++ route groups present at path level; ~7/20 `/game/api` methods return `null`; three route families (`/qos/*`, `/web/sporelabs*`, static launcher templating) have no dedicated C# handler.
+REST API. **~14/22** `/game/api` methods functional. Since 05-25: `deck.updateDecks` persists, `getPartOfferList` returns valid-empty, new `game://` in-game webview serving (`GameStorageAdapter`), launcher templating expanded.
 
-Selected divergences (full table in agent run; key rows):
+| Endpoint | C# handler | Status | Notes |
+|---|---|---|---|
+| `api.deck.updateDecks` | `GameRestController.updateDecks` | ✅ **(was ❌)** | real persistence via `DeckService`, ownership-validated |
+| `api.inventory.getPartOfferList` | `getPartOfferList` | ⚠️ **(was ❌)** | valid-empty XML; ⚠️C++ Vendor is stub |
+| `api.inventory.vendorParts` | `getVendorParts` | ⚠️ | sell/flair done (**more complete than C++**); weapon/parts TODO both sides |
+| `api.account.setSettings` | `setPlayerAccountSettings` | ⚠️ | **C# persists; ⚠️C++ never persists (empty loop)** |
+| `game://` webview (`GameStorageAdapter`) | new | ✅ **(NEW)** | serves Web.package DBPF + HTML shim; no C++ equiv (client-contract reimpl) |
+| `/bootstrap/launcher/*` templating | `StaticStorageAdapter` | ⚠️ **(changed)** | templates host/version/mode/isDev; missing version-lock vars |
+| account.auth/getAccount/logout, creature.getCreature/unlock/updateCreature, status.*, inventory.getPartList/updatePartStatus, config.getConfigs, recap.registration/log | controllers | ✅ | parity |
+| `api.account.unlock` | `unlockPlayerAccount` | ❌ | C++ real (`User::UnlockUpgrade`); C# null-stub |
+| `api.creature.getTemplate` | `getTemplate` | ❌ | C++ real; C# `// TODO` null |
+| `api.account.searchAccounts` | `searchPlayerAccounts` | ❌ | C# null; ⚠️C++ sort branches empty |
+| `api.game.{getGame,getRandomGame,exitGame}` | stubs | ⚠️ | ⚠️C++ hardcoded fixture data → client contract |
+| `api.leaderboard.getLeaderboard` | — | ❌ | ⚠️C++ stub (echoes category names only) — low priority |
+| `/game/service/png`, `/template_png/*`, `/creature_png/*` | — | ❌ | dynamic thumbnail route absent; UI thumbnails 404 |
+| `/qos/qos`, `/qos/firewall`, `/qos/firetype` | — | ❌ | NAT/firewall XML absent (C++ mostly real); may block matchmaking |
+| `/recap/api?method=api.game.status` | — | ❌ | launcher progress/play-button broken |
 
-| Endpoint | C++ file:line | C# handler | Status | Notes |
-|---|---|---|---|---|
-| `/api`, `/telemetryevent` | `Game/API.cpp:319,325` | — | ❌ | trivial stubs absent |
-| `/recap/api?method=api.game.status` | `Game/API.cpp:833` | — | ❌ | launcher progress/play-button broken |
-| `/recap/api?method=api.panel.*` | `Game/API.cpp:848+` | — | ❌ | commented out in C++ too |
-| `/bootstrap/launcher/*` | `Game/API.cpp:374,393` | StaticStorage fallthrough | ⚠️ | C++ templates `{{host}}`/`{{version}}`; C# serves raw |
-| `/game/api?method=api.inventory.getPartOfferList` | `Game/API.cpp:1068` | `GameRestController` | ⚠️ | empty list; vendor TODO |
-| `/game/api?method=api.account.unlock` | `Game/API.cpp:1517` | `GameRestController` | ⚠️ | returns null |
-| `/game/api?method=api.game.{getGame,getRandomGame,exitGame}` | `Game/API.cpp:1615+` | `GameRestController` | ⚠️ | null stubs |
-| `/game/api?method=api.deck.updateDecks` | `Game/API.cpp:1866` | `GameRestController` | ⚠️ | null — deck saves never persist |
-| `/game/api?method=api.leaderboard.getLeaderboard` | `Game/API.cpp:1883` | `GameRestController` | ⚠️ | null |
-| `/game/service/png` | `Game/API.cpp:541` | — | ❌ | template PNG by id+size; UI thumbnails 404 |
-| `/qos/qos`, `/qos/firewall`, `/qos/firetype` | `Game/API.cpp:591,633,681` | — | ❌ | NAT/firewall probe XML absent |
-
-**Top 5:** `/qos/*` family, `/game/service/png`, `api.game.status`, `api.deck.updateDecks`, `api.game.getGame`/`getRandomGame`.
+**Top gaps:** `/qos/*`, `/game/service/png`, `api.game.status`, `api.account.unlock`, `api.creature.getTemplate`, `api.game.getGame` (via client contract).
 
 ---
 
 ## Core / QoS / Network
 
-Low-level utilities + transport. Most C++ utils are intentionally replaced by .NET BCL. Genuine gaps: `QoS::Server`, `Scheduler`.
+Low-level utilities + transport; most C++ utils intentionally BCL-replaced. Since 05-25: FNV-1a exposed, logging modernized.
 
-| C++ class | C++ file:line | C# counterpart | Status | Notes |
-|---|---|---|---|---|
-| `Scheduler` (AddTask/CancelTask) | `Core/Async/Scheduler.h:47` | — | ❌ | only hardcoded 50ms `Task.Delay` loop in `RakNetServer.ExecuteAsync`; no cancellable timed-task primitive |
-| `Task`/`TaskComparator` | `Core/Async/Scheduler.h:17,40` | `System.Threading.Tasks` | N/A | BCL |
-| `DataBuffer` | `Core/IO/DataBuffer.h:12` | `BigEndianExtensions` on BinaryReader/Writer | ⚠️ | BE/LE covered; TDF int codec in `Blaze/Extensions` |
-| `utils::extended`/timestamp (color log) | `Core/Utils/Log.h:12` | `Util/Logger.cs` | ⚠️ | no ANSI color/timestamps |
-| `utils::json` | `Core/Utils/JSON.h:17` | `System.Text.Json` | N/A | BCL |
-| `utils::random` | `Core/Utils/Functions.h:183` | scattered `System.Random` | ❌ | no typed `random::get<T>` helper |
-| `utils::hash_id` (FNV-1a) | `Core/Utils/Functions.h:167` | — | ❌ | not exposed; AssetData.Parser keys by string |
-| `utils::enum_wrapper/helper` | `Core/Utils/Functions.h:210,287` | `[Flags]` enums | N/A | BCL |
-| string/time utils | `Core/Utils/Functions.h:44-60` | BCL (Split/StringComparer/DateTimeOffset) | N/A | |
-| `utils::xml_*node` | `Core/Utils/Functions.h:136-163` | `Util/XmlHelper.cs` | ⚠️ | serialize-only; no per-node typed get/add |
-| `utils::net::resolve_ip` | `Core/Utils/Net.h:13` | — | ❌ | no DNS resolution wrapper |
-| `Version.h` | `Core/Base/Version.h:1` | `ServerConfigOptions` | ⚠️ | tracks game version, not server self-version |
-| `QoS::Server` | `QoS/Server.h:11` | — | ❌ | no UDP QoS responder; may block login/matchmaking |
-| `Network::Client` (abstract) | `Network/Client.h:14` | Blaze/RakNet clients | ⚠️ | no shared base |
+| C++ class | C# counterpart | Status | Notes |
+|---|---|---|---|
+| `utils::hash_id` (FNV-1a) | `WireHash.Fnv1a` via `ScriptVfs.Hash` | ✅ **(was ❌)** | exposed + used (anim id hashing, asset lookup) |
+| `utils::extended`/log | `Util/Logging/*` (Serilog facade) | ✅ **(was ⚠️)** | ANSI theme + timestamps + per-category switches; old `Util/Logger.cs` deleted |
+| `Scheduler` (AddTask/CancelTask) | `LuaCoroutineScheduler` (Lua-scoped) + 50ms `Task.Delay` loop | ❌ | no general cancellable Core primitive; Lua scheduler doesn't cover non-Lua tasks |
+| `QoS::Server` | — (only Blaze `QosConfigInfo` static ping-site stub) | ❌ | no UDP/REST QoS responder; `/qos/*` absent |
+| `DataBuffer` | `BigEndianExtensions` | ⚠️ | BE/LE covered |
+| `utils::random` | scattered `Random.Shared` | ❌ | no typed helper |
+| `utils::net::resolve_ip` | — | ❌ | no DNS wrapper |
+| `utils::xml_*node` | `Util/XmlHelper.cs` | ⚠️ | serialize-only |
+| `Network::Client` (abstract) | Blaze/RakNet clients | ⚠️ | no shared base |
+| `Version.h` | `ServerConfigOptions` | ⚠️ | game version only, not server self-version |
+| `Task`/`json`/`enum`/string-time utils | BCL | N/A | |
 
-**Top 5:** `QoS::Server`, `Scheduler`, `utils::hash_id` (FNV-1a), `utils::random` typed helper, `utils::xml_*node` typed overloads.
+**Top gaps:** `QoS::Server`, general `Scheduler`, `utils::random` typed helper, `resolve_ip`, `xml_*node` typed overloads.
 
 ---
 
-## Deep-dive doc families
-
-Individual rows above are expanded class/command/endpoint-by-detail in:
-
-- [`components/`](../protocol/components/README.md) — per-Blaze-component command tables (expands the [Blaze](#blaze) section).
-- [`data-model/`](../data-model/README.md) — per-entity field tables + persistence (expands [SporeNet](#sporenet)).
-- [`http/`](../protocol/http/README.md) — complete REST endpoint catalog (supersedes the selected-rows [HTTP](#http) table).
-- `systems/` — Game-module subsystem deep-dives (not yet authored; Opus-grade — see ROADMAP M7).
-
 ## How to keep this in sync
 
-- This is a **snapshot** (2026-05-25). When a row's status changes (a port lands), edit the row + the executive summary coverage estimate in the same turn.
-- Deep-dive docs (`components/`, `systems/`, `data-model/`, `http/`) expand individual rows. When a deep-dive lands, link it from the relevant row.
-- Re-run the 6-agent fan-out after major porting milestones to refresh coverage estimates.
+- **Snapshot** (refreshed 2026-07-08). When a row's status changes, edit the row + the executive summary in the same turn.
+- Deep-dive docs (`components/`, `data-model/`, `http/`, `systems/`) expand individual rows.
+- Re-run the 6-agent fan-out after major milestones. **Use the correct C++ path `C:\CodingProjects\Personal\ReCap.Cpp`** and keep the C++-is-a-floor / client-is-the-contract framing.
