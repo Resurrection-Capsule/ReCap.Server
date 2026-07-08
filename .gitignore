@@ -41,3 +41,6 @@ s2c_payloads.txt
 
 # Native build outputs
 native/lua51/out/
+
+# test run artifacts
+**/TestResults/
