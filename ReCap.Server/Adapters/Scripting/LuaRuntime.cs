@@ -60,6 +60,7 @@ public sealed class LuaRuntime : IDisposable
         ctx.Scheduler = new LuaCoroutineScheduler(L);
         Api.NThreadModule.Register(L);
         Api.NThreadDataModule.Register(L);
+        Api.NLocomotionModule.Register(L);
         Api.NGameObjectModule.Register(L);
         Api.NPlayerModule.Register(L);
         Api.NAbilityContextModule.Register(L);

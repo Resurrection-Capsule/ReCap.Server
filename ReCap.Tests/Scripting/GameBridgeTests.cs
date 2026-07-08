@@ -404,4 +404,28 @@ public class GameBridgeTests
             return true
             """)));
     }
+
+    [Fact]
+    public void LocomotionNativesDriveBridge()
+    {
+        using var rt = Make();
+        var b = (FakeBridge)ScriptContextRegistry.Get(rt.L)!.GameBridge!;
+        rt.Execute(LuaFixtures.Compile("""
+            nLocomotion.SlideToPoint(10, 1, 2, 3, 6)
+            nLocomotion.MoveToCircleEdge(10, 4, 5, 6, 2.5, true)
+            nLocomotion.TurnToFace(10, 7, 8, 9)
+            nLocomotion.Stop(10)
+            """), "loco");
+        Assert.Equal((10u, 4f, 5f, 6f, 2.5f), b.LastGoal); // MoveToCircleEdge is the last goal set
+        Assert.Equal((10u, 7f, 8f, 9f), b.LastFacing);
+        Assert.Equal(10u, b.Stopped);
+    }
+
+    [Fact]
+    public void MoveToCircleEdgeReturnsBool()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return nLocomotion.MoveToCircleEdge(10, 0, 0, 0, 1) == true")));
+    }
 }
