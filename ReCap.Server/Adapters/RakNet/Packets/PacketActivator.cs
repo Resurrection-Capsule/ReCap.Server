@@ -89,6 +89,7 @@ public static class PacketActivator
                 break;
 
             case PacketType.LocomotionDataUnreliableUpdate:
+                packet = new LocomotionDataUnreliableUpdatePacket();
                 break;
 
             case PacketType.AttributeDataUpdate:
