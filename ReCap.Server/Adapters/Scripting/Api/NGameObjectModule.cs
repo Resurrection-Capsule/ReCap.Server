@@ -32,7 +32,10 @@ public static unsafe class NGameObjectModule
             ("SetTeam", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTeam),
             ("IsModifierActive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsModifierActive),
             ("ResetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetAnimationState),
-            ("SetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAttributeSnapshot));
+            ("SetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAttributeSnapshot),
+            ("SetTargetPosition", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetPosition),
+            ("SetNavCollision", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetNavCollision),
+            ("GetModifiedMoveSpeed", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetModifiedMoveSpeed));
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,
@@ -514,6 +517,63 @@ public static unsafe class NGameObjectModule
         }
         catch { }
         return 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetTargetPosition(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 4) == LuaNative.LUA_TNUMBER)
+            {
+                bridge.SetLocomotionTarget(
+                    (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)),
+                    (float)LuaNative.lua_tonumber(L, 2), (float)LuaNative.lua_tonumber(L, 3), (float)LuaNative.lua_tonumber(L, 4));
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // Ghidra nGameObject::SetNavCollision@0x009fe7c0: server-side pathfinding flag (inverted), no wire.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetNavCollision(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+            {
+                var collidable = LuaNative.lua_toboolean(L, 2) != 0;
+                bridge.SetNavCollision((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)), collidable);
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetModifiedMoveSpeed(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            var speed = bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? bridge.GetModifiedMoveSpeed((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)))
+                : 0f;
+            LuaNative.lua_pushnumber(L, speed);
+            return 1;
+        }
+        catch
+        {
+            LuaNative.lua_pushnumber(L, 0f);
+            return 1;
+        }
     }
 
     private static uint ReadId(nint L) =>

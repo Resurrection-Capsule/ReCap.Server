@@ -428,4 +428,18 @@ public class GameBridgeTests
         Assert.True(rt.EvalBool(LuaFixtures.Compile(
             "return nLocomotion.MoveToCircleEdge(10, 0, 0, 0, 1) == true")));
     }
+
+    [Fact]
+    public void GameObjectLocomotionNativesDriveBridge()
+    {
+        using var rt = Make();
+        var b = (FakeBridge)ScriptContextRegistry.Get(rt.L)!.GameBridge!;
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nGameObject.SetTargetPosition(10, 3, 4, 5)
+            nGameObject.SetNavCollision(10, false)
+            return nGameObject.GetModifiedMoveSpeed(10) == 7.5 and nGameObject.GetModifiedMoveSpeed(99) == 0
+            """)));
+        Assert.Equal((10u, 3f, 4f, 5f), b.LastTarget);
+        Assert.Equal((10u, false), b.LastNav);
+    }
 }
