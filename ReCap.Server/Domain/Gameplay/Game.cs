@@ -1161,6 +1161,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // fields) using the wire-verified enemy-shape field set {6,7}. Announce is gated on the noun
     // resolving server-side (unresolvable noun → server-side only, no wire) to avoid a client
     // noun-load crash. Returns the new object id.
+    // DEFERRED: visible spawn is effectively inert for real nouns until a lossless asset-handle path
+    // exists — nUtil.GetAsset returns (float)FNV and LUA_NUMBER=float (24-bit mantissa) drops hashes
+    // above ~16.7M, so NounResolves fails and the spawn stays server-side-only (invisible, never a
+    // crash). Fix needs an integer handle table, not a float-boxed hash.
     public uint SpawnScriptObject(uint nounId, Vector3 position)
     {
         var objId = _nextObjectId++;
