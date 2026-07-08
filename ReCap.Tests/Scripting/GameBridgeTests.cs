@@ -48,6 +48,8 @@ internal sealed class FakeBridge : IScriptGameBridge
     public List<uint> Deleted { get; } = [];
     public void MarkForDelete(uint objectId) => Deleted.Add(objectId);
     public void SetVisible(uint objectId, bool visible) { }
+    public List<uint> AnimResets { get; } = [];
+    public void ResetAnimationState(uint objectId) => AnimResets.Add(objectId);
 }
 
 public class GameBridgeTests
@@ -315,6 +317,24 @@ public class GameBridgeTests
             return inFront == true and behind == false and tooFar == false
                and overlap == true and edgeGraze == true
             """)));
+    }
+
+    [Fact]
+    public void ResetAnimationStateCallsBridge()
+    {
+        using var rt = Make();
+        var bridge = (FakeBridge)ScriptContextRegistry.Get(rt.L)!.GameBridge!;
+        rt.Execute(LuaFixtures.Compile("nGameObject.ResetAnimationState(10)"), "ras");
+        Assert.Equal([10u], bridge.AnimResets);
+    }
+
+    [Fact]
+    public void SetAttributeSnapshotStoresPerObjectHandle()
+    {
+        using var rt = Make();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        rt.Execute(LuaFixtures.Compile("nGameObject.SetAttributeSnapshot(55, 42)"), "sas");
+        Assert.True(ctx.TryGetObjectSnapshot(55, out var handle) && handle == 42);
     }
 
     [Fact]

@@ -30,7 +30,9 @@ public static unsafe class NGameObjectModule
             ("SetIsVisible", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetIsVisible),
             ("SetStealthType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetStealthType),
             ("SetTeam", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTeam),
-            ("IsModifierActive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsModifierActive));
+            ("IsModifierActive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsModifierActive),
+            ("ResetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetAnimationState),
+            ("SetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAttributeSnapshot));
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,
@@ -478,6 +480,40 @@ public static unsafe class NGameObjectModule
         {
             return 0;
         }
+    }
+
+    // ResetAnimationState(objId) = undo death-anim (catalog §Mechanical): broadcast state 0.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int ResetAnimationState(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+                bridge.ResetAnimationState((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)));
+        }
+        catch { }
+        return 0;
+    }
+
+    // Projectile carries the caster's cast-time snapshot handle (catalog §Mechanical).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetAttributeSnapshot(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+            {
+                var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var handle = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+                ctx.SetObjectSnapshot(objId, handle);
+            }
+        }
+        catch { }
+        return 0;
     }
 
     private static uint ReadId(nint L) =>

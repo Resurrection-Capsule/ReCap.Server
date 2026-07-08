@@ -15,6 +15,7 @@ public interface IScriptGameBridge
     IReadOnlyDictionary<int, float>? GetAttributeTable(uint objectId);
     bool TryGetOrientation(uint objectId, out float x, out float y, out float z, out float w);
     void BroadcastAnimationState(uint objectId, uint stateHash);
+    void ResetAnimationState(uint objectId);
     IReadOnlyList<uint> QueryObjectsInRadius(float x, float y, float z, float radius, bool damageableOnly);
     float ApplyHeal(uint targetId, float amount);
     void MarkForDelete(uint objectId);
@@ -77,6 +78,11 @@ public sealed class ScriptStateContext
 
     public bool TryGetAttributeSnapshot(uint handle, out IReadOnlyDictionary<int, float> attributes)
         => _attributeSnapshots.TryGetValue(handle, out attributes!);
+
+    // Per-object cast-time attribute snapshot (projectiles carry the caster's snapshot handle).
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, uint> _objectSnapshots = new();
+    public void SetObjectSnapshot(uint objectId, uint snapshotHandle) => _objectSnapshots[objectId] = snapshotHandle;
+    public bool TryGetObjectSnapshot(uint objectId, out uint snapshotHandle) => _objectSnapshots.TryGetValue(objectId, out snapshotHandle);
 }
 
 public static class ScriptContextRegistry

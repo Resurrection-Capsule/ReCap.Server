@@ -146,6 +146,9 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public void BroadcastAnimationState(uint objectId, uint stateHash) =>
         _game.BroadcastAnimationState(objectId, stateHash);
 
+    // ResetAnimationState = undo death-anim (catalog §Mechanical): broadcast state 0.
+    public void ResetAnimationState(uint objectId) => _game.BroadcastAnimationState(objectId, 0u);
+
     // Client wrapper @0x00a0aed0: QueryObjectsInRadius capped at 256, no alive gate; the table
     // filter (nSporeLabs.damageableObjectTypes whitelist) is approximated server-side as
     // "has a combatant" (MaxHealth > 0) until per-noun type ids are parsed.
