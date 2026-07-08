@@ -80,6 +80,15 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void BitMaskClearsListedBitsVariadic()
+    {
+        using var rt = Make();
+        // 0b1111 clear 0b0010 and 0b0100 -> 0b1001 = 9. Single-flag: 7 clear 1 = 6.
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return nBit.Mask(15, 2, 4) == 9 and nBit.Mask(7, 1) == 6 and nBit.Mask(5) == 5")));
+    }
+
+    [Fact]
     public void AbilityContextGettersReadInvocation()
     {
         using var rt = Make();
