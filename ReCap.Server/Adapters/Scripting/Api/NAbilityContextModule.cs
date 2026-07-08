@@ -18,7 +18,8 @@ public static unsafe class NAbilityContextModule
             ("PayCooldownAndMana", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&PayCooldownAndMana),
             ("TargetInRangeAtStart", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TargetInRangeAtStart),
             ("GetAnimationSequenceIndex", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAnimationSequenceIndex),
-            ("PlayAnimationSequence", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&PlayAnimationSequence));
+            ("PlayAnimationSequence", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&PlayAnimationSequence),
+            ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
     }
 
     // Retail contracts (Ghidra 2026-06-06, VERIFIED_FACTS C3 addendum):
@@ -166,6 +167,11 @@ public static unsafe class NAbilityContextModule
             return 0;
         }
     }
+
+    // Recognized no-op (state mutation impl-time-DEFERRED, needs nAbility::ReleaseAgent decompile).
+    // Registering it removes it from stub telemetry so the harvest ratchet drops.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int ReleaseAgent(nint L) => 0;
 
     private static uint? ReadOptionalObjectIdArg(nint L)
     {

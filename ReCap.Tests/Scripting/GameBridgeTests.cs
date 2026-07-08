@@ -168,6 +168,14 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void ReleaseAgentReturnsNoValues()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile(
+            "return select('#', nAbility.ReleaseAgent()) == 0")));
+    }
+
+    [Fact]
     public void IsPlayerControlledObjectFollowsBridge()
     {
         using var rt = Make();
