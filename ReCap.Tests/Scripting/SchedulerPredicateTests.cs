@@ -56,4 +56,50 @@ public class SchedulerPredicateTests
             throw new InvalidOperationException($"chunk exec failed: {LuaNative.ToManagedString(L, -1)}");
         return LuaNative.lua_gettop(L);
     }
+
+    [Fact]
+    public void WaitForHitpointsAboveResumesWhenHpCrossesThreshold()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var ctx = ScriptContextRegistry.Get(rt.L)!;
+        var bridge = new MutableHpBridge();
+        ctx.GameBridge = bridge;
+        var scheduler = ctx.Scheduler!;
+
+        // Spawn a coroutine for object 10 that waits until its HP rises above 50 (no timeout).
+        rt.Execute(LuaFixtures.Compile("""
+            nThread.CreateThreadForObject(10, function()
+                nThread.WaitForHitpointsAbove(10, 50, 0)
+            end)
+            """), "wfa");
+
+        scheduler.Tick(1.0);
+        Assert.True(scheduler.HasThreadForObject(10)); // hp 40 <= 50 -> parked
+        bridge.Hp = 60f;
+        scheduler.Tick(2.0);
+        Assert.False(scheduler.HasThreadForObject(10)); // hp 60 > 50 -> resumed
+    }
+
+    private sealed class MutableHpBridge : IScriptGameBridge
+    {
+        public float Hp = 40f;
+        public float GetHitPoints(uint id) => Hp;
+        public float GetMaxHitPoints(uint id) => 100f;
+        public bool ObjectExists(uint id) => true;
+        public bool TryGetPosition(uint id, out float x, out float y, out float z) { x = y = z = 0f; return true; }
+        public byte GetTeam(uint id) => 0;
+        public void SetTeam(uint id, byte t) { }
+        public uint GetTargetId(uint id) => 0;
+        public bool IsPlayerControlled(uint id) => false;
+        public byte GetPlayerId(uint id) => 0;
+        public bool TryGetAttributeValue(uint id, int a, out float v) { v = 0f; return false; }
+        public IReadOnlyDictionary<int, float>? GetAttributeTable(uint id) => null;
+        public bool TryGetOrientation(uint id, out float x, out float y, out float z, out float w) { x = y = z = 0f; w = 1f; return true; }
+        public void BroadcastAnimationState(uint id, uint s) { }
+        public void ResetAnimationState(uint id) { }
+        public IReadOnlyList<uint> QueryObjectsInRadius(float x, float y, float z, float r, bool d) => [];
+        public float ApplyHeal(uint id, float a) => 0f;
+        public void MarkForDelete(uint id) { }
+        public void SetVisible(uint id, bool v) { }
+    }
 }

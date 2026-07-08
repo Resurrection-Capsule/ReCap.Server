@@ -14,7 +14,55 @@ public static unsafe class NThreadModule
             ("WaitForever", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForever),
             ("WaitForXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForXSeconds),
             ("WaitUntilTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitUntilTime),
-            ("WakeUp", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WakeUp));
+            ("WakeUp", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WakeUp),
+            ("WaitForHitpointsAbove", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForHitpointsAbove),
+            ("WaitForFadeOutInXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForFadeOutInXSeconds));
+    }
+
+    // catalog §Mechanical: yield until GetHitPoints(objId) > threshold OR timeout (0 = no timeout).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitForHitpointsAbove(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var scheduler = ctx?.Scheduler;
+            var bridge = ctx?.GameBridge;
+            if (scheduler is not null && bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
+            {
+                var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+                var threshold = LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER ? (float)LuaNative.lua_tonumber(L, 2) : 0f;
+                var timeout = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? (double)LuaNative.lua_tonumber(L, 3) : 0.0;
+                double? wakeAt = timeout > 0 ? scheduler.Now + timeout : null;
+                scheduler.RegisterYield(L, sleeping: false, wakeAt: wakeAt, wakeWhen: () => bridge.GetHitPoints(objId) > threshold);
+            }
+            else return 0;
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitForHitpointsAbove failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
+    }
+
+    // catalog §Mechanical: plain timed yield tied to corpse fade window.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitForFadeOutInXSeconds(nint L)
+    {
+        try
+        {
+            var scheduler = ScriptContextRegistry.Get(L)?.Scheduler;
+            var seconds = LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER
+                ? Math.Max(0.0, (double)LuaNative.lua_tonumber(L, 2)) : 0.0;
+            scheduler?.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + seconds);
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitForFadeOutInXSeconds failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
     }
 
     // Retail @0x00a02280: arg1 = absolute SIM time (seconds, clamped >= 0); optional args 2-3
