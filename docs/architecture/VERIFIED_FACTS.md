@@ -303,6 +303,20 @@ dalkon's C++ slot switch (Player.cpp:104: 0→0, 2→1, 3→3) does NOT match th
 his JSON-db ability ids are a parallel domain; ReCap resolves from the PlayerClass asset instead
 (`AssetDatabase.ResolveAbilitySlots`).
 
+### C8 — ObjectDelete 0x8E payload (client ground-truth, Ghidra 2026-06-28, D-025)
+
+`ClientNet::OnGmsObjectDelete` @0x0053ddc0 (kGms id 14). The message body is read as a **flat array
+of `u32` object ids** — count = `bodyLen >> 2`, stride 4 (`*(uint*)(buf + i*4)`); the length comes
+from the reader context (`*(ctx+8)` = byte length via FUN_00a8d1a0, `*(ctx+0xc)` = data pointer via
+FUN_00a8d180). For each id the client does a hash-table lookup and `ObjectManager::RemoveObject`.
+
+**No flags, no vaporize bool, no count prefix, no per-id extra fields** (stride is exactly 4) — and
+**the removal is immediate** (no death animation is driven by this packet; any death anim would be a
+separate prior message, none confirmed yet). LE per the game protocol. This resolves the long-open
+D-025 question ("objectId only? +flags? anim-first vs immediate?") → objectId-array, immediate.
+ReCap: `ObjectDeletePacket` writes `ObjectIds` as contiguous `u32` LE; `Game.OnObjectDeath` sends one
+id per dead object. Golden: `ObjectDeletePacketTests`.
+
 ---
 
 ## To re-verify before trusting (carried over, NOT yet confirmed this cycle)

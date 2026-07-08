@@ -152,7 +152,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         var result = new List<uint>();
         foreach (var (id, obj) in _game.Objects.Objects)
         {
-            if (damageableOnly && obj.MaxHealth <= 0f) continue;
+            if (damageableOnly && (obj.MaxHealth <= 0f || obj.Dead)) continue;
             if (System.Numerics.Vector3.DistanceSquared(center, obj.Position) > radiusSq) continue;
             result.Add(id);
             if (result.Count >= 256) break;
@@ -167,7 +167,15 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         obj.Health = Math.Clamp(obj.Health + amount, 0f, obj.MaxHealth);
         ReCap.Server.Util.Logging.Log.Game.Info(
             $"[lua] HealDamage target={targetId} amount={amount:F1} hp {before:F1}→{obj.Health:F1}");
-        return obj.Health - before;
+        var delta = obj.Health - before;
+        // C++ Object::SetHealth: HP reaching <=0 triggers OnObjectDeath (once). Despawns the corpse so
+        // it stops being a valid target — without this the melee tick keeps re-finding the dead object.
+        if (obj.Health <= 0f && !obj.Dead)
+        {
+            obj.Dead = true;
+            _game.OnObjectDeath(targetId);
+        }
+        return delta;
     }
 
     public void MarkForDelete(uint objectId) => _game.Objects.Remove(objectId);

@@ -1134,6 +1134,19 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         });
     }
 
+    // Object death sink (D-025). Fired from the HP-mutation point (GameScriptContext.ApplyHeal) the
+    // first time an object reaches <=0 hp. Despawns the object: removes it server-side so it stops
+    // being a valid target (ends the corpse re-target loop) and tells every client to delete it via
+    // ObjectDelete 0x8E. The client handler (OnGmsObjectDelete @0x0053ddc0) removes immediately — no
+    // death animation is driven by this message. Loot/objective hooks land with the loot phase.
+    public void OnObjectDeath(uint objectId)
+    {
+        if (!Objects.Objects.TryGetValue(objectId, out var obj)) return;
+        Log.Game.Info($"[death] object={objectId} noun=0x{obj.NounId:X8} despawned");
+        BroadcastToAllPlayers(new ObjectDeletePacket { ObjectIds = [objectId] });
+        Objects.Remove(objectId);
+    }
+
     // Lua nGameObject.SetAnimationState (client @0x009fc000 broadcasts via SporeNet message).
     public void BroadcastAnimationState(uint objectId, uint state)
     {

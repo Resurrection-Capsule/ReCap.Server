@@ -25,6 +25,9 @@ public sealed class GameObject
     public bool PlayerControlled { get; set; }
     public float Health { get; set; }
     public float MaxHealth { get; set; }
+    // Set once when HP first reaches <=0 (C++ Object death, OnObjectDeath). Guards against firing the
+    // death sink twice and excludes the corpse from targeting queries before it is swept.
+    public bool Dead { get; set; }
     public uint TargetId { get; set; }
     // kAttribute id → value. CONFIRMED ids (Ghidra GetAttributeValue @0x009feca0 switch sites):
     // 0=Strength 1=Dexterity 2=Mind 4=MaxHealth. Remaining ids of the 116-wide domain are
