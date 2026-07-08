@@ -255,9 +255,14 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
             if ((obj.DirtyFlags & ObjectDirtyFlags.Locomotion) != 0 && !obj.PlayerControlled)
             {
-                IRakNetPacket locomotionPacket = (obj.GoalFlags & 0x020) != 0
-                    ? new ObjectTeleportPacket { ObjectId = obj.ObjectId, Position = obj.Position, Orientation = obj.Orientation }
-                    : new LocomotionDataUpdatePacket { ObjectId = obj.ObjectId, Locomotion = new LocomotionData { GoalFlags = obj.GoalFlags } };
+                IRakNetPacket locomotionPacket;
+                if ((obj.GoalFlags & 0x020) != 0)
+                    locomotionPacket = new ObjectTeleportPacket { ObjectId = obj.ObjectId, Position = obj.Position, Orientation = obj.Orientation };
+                else if ((obj.GoalFlags & 0x001) != 0)
+                    // 0x95 smooth-move channel (client OnGmsLocomotionDataUnreliableUpdate @0x0053e600).
+                    locomotionPacket = new LocomotionDataUnreliableUpdatePacket { ObjectId = obj.ObjectId, GoalPosition = obj.GoalPosition };
+                else
+                    locomotionPacket = new LocomotionDataUpdatePacket { ObjectId = obj.ObjectId, Locomotion = new LocomotionData { GoalFlags = obj.GoalFlags } };
                 BroadcastToAllPlayers(locomotionPacket);
             }
 
