@@ -6,9 +6,6 @@ namespace ReCap.Server.Adapters.Scripting.Api;
 
 public static unsafe class NThreadDataModule
 {
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<nint, int> _privateTableRefs = new();
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<nint, System.Collections.Concurrent.ConcurrentDictionary<int, double>> _guidSlots = new();
-
     public static void Register(nint L) =>
         LuaApiModule.RegisterNamespace(L, "nThreadData",
             ("GetPrivateTable", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetPrivateTable),
@@ -21,7 +18,13 @@ public static unsafe class NThreadDataModule
     {
         try
         {
-            if (_privateTableRefs.TryGetValue(L, out var existing))
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null)
+            {
+                LuaNative.lua_pushnil(L);
+                return 1;
+            }
+            if (ctx.TryGetPrivateTableRef(L, out var existing))
             {
                 LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, existing);
                 if (LuaNative.lua_type(L, -1) == LuaNative.LUA_TTABLE) return 1;
@@ -30,7 +33,7 @@ public static unsafe class NThreadDataModule
             LuaNative.lua_createtable(L, 0, 0);
             LuaNative.lua_pushvalue(L, -1);
             var reference = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
-            _privateTableRefs[L] = reference;
+            ctx.SetPrivateTableRef(L, reference);
             return 1;
         }
         catch
@@ -46,13 +49,14 @@ public static unsafe class NThreadDataModule
     {
         try
         {
-            if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is not null
+                && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
                 && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
             {
                 var slot = (int)Math.Round((double)LuaNative.lua_tonumber(L, 1));
                 var guid = (double)LuaNative.lua_tonumber(L, 2);
-                var slots = _guidSlots.GetOrAdd(L, _ => new());
-                slots[slot] = guid;
+                ctx.SetGuidSlot(L, slot, guid);
             }
         }
         catch { }

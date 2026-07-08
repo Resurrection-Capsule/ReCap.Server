@@ -83,6 +83,27 @@ public sealed class ScriptStateContext
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, uint> _objectSnapshots = new();
     public void SetObjectSnapshot(uint objectId, uint snapshotHandle) => _objectSnapshots[objectId] = snapshotHandle;
     public bool TryGetObjectSnapshot(uint objectId, out uint snapshotHandle) => _objectSnapshots.TryGetValue(objectId, out snapshotHandle);
+
+    // nThreadData per-thread stores (registry-ref + GUID slots), lifecycle-bound to the
+    // owning coroutine; cleaned by LuaCoroutineScheduler.Release to avoid leaking registry
+    // refs / cross-object bleed if the native allocator reuses a thread pointer.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, int> _privateTableRefs = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, System.Collections.Concurrent.ConcurrentDictionary<int, double>> _guidSlots = new();
+
+    public void SetPrivateTableRef(nint threadL, int reference) => _privateTableRefs[threadL] = reference;
+
+    public bool TryGetPrivateTableRef(nint threadL, out int reference) => _privateTableRefs.TryGetValue(threadL, out reference);
+
+    public bool TryTakePrivateTableRef(nint threadL, out int reference) => _privateTableRefs.TryRemove(threadL, out reference);
+
+    public void SetGuidSlot(nint threadL, int slot, double guid) =>
+        _guidSlots.GetOrAdd(threadL, _ => new()).AddOrUpdate(slot, guid, (_, _) => guid);
+
+    public void RemoveThreadData(nint threadL)
+    {
+        _guidSlots.TryRemove(threadL, out _);
+        _privateTableRefs.TryRemove(threadL, out _);
+    }
 }
 
 public static class ScriptContextRegistry

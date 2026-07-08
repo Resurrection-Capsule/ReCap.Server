@@ -44,7 +44,7 @@ public static unsafe class NPlayerModule
             var id = bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
                 ? bridge.GetPlayerId((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)))
                 : (byte)0;
-            LuaNative.lua_pushnumber(L, id);
+            LuaNative.lua_pushnumber(L, (float)id);
             return 1;
         }
         catch

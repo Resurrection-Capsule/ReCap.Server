@@ -127,6 +127,12 @@ public sealed class LuaCoroutineScheduler(nint mainState)
             _byObject.Remove(entry.ObjectId);
         var context = ScriptContextRegistry.Get(entry.ThreadL);
         context?.RemoveInvocation(entry.ThreadL);
+        if (context is not null)
+        {
+            if (context.TryTakePrivateTableRef(entry.ThreadL, out var privateRef))
+                LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, privateRef);
+            context.RemoveThreadData(entry.ThreadL);
+        }
         ScriptContextRegistry.Unregister(entry.ThreadL);
         StubTelemetry.UntagState(entry.ThreadL);
         LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, entry.ThreadRef);
