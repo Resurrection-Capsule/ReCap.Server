@@ -82,23 +82,33 @@ The reusable parsers that define the client's data model (all fields are wide-st
 
 **★ Note:** the account-response `items` node is the **inbox**, not the inventory — creature parts live inside each creature (`ParseCreaturesBlock` nested) and the vendor offer parts come from `getPartOfferList` (`ParsePartEntry`).
 
-### Remaining (ack-style) response handlers
-`logout`, `exitGame`, `setSettings`, `unlock`, `unlockCreature`, `resetCreature`, `getReplay`,
-`getPartList`, `updatePartStatus`, `setNewPlayerStats`, `updateCreature`, `updateDecks`, `vendorParts`
-each have a builder-vtable slot +0x30 handler that returns `timestamp` + a success/updated-entity and
-**reuses the block/entry parsers above** (creatures/parts/decks). No new data contract — field-mapped
-on demand at implementation time by decompiling the specific +0x30 slot.
+### All remaining response handlers (mapped)
+
+| Endpoint | Response handler (vtable +0x30) | Reads |
+|---|---|---|
+| `logout`, `exitGame`, `setSettings`, `updatePartStatus`, `setNewPlayerStats` | `0x0076f560` (shared base **no-op** — `return;`) | nothing (ack-only) |
+| `unlock` | `ClientRest::ParseUnlockResponse` @0x00462fb0 | re-parses the **account** block (updated after unlock) |
+| `unlockCreature` | `ClientRest::ParseUnlockCreatureResponse` @0x00460b80 | `creature_id` (id of the new creature) |
+| `resetCreature` | `ClientRest::ParseResetCreatureResponse` @0x00460020 | `creature.version` (new version) |
+| `getReplay` | `ClientRest::ParseReplayResponse` @0x004605f0 | `date` + `replay` (blob the client loads) |
+| `getPartList` | `ClientRest::ParsePartListResponse` @0x004601a0 | `parts` list (`FUN_0045ede0` inventory-part parser) |
+| `updateCreature` | `ClientRest::ParseUpdateCreatureResponse` @0x00460c70 | `creature.version` + refreshes AssetCatalog/Pollinator |
+| `updateDecks` | `ClientRest::OnUpdateDecksResponse` @0x0045a870 | ack — no body parse; refreshes UI from the local deck state |
+| `vendorParts` | `ClientRest::ParseVendorPartsResponse` @0x004612b0 | **`parts`** (updated inventory) + **`dna`** (new DNA/currency balance) |
+
+**★ `vendorParts` returns `dna`** = the player's currency after buy/sell (DNA points). `getPartList`/`vendorParts` share the inventory-part parser `FUN_0045ede0` (parts with account_id/creature_id/status — a superset of `ParsePartEntry`; field-map when building inventory).
 
 ## Status
 - ✅ Architecture + class (`SP_App::ApiRequest`) + builder/response(+0x30) pattern.
 - ✅ **All 18 request contracts** decompiled + named (`ClientRest::Build*Request`).
 - ✅ **Full data model** (creature, part, deck, inbox-items, settings, server_tuning) — block parsers decompiled + named.
-- ✅ Master responses: `account`/`auth`, `getPartOfferList`, `getGame` — named + plate-commented.
-- ✅ ~24 Ghidra symbols annotated + program saved.
-- ⏳ The 13 ack-style response handlers — reuse the parsers above; decompile the +0x30 slot on demand when building each endpoint (no unknown contract remains).
+- ✅ **All 18 response handlers** mapped (vtable +0x30): account/offer-list/getGame + the 13 remaining (5 no-op + 8 named parsers). 5 endpoints share a base no-op (ack-only).
+- ✅ **~32 Ghidra symbols** named + plate comments + program saved.
 
-**The terrain is fully mapped: every data structure the client reads is named + field-mapped in Ghidra.
-Build the authentic C# systems on this, not the C++ fixtures.**
+**COMPLETE: every endpoint's request AND response is mapped; every data structure the client reads is
+named + field-mapped in Ghidra. Build the authentic C# systems on this, not the C++ fixtures.**
+Only micro-detail left: field-map the inventory-part parser `FUN_0045ede0` (getPartList/vendorParts) —
+a superset of `ParsePartEntry` — when building the inventory system.
 
 ## Real-vs-C++ implementation insights (the whole point)
 1. **`settings` + `server_tuning` are mandatory** — client parses them; C++ leaves `settings` empty and never emits `server_tuning`. Biggest login-flow gap.
