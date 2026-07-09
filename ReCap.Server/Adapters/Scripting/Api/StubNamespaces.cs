@@ -7,7 +7,7 @@ public static class StubNamespaces
         LuaApiModule.RegisterNamespace(L, "nThreadData");
         LuaApiModule.RegisterNamespace(L, "nTimeManager");
         LuaApiModule.RegisterNamespace(L, "nThread");
-        LuaApiModule.RegisterNamespace(L, "nBehaviorTree");
+        NBehaviorTreeModule.Register(L);
         LuaApiModule.RegisterNamespace(L, "nScenarioManager");
         LuaApiModule.RegisterNamespace(L, "nAbility");
         LuaApiModule.RegisterNamespace(L, "nModifier");
