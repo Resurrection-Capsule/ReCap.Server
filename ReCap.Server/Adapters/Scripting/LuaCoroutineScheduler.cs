@@ -83,6 +83,18 @@ public sealed class LuaCoroutineScheduler(nint mainState)
             entry.Sleeping = false;
     }
 
+    // Force-terminate a specific coroutine by its thread handle (used to stop a per-instance modifier
+    // tick when the modifier is deleted). Object-keyed threads use HasThreadForObject; detached
+    // threads (objectId 0, e.g. modifier ticks) can only be stopped by their thread handle.
+    public bool StopThread(nint threadL)
+    {
+        if (!_threads.TryGetValue(threadL, out var entry)) return false;
+        Release(entry);
+        return true;
+    }
+
+    public bool HasThread(nint threadL) => _threads.ContainsKey(threadL);
+
     public void Tick(double nowSeconds)
     {
         _now = nowSeconds;

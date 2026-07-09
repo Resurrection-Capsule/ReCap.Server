@@ -342,6 +342,18 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             InstanceId = instance.InstanceId,
             StackCount = (uint)instance.StackCount,
         });
+
+        // Retail (FUN_009e5c50): the modifier's index [2] runs as a persistent per-instance coroutine
+        // (the DoT/aura loop, resumed each frame), carrying instance context so nModifier.GetMyAgentID
+        // /GetMyInitiatorID/GetMyStackCount/GetRank resolve. DEFERRED: [1] activate + [4] event handler
+        // (both need the shared per-instance context region so their nThreadData private table is the
+        // same one [2] reads — our private table is per-thread), stack policy (nActivationType) and
+        // duration auto-expiry. Removal is script-driven via nModifier.MarkForDelete for now.
+        lock (_luaGate)
+        {
+            if (_registry.Find(ScriptKind.Modifier, modifierGuid) is { } entry)
+                instance.ThreadHandle = SpawnModifierIndex(entry, 2, ModifierInvocation(instance));
+        }
         return instance.InstanceId;
     }
 
@@ -349,6 +361,16 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     {
         if (_game.Modifiers.Get(instanceId) is not { } instance) return false;
         var targetId = instance.TargetId;
+
+        lock (_luaGate)
+        {
+            // Retail runs index [3] deactivate once on removal, then tears down the tick thread.
+            if (_registry.Find(ScriptKind.Modifier, instance.ModifierGuid) is { } entry)
+                SpawnModifierIndex(entry, 3, ModifierInvocation(instance));
+            if (instance.ThreadHandle != 0)
+                _scheduler.StopThread(instance.ThreadHandle);
+        }
+
         if (!_game.Modifiers.Remove(instanceId)) return false;
         _game.BroadcastModifierDeleted(new ReCap.Server.Adapters.RakNet.Packets.ModifierDeletedPacket
         {
@@ -356,6 +378,29 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             InstanceId = instanceId,
         });
         return true;
+    }
+
+    private static Adapters.Scripting.AbilityInvocation ModifierInvocation(Domain.Gameplay.ModifierInstance instance) =>
+        new(AgentId: instance.TargetId, TargetId: 0, CursorX: 0, CursorY: 0, CursorZ: 0, Rank: instance.Rank,
+            AbilityHash: instance.ModifierGuid, InstanceId: instance.InstanceId,
+            InitiatorId: instance.CasterId, StackCount: instance.StackCount);
+
+    // Spawn modTable[index] (numeric — modifiers use [1]/[2]/[3]/[4], NOT a named field like abilities)
+    // as a detached coroutine (objectId 0 = no per-object gate; a target can carry many modifiers plus
+    // its own ability thread). Returns the thread handle, or 0 if the index is not a function.
+    private nint SpawnModifierIndex(ScriptEntry entry, int index, Adapters.Scripting.AbilityInvocation invocation)
+    {
+        var L = _runtime.L;
+        LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
+        LuaNative.lua_rawgeti(L, -1, index);
+        if (LuaNative.lua_type(L, -1) != LuaNative.LUA_TFUNCTION)
+        {
+            LuaNative.lua_settop(L, 0);
+            return 0;
+        }
+        LuaNative.lua_remove(L, -2); // drop the table, leave the function on top
+        return _scheduler.SpawnFromStack(L, objectId: 0, valuesOnTop: 1,
+            beforeFirstResume: t => ScriptContextRegistry.Get(_runtime.L)?.SetInvocation(t, invocation));
     }
 
     public uint FindModifierByGuid(uint targetId, uint modifierGuid) =>

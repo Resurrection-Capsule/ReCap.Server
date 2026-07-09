@@ -13,6 +13,10 @@ public sealed class ModifierInstance
     public int Rank { get; init; }
     public int StackCount { get; set; } = 1;
     public uint DurationMs { get; set; } = 0xFFFFFFFF;
+
+    // The per-instance Lua coroutine running the modifier's tick (index [2]); 0 = none (tickless
+    // modifier or unresolved script). Stopped when the modifier is removed.
+    public nint ThreadHandle { get; set; }
 }
 
 public sealed class ModifierSystem

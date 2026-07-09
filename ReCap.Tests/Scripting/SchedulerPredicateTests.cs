@@ -132,6 +132,23 @@ public class SchedulerPredicateTests
     // ability tick passes small hit-time offsets (e.g. 0.26); treating them as absolute sim time made
     // the wait a no-op once the game clock passed 0.26, so basic-attack coroutines finished in one tick
     // and the AI re-cast every 50ms.
+    // Detached coroutines (objectId 0, e.g. per-instance modifier ticks) aren't in the per-object map,
+    // so they can only be terminated by their thread handle — the hook modifier removal uses.
+    [Fact]
+    public void StopThreadTerminatesDetachedCoroutineByHandle()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var scheduler = ScriptContextRegistry.Get(rt.L)!.Scheduler!;
+
+        var thread = scheduler.Spawn(rt.L, objectId: 0, fnIndex: PushSleeperFn(rt.L), argCount: 0);
+        scheduler.RegisterYield(thread, sleeping: true, wakeAt: null); // parked indefinitely
+
+        Assert.True(scheduler.HasThread(thread));
+        Assert.True(scheduler.StopThread(thread));
+        Assert.False(scheduler.HasThread(thread));
+        Assert.False(scheduler.StopThread(thread)); // idempotent once gone
+    }
+
     [Fact]
     public void WaitUntilTimeWaitsRelativeToNowNotAbsoluteSimTime()
     {
