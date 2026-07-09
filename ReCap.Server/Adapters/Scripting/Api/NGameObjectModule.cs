@@ -58,9 +58,25 @@ public static unsafe class NGameObjectModule
                 LuaNative.lua_pushboolean(L, 0);
                 return 2;
             }
+            var sourceId = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)) : 0u;
             var targetId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
             var amount = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, 3) : 0f;
             var applied = bridge.ApplyHeal(targetId, amount);
+
+            // Retail HealDamage @0x009fd020 emits the combat event (0xBA) that drives the client's
+            // floating number + hit reaction. The client parser (ClientNet::OnGmsCombatEvent →
+            // FUN_004e6190) gates the display block on deltaHealth > 0, so deltaHealth carries the
+            // POSITIVE MAGNITUDE of the change (matches C++ TakeDamage/Heal: mDeltaHealth = |amount|,
+            // mIntegerHpChange = (int)mDeltaHealth). A signed delta lands in the wrong branch and shows
+            // nothing. applied is the signed HP delta here; take its magnitude for the wire.
+            var magnitude = MathF.Abs(applied);
+            if (magnitude > 0f)
+            {
+                try { bridge.BroadcastCombatEvent(targetId, sourceId, magnitude, (int)MathF.Round(magnitude), 0); }
+                catch { /* feedback packet is best-effort; never fail the cast */ }
+            }
+
             LuaNative.lua_pushnumber(L, applied);
             LuaNative.lua_pushboolean(L, 0);
             return 2;
@@ -133,11 +149,12 @@ public static unsafe class NGameObjectModule
         try { dealt = damage > 0f ? -bridge!.ApplyHeal(targetId, -damage) : 0f; }
         catch { dealt = 0f; }
 
-        // Floating damage number + combat log (0xBA). deltaHealth<0 = damage; flags left 0 (the crit
-        // bit is not yet Ghidra-confirmed — isCrit is already returned to Lua for gameplay).
-        if (dealt != 0f)
+        // Floating damage number + combat log (0xBA). Client gates the display on deltaHealth > 0, so
+        // it carries the POSITIVE magnitude (C++ mDeltaHealth = |damage|, mIntegerHpChange = (int)it);
+        // flags left 0 (the crit bit is not yet Ghidra-confirmed — isCrit is already returned to Lua).
+        if (dealt > 0f)
         {
-            try { bridge!.BroadcastCombatEvent(targetId, 0, -dealt, -(int)MathF.Round(dealt), 0); }
+            try { bridge!.BroadcastCombatEvent(targetId, 0, dealt, (int)MathF.Round(dealt), 0); }
             catch { /* feedback packet is best-effort; never fail the cast */ }
         }
 
