@@ -119,9 +119,17 @@ public sealed class AssetDatabase : IDisposable
         if (classAsset is null) return null;
 
         var attrsRef = (classAsset.FindByName("mpClassAttributes") as StringValue)?.Value;
-        if (string.IsNullOrEmpty(attrsRef)) return null;
+        var attrs = string.IsNullOrEmpty(attrsRef) ? null : GetAssetByName(attrsRef);
+        if (attrs is not null) return attrs;
 
-        return GetAssetByName(attrsRef);
+        // The NonPlayerClass binary catalog is misparsed by the current parser package (field/string
+        // order vs the client registrar @0x00f5c912): mpClassAttributes reads the localized display
+        // name (the "Chrono Striker" bug), not the ".ClassAttributes" ref, so director enemies would
+        // spawn with baseHealth=0 and be non-damageable. Fall back to the by-convention asset name
+        // derived from the class ref — verified: <Creature>.ClassAttributes resolves with real
+        // baseHealth. Remove once the parser package fixes the NonPlayerClass layout.
+        var baseName = Path.GetFileNameWithoutExtension(classRef);
+        return string.IsNullOrEmpty(baseName) ? null : GetAssetByName(baseName + ".ClassAttributes");
     }
 
     public Task WarmUpAsync(CancellationToken ct = default) => Task.Run(() =>
