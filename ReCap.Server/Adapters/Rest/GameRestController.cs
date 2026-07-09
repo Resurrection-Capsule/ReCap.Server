@@ -267,7 +267,18 @@ public class GameRestController
     [RequestMapping(Name="api.account.unlock")]
     public byte[]? unlockPlayerAccount(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        // Client ClientRest::ParseUnlockResponse re-parses the <account> block after an unlock.
+        // unlock_id is an upgrade unlock; per-account unlock persistence is DEFERRED (single-player
+        // runs unlock-all/isTest), so acknowledge and return the current account block.
+        var account = accountService.getAccountByAuthToken(parameters["token"]);
+        var response = new AuthResponseContract{
+            Stat = "ok",
+            Version = ServerConfig.GameVersionStr,
+            Timestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000),
+            ExecTime = 1,
+            Account = accountMapper.toContract(account)
+        };
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.account.setNewPlayerStats")]
@@ -310,11 +321,11 @@ public class GameRestController
 
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        var template = creatureService.getCreatureTemplateById(templateId);
+        var template = creatureService.getCreatureTemplateById(templateId)
+            ?? throw new ForbiddenOperationException("Creature template not found");
 
-        // TODO: Implement getTemplate returning GetCreatureTemplateResponseContract
-
-        return null;
+        var response = creatureMapper.toGetCreatureTemplateContract(template);
+        return XmlHelper.Serialize(response);
     }
 
     [RequestMapping(Name="api.creature.resetCreature")]

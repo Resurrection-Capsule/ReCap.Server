@@ -69,4 +69,29 @@ public class CreatureMapper
         ThumbPngUrl = CreaturePngUrl(creature.TemplateID),
         Stats = creature.getStatsAsString(),
     };
+
+    // api.creature.getTemplate — template-level data only (no per-creature parts/gear).
+    // Fields per the client contract (TemplateCreature::WriteApi); type_a = elementType.
+    public GetCreatureTemplateResponseContract toGetCreatureTemplateContract(CreatureTemplateModel t) => new()
+    {
+        Stat = "ok",
+        Timestamp = 1,
+        ExecTime = 1,
+
+        NameLocaleId = t.nameLocaleId,
+        TextLocaleId = t.descLocaleId,
+        TemplateName = t.name,
+        Type = t.elementType,
+        WeaponMinDamage = t.weaponMinDamage,
+        WeaponMaxDamage = t.weaponMaxDamage,
+        GearScore = t.gearScore,
+        Class = t.classType,
+        StatsTemplate = t.statsTemplate,
+
+        AbilityBasic = (ulong)t.abilityBasic,
+        AbilitySpecial1 = (ulong)t.abilitySpecial1,
+        AbilitySpecial2 = (ulong)t.abilitySpecial2,
+        AbilityRandom = (ulong)t.abilityRandom,
+        AbilityPassive = (ulong)t.abilityPassive,
+    };
 }
