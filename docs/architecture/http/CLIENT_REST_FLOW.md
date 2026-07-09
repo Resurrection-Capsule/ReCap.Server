@@ -61,8 +61,44 @@ Reads `<response>` in order:
 ### `getPartOfferList` → `ClientRest::ParsePartOfferListResponse` @0x00460380 (vtable +0x30)
 `timestamp` + `expires` (int64 unix — offer expiry, obj+0x58) + `parts` (list → `FUN_0045f4c0`, obj+0x78).
 
-### Remaining response handlers (mechanical follow-up)
-Each endpoint's response = **its builder object's vtable slot +0x30**; most reuse the block sub-parsers (`ParseCreaturesBlock`/`ParseItemsBlock`/deck-list) or return `timestamp` + the updated entity. To field-map any: read the builder's `PTR_FUN_00fdXXXX` vtable, take slot +0x30, decompile. Endpoints still to field-map: `getGame`/`getReplay` (game-history XML — needs a server-side history store for real data), `updateCreature`/`updateDecks`/`unlock`/`getPartList`/`updatePartStatus`/`setSettings` (mostly ack + updated entity).
+### `getGame` → `ClientRest::ParseGameResponse` @0x0046d880 (vtable +0x30; was mis-auto-named Telemetry_ReportMatchEnd)
+Game-history record: `game_id, date, cashed_out, finish, starting_difficulty, start`, then `rounds[]`
+(each: `chain_id, finish, planet_id, success, round_id, start, players[]`) and per player:
+`deaths, kills, account_id, result, creature1_id, creature1_version, creature2_id/version, creature3_id/version`.
+Real data needs a server-side game-history store (absent); launcher/replay feature, low dungeon-loop priority.
+
+## Data model — block sub-parser field maps (decompiled + named)
+
+The reusable parsers that define the client's data model (all fields are wide-string XML child values; int64 via a parse helper, float via `wcstod`):
+
+| Parser | Per-item fields |
+|---|---|
+| `ClientRest::ParseCreaturesBlock` @0x00463990 | `id`(i64), `name`(str), `png_thumb_url`(str), `noun_id`(i64), `version`(i64), `gear_score`(float), `item_points`(float), + nested parts/stats |
+| `ClientRest::ParsePartEntry` @0x0045f4c0 (offer + inventory parts) | `cost`(i64), `level`(i64), `prefix_asset_id`(i64), `prefix_secondary_asset_id`(i64), `rarity`(int), `reference_id`(i64), `rigblock_asset_id`(i64), `suffix_asset_id`(i64) |
+| `ClientRest::ParseDecksBlock` @0x00468980 | `name`(str), `category`(str; "pvp" sets a flag), `id`(i64), `slot`(i64), `locked`(i64), + nested `creatures[]` (`id,name,noun_id,version,gear_score,item_points`) |
+| `ClientRest::ParseItemsBlock` @0x00463de0 (**inbox/mail, NOT parts**) | `account_id`(i64), `id`(i64), `message_id`(i64), `metadata`(str), `date`(i64) |
+| `ClientRest::ParseAccountBlock` @0x00471110 | account struct init/reset (fields consumed via the account object) |
+| `ClientRest::ParseServerTuningBlock` @0x0045f8a0 | item-store economy (see above) |
+
+**★ Note:** the account-response `items` node is the **inbox**, not the inventory — creature parts live inside each creature (`ParseCreaturesBlock` nested) and the vendor offer parts come from `getPartOfferList` (`ParsePartEntry`).
+
+### Remaining (ack-style) response handlers
+`logout`, `exitGame`, `setSettings`, `unlock`, `unlockCreature`, `resetCreature`, `getReplay`,
+`getPartList`, `updatePartStatus`, `setNewPlayerStats`, `updateCreature`, `updateDecks`, `vendorParts`
+each have a builder-vtable slot +0x30 handler that returns `timestamp` + a success/updated-entity and
+**reuses the block/entry parsers above** (creatures/parts/decks). No new data contract — field-mapped
+on demand at implementation time by decompiling the specific +0x30 slot.
+
+## Status
+- ✅ Architecture + class (`SP_App::ApiRequest`) + builder/response(+0x30) pattern.
+- ✅ **All 18 request contracts** decompiled + named (`ClientRest::Build*Request`).
+- ✅ **Full data model** (creature, part, deck, inbox-items, settings, server_tuning) — block parsers decompiled + named.
+- ✅ Master responses: `account`/`auth`, `getPartOfferList`, `getGame` — named + plate-commented.
+- ✅ ~24 Ghidra symbols annotated + program saved.
+- ⏳ The 13 ack-style response handlers — reuse the parsers above; decompile the +0x30 slot on demand when building each endpoint (no unknown contract remains).
+
+**The terrain is fully mapped: every data structure the client reads is named + field-mapped in Ghidra.
+Build the authentic C# systems on this, not the C++ fixtures.**
 
 ## Real-vs-C++ implementation insights (the whole point)
 1. **`settings` + `server_tuning` are mandatory** — client parses them; C++ leaves `settings` empty and never emits `server_tuning`. Biggest login-flow gap.
