@@ -81,8 +81,22 @@ public static unsafe class NAbilityContextModule
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int PayCooldownAndMana(nint L)
     {
-        // Retail: stamps cooldown start + deducts mana clamped to 0, no return value.
-        // Server mana/cooldown state lands with the combat phase; arity contract holds now.
+        // Retail @0x00a43470 reads the invoking ability's cooldown from its def (abilityDef+0x60,
+        // populated from the ability's `cooldown` prop) and stamps it. We stamp a per-(agent,ability)
+        // deadline that InvokeAbility honours, so the ability can't re-fire until it cools down — the
+        // gate that stops the AI enemy (and a spamming player) from attacking every tick. Mana state
+        // is not modelled yet; the cooldown is the load-bearing half. 0 returns (retail arity).
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GetInvocation(L) is { AbilityHash: not 0 } inv)
+            {
+                var cooldown = ctx.Registry.Find(ScriptKind.Ability, inv.AbilityHash)?.Cooldown ?? 0f;
+                if (cooldown > 0f)
+                    ctx.StampCooldown(inv.AgentId, inv.AbilityHash, (ctx.Scheduler?.Now ?? 0d) + cooldown);
+            }
+        }
+        catch { /* cooldown is best-effort; never fail the cast */ }
         return 0;
     }
 

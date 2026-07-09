@@ -152,6 +152,16 @@ public sealed class ScriptStateContext
     }
     public uint ResolveAssetHash(float boxed)
         => _assetHashByBoxed.TryGetValue(boxed, out var hash) ? hash : (uint)boxed;
+
+    // Per-(object, ability) cooldown deadline in scheduler seconds. Stamped by
+    // nAbilityContext.PayCooldownAndMana (from the ability's `cooldown` prop) and checked by
+    // GameScriptContext.InvokeAbility, which refuses a cast while the ability is still cooling down —
+    // the retail gate that stops an AI enemy (or a spamming player) from re-firing every tick.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(uint Object, uint Ability), double> _cooldownReadyAt = new();
+    public void StampCooldown(uint objectId, uint abilityHash, double readyAtSeconds)
+        => _cooldownReadyAt[(objectId, abilityHash)] = readyAtSeconds;
+    public bool IsOnCooldown(uint objectId, uint abilityHash, double nowSeconds)
+        => _cooldownReadyAt.TryGetValue((objectId, abilityHash), out var ready) && nowSeconds < ready;
 }
 
 public static class ScriptContextRegistry

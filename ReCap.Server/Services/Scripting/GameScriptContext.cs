@@ -55,6 +55,10 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             var entry = _registry.Find(ScriptKind.Ability, abilityHash);
             if (entry is null || !entry.HasTick) return false;
             if (_scheduler.HasThreadForObject(agentId)) return false;
+            // Cooldown gate (retail): refuse the cast while this (agent, ability) is still cooling
+            // down — stamped by PayCooldownAndMana. Stops the AI enemy re-firing its attack every tick.
+            if (ScriptContextRegistry.Get(_runtime.L) is { } state && state.IsOnCooldown(agentId, abilityHash, _scheduler.Now))
+                return false;
 
             var L = _runtime.L;
             // TargetInRangeAtStart mirrors the client's cached at-cast flag (@0x00a410a0 reads a
