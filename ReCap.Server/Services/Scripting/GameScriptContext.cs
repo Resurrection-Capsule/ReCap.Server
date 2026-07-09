@@ -304,4 +304,15 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset)
         => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
            && AI.AggroSystem.InPerceptionCircle(o.Position, new System.Numerics.Vector3(x, y, z), bb.PerceptionRadius, offset);
+
+    public void CastAiAbility(string abilityName, uint self, uint target)
+    {
+        var hash = AssetData.Parser.WireHash.Fnv1a(abilityName);
+        var cursor = _game.Objects.Objects.TryGetValue(target, out var t) ? t.Position : System.Numerics.Vector3.Zero;
+        InvokeAbility(hash, self, target, cursor.X, cursor.Y, cursor.Z, rank: 0);
+    }
+
+    // Condition-type evaluators (Distance, Closest, ...) are harvest-deferred; the slice enemy
+    // (ZelemBasicMelee) uses none. See AI_SLICE_HARVEST.md.
+    public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target) => false;
 }

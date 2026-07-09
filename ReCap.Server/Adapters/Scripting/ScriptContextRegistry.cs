@@ -35,6 +35,8 @@ public interface IScriptGameBridge
     bool HasAggroTargets(uint agentId);
     uint GetBestTarget(uint agentId);
     bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset);
+    void CastAiAbility(string abilityName, uint self, uint target);
+    bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target);
 }
 
 public readonly record struct AbilityInvocation(

@@ -116,6 +116,8 @@ public class SchedulerPredicateTests
         public bool HasAggroTargets(uint a) => false;
         public uint GetBestTarget(uint a) => 0;
         public bool InPerceptionCircle(uint a, float x, float y, float z, float o) => false;
+        public void CastAiAbility(string abilityName, uint self, uint target) { }
+        public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target) => false;
     }
 
     [Fact]

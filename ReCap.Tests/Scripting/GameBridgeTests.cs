@@ -97,6 +97,10 @@ internal sealed class FakeBridge : IScriptGameBridge
     public bool HasAggroTargets(uint agentId) => agentId == 10;
     public uint GetBestTarget(uint agentId) => agentId == 10 ? 55u : 0u;
     public bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset) => agentId == 10;
+
+    public List<(string Name, uint Self, uint Target)> AiCasts { get; } = [];
+    public void CastAiAbility(string abilityName, uint self, uint target) => AiCasts.Add((abilityName, self, target));
+    public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target) => false;
 }
 
 public class GameBridgeTests

@@ -5,65 +5,77 @@ namespace ReCap.Server.Domain.Gameplay.AI;
 
 public interface IAiActions
 {
-    bool ConditionMet(string ns, string name, uint self, uint target);
-    void CastAbility(uint gambitAbility, uint self, uint target);
-    void MoveToward(uint self, uint target);
+    void CastAbility(string abilityName, uint self, uint target);
+    bool ConditionPasses(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target);
 }
 
-// Walks an AIDefinition node graph (ainode[]: mpConditionData decides transitions via output edges;
-// mpPhaseData carries gambits = condition->ability). Operates on the generic AssetValue shape so it
-// needs no game data to unit-test; real condition namespace::names + phase encodings are exercised
-// in-game after the harvest (Task 8). Tolerant: unknown/absent shapes -> no-op, never throws.
+// Real AIDefinition shape (AI_SLICE_HARVEST.md, ZelemBasicMelee sample):
+// ainode[0].mpPhaseData is an asset-REFERENCE (StringValue name) resolved to a Phase asset.
+// Phase.gambit[] is a prioritizedList: first gambit whose condition passes (absent = unconditional)
+// wins and its ability is cast. Tolerant: any null/missing/wrong-type shape -> no-op, never throws.
 public sealed class AIController
 {
     private readonly AssetValue _def;
+    private readonly Func<string, AssetValue?> _resolveAsset;
     private readonly IAiActions _actions;
-    public int CurrentNode { get; private set; }
 
-    public AIController(AssetValue aiDefinition, IAiActions actions)
+    public AIController(AssetValue aiDefinition, Func<string, AssetValue?> resolveAsset, IAiActions actions)
     {
         _def = aiDefinition;
+        _resolveAsset = resolveAsset;
         _actions = actions;
     }
 
     public void Tick(uint selfId, uint targetId)
     {
-        var nodes = _def.FindByName("ainode");
-        var node = NodeAt(nodes, CurrentNode);
-        if (node is null) return;
+        if (_def.FindByName("ainode") is not ArrayValue nodes || nodes.Items.Count == 0) return;
+        var node = nodes.Items[0];
 
-        if (Condition(node.FindByName("mpConditionData"), selfId, targetId))
+        var phaseName = (node.FindByName("mpPhaseData") as StringValue)?.Value;
+        if (string.IsNullOrEmpty(phaseName)) return;
+
+        var phase = _resolveAsset(phaseName);
+        if (phase is null) return;
+
+        if (phase.FindByName("gambit") is not ArrayValue gambits) return;
+
+        foreach (var gambit in gambits.Items)
         {
-            var outputs = node.FindByName("output");
-            var next = FirstInt(outputs);
-            if (next is int n && NodeAt(nodes, n) is not null) { CurrentNode = n; return; }
-        }
+            var conditionName = (gambit.FindByName("condition") as StringValue)?.Value;
+            bool passes;
+            if (string.IsNullOrEmpty(conditionName))
+            {
+                passes = true;
+            }
+            else
+            {
+                var props = ReadProps(gambit.FindByName("conditionProps"));
+                passes = _actions.ConditionPasses(conditionName, props, selfId, targetId);
+            }
 
-        var phase = node.FindByName("mpPhaseData");
-        foreach (var gambit in Gambits(phase))
-        {
-            if (!Condition(gambit.FindByName("condition"), selfId, targetId)) continue;
-            var ability = gambit.FindByName("ability").AsUInt32();
-            if (ability != 0) { _actions.CastAbility(ability, selfId, targetId); return; }
-        }
+            if (!passes) continue;
 
-        if (targetId != 0) _actions.MoveToward(selfId, targetId);
+            var abilityName = (gambit.FindByName("ability") as StringValue)?.Value;
+            if (!string.IsNullOrEmpty(abilityName))
+            {
+                _actions.CastAbility(abilityName, selfId, targetId);
+            }
+            return;
+        }
     }
 
-    private bool Condition(AssetValue? conditionData, uint self, uint target)
+    private static IReadOnlyList<(string Name, string Value)> ReadProps(AssetValue? propsNode)
     {
-        if (conditionData is null) return false;
-        var ns = conditionData.FindByName("namespace").AsString();
-        var name = conditionData.FindByName("name").AsString();
-        return !string.IsNullOrEmpty(ns) && !string.IsNullOrEmpty(name) && _actions.ConditionMet(ns, name, self, target);
+        if (propsNode is not ArrayValue arr || arr.Items.Count == 0)
+            return System.Array.Empty<(string, string)>();
+
+        var result = new List<(string, string)>(arr.Items.Count);
+        foreach (var item in arr.Items)
+        {
+            var name = (item.FindByName("name") as StringValue)?.Value;
+            var value = (item.FindByName("value") as StringValue)?.Value;
+            if (!string.IsNullOrEmpty(name)) result.Add((name, value ?? string.Empty));
+        }
+        return result;
     }
-
-    private static AssetValue? NodeAt(AssetValue? nodes, int index)
-        => nodes is ArrayValue a && index >= 0 && index < a.Items.Count ? a.Items[index] : null;
-
-    private static IEnumerable<AssetValue> Gambits(AssetValue? phase)
-        => phase is ArrayValue a ? a.Items : phase is not null ? new[] { phase } : System.Array.Empty<AssetValue>();
-
-    private static int? FirstInt(AssetValue? arr)
-        => arr is ArrayValue a && a.Items.Count > 0 ? (int)a.Items[0].AsUInt32() : null;
 }
