@@ -30,6 +30,19 @@ public class AIControllerTests
     }
 
     [Fact]
+    public void Tick_NoAggroTarget_DoesNotCast()
+    {
+        var actions = new RecordingActions();
+        var phase = SyntheticAi.SingleUnconditionalGambitPhase("ZelemBasicMeleeAttack");
+        var def = SyntheticAi.Definition("P");
+        var ctrl = new AIController(def, name => name == "P" ? phase : null, actions);
+
+        ctrl.Tick(selfId: 2, targetId: 0);
+
+        Assert.Empty(actions.Casts);
+    }
+
+    [Fact]
     public void Tick_PrioritizedList_FallsThroughToUnconditionalGambitWhenFirstFails()
     {
         var actions = new RecordingActions();

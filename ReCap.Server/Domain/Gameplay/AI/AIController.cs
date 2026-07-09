@@ -28,6 +28,12 @@ public sealed class AIController
 
     public void Tick(uint selfId, uint targetId)
     {
+        // Aggro-driven: no valid target on the aggro list ⇒ idle. The slice contract is
+        // "aggro → best target → cast" (AI_SLICE_HARVEST.md); a basic-melee gambit is meaningless
+        // without a target, and firing it every tick made enemies flail attacks at their own
+        // position (target=0). Conditionless idle/patrol phases are a later, richer-enemy concern.
+        if (targetId == 0) return;
+
         if (_def.FindByName("ainode") is not ArrayValue nodes || nodes.Items.Count == 0) return;
         var node = nodes.Items[0];
 
