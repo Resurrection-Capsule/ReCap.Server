@@ -66,13 +66,18 @@ public sealed class ObjectManager
     // MarkForDelete during InvokeAbility) while the game loop enumerates in FlushObjectUpdates —
     // a plain Dictionary threw "Collection was modified" and killed Update (2026-06-06 15:51 log).
     private readonly ConcurrentDictionary<uint, GameObject> _objects = new();
+    private readonly AI.AggroSystem _aggro;
+    private readonly Dictionary<uint, AI.AIController> _controllers = new();
 
     public IReadOnlyDictionary<uint, GameObject> Objects => _objects;
 
     public ObjectManager(AssetDatabase? db)
     {
         _db = db;
+        _aggro = new AI.AggroSystem(this);
     }
+
+    public void AttachController(uint objectId, AI.AIController controller) => _controllers[objectId] = controller;
 
     public GameObject Spawn(uint objectId, uint nounId, Vector3 position, float scale, byte team, bool playerControlled)
     {
@@ -145,7 +150,11 @@ public sealed class ObjectManager
         return obj;
     }
 
-    public bool Remove(uint objectId) => _objects.TryRemove(objectId, out _);
+    public bool Remove(uint objectId)
+    {
+        _controllers.Remove(objectId);
+        return _objects.TryRemove(objectId, out _);
+    }
 
     // True when the AssetDatabase can resolve this noun — used to gate the 0x8C ObjectCreate announce
     // for Lua-spawned objects (if the server resolves it, the client can too; unresolvable → no wire).
@@ -154,6 +163,12 @@ public sealed class ObjectManager
     public void Update(double deltaSeconds)
     {
         if (_objects.Count == 0) return;
-        // AI tick plumbing — behaviors land in a later phase.
+
+        _aggro.Tick();
+        foreach (var (id, controller) in _controllers.ToArray())
+        {
+            if (!_objects.TryGetValue(id, out var agent) || agent.Dead || agent.Agent is null) continue;
+            controller.Tick(id, _aggro.BestTargetFor(agent));
+        }
     }
 }

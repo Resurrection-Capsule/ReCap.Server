@@ -548,7 +548,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         var markerId = marker.FindByName("markerId").AsUInt32();
 
         var objId = _nextObjectId++;
-        Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
+        var enemy = Objects.Spawn(objId, noun, pos, scale, team: 0, playerControlled: false);
+        if (enemy.Agent is not null && enemy.AIDefinition is not null && Assets is not null && ScriptContext is not null)
+            Objects.AttachController(enemy.ObjectId,
+                new AI.AIController(enemy.AIDefinition, Assets.GetAssetByName,
+                    new AI.BridgeAiActions(ScriptContext)));
 
         var objData = new SporelabsObject
         {
