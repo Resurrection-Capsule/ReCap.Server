@@ -130,3 +130,33 @@ real match-completion packet capture or Ghidra RE of the client's 0x1C dispatch.
   Needs client RE or a Wireshark capture of a real match end.
 - `[?]` Ghidra: search `submitOfflineGameReport` string + `0x1C` component dispatch in the
   retail client to recover the report struct and confirm whether a reply is required.
+
+---
+
+## Client-side (Ghidra strings, 2026-07-08) — what GameReporting actually IS
+
+The retail client ships the full GameReporting RPC + report-schema strings (`0x010e3b34`–`0x010e4240`,
+error space `0x010e3d50`+), confirming it's a real EA Blaze component the client *can* drive — the
+solo path just never does. Resolves the open questions (purpose + why it's absent on the solo path):
+
+- **Commands present:** `submitGameReport` (0x01), `submitOfflineGameReport` (0x02),
+  `submitGameEvents` (0x03), `getGameReportQuery`/`QueriesList`/`Reports`/`View`/`ViewInfo`/
+  `ViewInfoList`/`Types` (0x04–0x0A), `submitTrustedMidGameReport` (0x64),
+  `submitTrustedEndGameReport` (0x65).
+- **Related GameManager notification:** `NotifyGameReportingIdChange`
+  (`Blaze::GameManager::NotifyGameReportingIdChange`) — binds the current game to its
+  game-reporting id (this is a GameManager 0x04 notify, **not** a 0x1C message).
+- **Finished-status enum:** `GAMEREPORT_FINISHED_STATUS_{DNF, FINISHED, DEFAULT}`.
+- **Report class hierarchy:** `Blaze::GameReporting::ArsonClub::*` / `ArsonCTF_NonDerived::*` — these
+  are EA Blaze SDK **sample** report schemas ("Arson" = the Blaze sample title), compiled in
+  generically; the Darkspore-specific report type is a derived schema (not literally "Arson*").
+
+**⇒ WHAT IT IS:** the **post-match statistics / telemetry submission** system. At match end the
+client submits a game report (per-player result + kills/deaths + finished-status) that the server
+collates for stats/leaderboards; `submitOfflineGameReport` is the single-player / non-authoritative
+variant, `submitTrusted{Mid,End}GameReport` the server-authoritative flow. `NotifyGameReportingIdChange`
+(from GameManager) hands the client the reporting id for the current game. The `Arson*` classes are
+Blaze boilerplate, not Darkspore data. **Solo relevance:** a *completed* level might fire
+`submitOfflineGameReport`, but the captured session quit mid-dungeon so none fired — **low priority**,
+only needed if ReCap builds stats/leaderboards. Field-level TDF of the `submitOfflineGameReport`
+request = decompile the client's 0x1C builder for that RPC when/if stats are implemented.

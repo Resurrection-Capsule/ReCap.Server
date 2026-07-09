@@ -136,3 +136,30 @@ by the C++ server — `ComponentManager::Get(0x0A)` returns `nullptr`. `[V]` `Co
   subscribe, or only on region-count changes? Push vs. poll model is undefined.
 - `[?]` Is the C# CIDS advertisement of 0x0A (`UtilComponent.cs:62`) intentional or a copy
   error vs. the C++ list? Harmless today; remove if it causes unexpected client behaviour.
+
+---
+
+## Client-side (Ghidra strings, 2026-07-08) — what CensusData actually IS
+
+The retail client ships the **full** CensusData class + RPC schema (strings `0x010e64c4`–`0x010e6710`
+plus the census-item types `0x010dc4f8`–`0x010dd2e0`), so it *can* parse the feed even though the
+solo path never subscribes. Resolves the open questions above (purpose + payload shape):
+
+- **Commands:** `subscribeToCensusData` (0x01), `unsubscribeFromCensusData` (0x02),
+  `getRegionCounts` (0x03 → `Blaze::CensusData::RegionCounts`).
+- **Notifications:** `NotifyServerCensusData` (0x04, payload field = `mCensusDataList`) +
+  `NotifyServerCensusDataItem` (per-item, `Blaze::CensusData::NotifyServerCensusDataItem`).
+- **Census-item types carried in the list:** `GameManagerCensusData`
+  (`mGameAttributesData` = `GameAttributeCensusData` — population per game-attribute, i.e. games/
+  players per mode) and `PlaygroupCensusData` (`Blaze::Playgroups::PlaygroupCensusData` — population
+  per playgroup).
+- **Errors:** `CENSUSDATA_ERR_PLAYER_{ALREADY_SUBSCRIBED,NOT_SUBSCRIBED}`.
+
+**⇒ WHAT IT IS:** a subscription-based **live population feed**. A client subscribes; the server
+pushes `NotifyServerCensusData` carrying `mCensusDataList` — a vector of census items (per-mode game
+counts via `GameManagerCensusData`, per-playgroup counts via `PlaygroupCensusData`, plus region
+counts). It drives **server-browser / matchmaking population displays** ("N players online",
+games-in-progress by mode/region). **NOT used in single-player** — the client never subscribes on the
+solo path, so ReCap can leave component 0x0A unimplemented with no client impact. Field-level TDF
+offsets (if multiplayer population is ever built) = decompile the client's `NotifyServerCensusData`
+parser; these are standard EA Blaze SDK TDFs already partially known to `Tdf.cs`.

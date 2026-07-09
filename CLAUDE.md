@@ -6,12 +6,13 @@ File guide for Claude Code when working in this repo.
 
 ReCap (Resurrection Capsule) = Darkspore private server reimpl in C#. Darkspore = action-RPG by Maxis (2011), servers shut 2016. ReCap re-implements the server to make the game playable offline.
 
-Three codebases:
+Codebases:
 1. **This repo (C#)** — clean architecture, main project
-2. **C++ reference** (`C:\CodingProjects\Personal\ReCap.Cpp`) — by @dalkon, authoritative source for protocol behavior
-3. **ReCap.Develop (C#)** — experimental/messy, separate dir (not branch)
+2. **Darkspore.exe in Ghidra (MCP)** — the retail client. **THE source of truth** for protocol behavior, packet/struct layouts, and the required contract.
+3. **C++ reference** (`C:\CodingProjects\Personal\ReCap.Cpp`) — by @dalkon. **Being abandoned.** Reverse-engineered approximation full of errors + hardcoded fixtures. NOT authoritative — historical hint at most, never proof.
+4. **ReCap.Develop (C#)** — experimental/messy, separate dir (not branch).
 
-C++ reference = **ground truth** for packet structures, values, protocol flow. Debug client behavior → trace the C++ reference, not ReCap.Develop.
+**Ghidra client analysis + mapping = ground truth** for packet structures, values, protocol flow. Debug client behavior → decompile the client in Ghidra (image base 0x400000), and/or wire capture. **Do NOT cite C++ as authority** — it has errors and hardcoded values and is being dropped. See [[ghidra-is-source-of-truth-not-cpp]] and `docs/architecture/http/CLIENT_REST_FLOW.md` (why-not-C++ rationale).
 
 ## Claude Directives
 - Short 3-6 word sentences.
@@ -19,22 +20,22 @@ C++ reference = **ground truth** for packet structures, values, protocol flow. D
 - Run tools first, show result, stop. No narrate.
 - Drop articles ("Me fix code" not "will fix the code").
 - Maintain CLAUDE.md + MEMORY.md updated.
-- **Memory write-back rule (CRITICAL):** After every confirmed fix, C++ alignment, or invalidated assumption, update `memory/` files in the same turn. Mark stale memories outdated (prepend `OUTDATED YYYY-MM-DD:` + new state). Never let memory drift behind code.
-- **Evidence over dogma.** No protocol claim is true because a doc or memory says so. Trust only what is verified against C++ source (`file:line`) or a wire capture. Before relying on any "rule", confirm it. When a verified fact contradicts an old claim, supersede it and log it.
+- **Memory write-back rule (CRITICAL):** After every confirmed fix, Ghidra verification, or invalidated assumption, update `memory/` files in the same turn. Mark stale memories outdated (prepend `OUTDATED YYYY-MM-DD:` + new state). Never let memory drift behind code.
+- **Evidence over dogma.** No protocol claim is true because a doc or memory says so. Trust only what is verified against the **Ghidra client decompile** (`address`/symbol) or a wire capture. C++ (`file:line`) is NOT evidence — treat any C++-sourced claim as unverified until confirmed in Ghidra. Before relying on any "rule", confirm it. When a verified fact contradicts an old claim, supersede it and log it.
 
-## North star: reimplement, don't transliterate
+## North star: reimplement from the client, don't transliterate C++
 
-C++ (`ReCap.Cpp`) is a **reverse-engineered approximation** with visible shortcuts/quirks (e.g. an enemy-spawn `break` that caps enemies at 1/set; a debug-pattern objective description; build drift between its prebuilt binary and its source tree). The goal is NOT to copy C++ byte-for-byte forever — it's to build a **robust, clean C# reimplementation that satisfies the retail client's real contract**, ideally *closer to what the original game did* than C++'s approximation. **But the client is strict** — it null-derefs on the smallest misread. So any "improve beyond C++" move requires **solid, verified confirmation** of the real behavior (wire capture of the working binary, and/or the client's own parse in Ghidra), never a guess/interpretation. Confirm first (VERIFIED_FACTS), then reimplement cleanly. The capture is wire ground-truth where C++ source has drifted.
+The goal is a **robust, clean C# reimplementation that satisfies the retail client's real contract** — derived from the **Ghidra client** (its builders/parsers/struct layouts) and wire captures, NOT from C++. C++ (`ReCap.Cpp`) is a reverse-engineered approximation full of shortcuts/quirks (enemy-spawn `break` capping enemies at 1/set; debug-pattern objective text; hardcoded fixtures like the vendor 100-149 offer list; build drift). **We are abandoning it** — do not port C++ behavior, port the client's contract. **The client is strict** — it null-derefs on the smallest misread. So every field/value requires **verified confirmation from the client's own parse in Ghidra and/or a wire capture**, never a guess and never "because C++ does it". Confirm first (VERIFIED_FACTS / Ghidra address), then reimplement cleanly.
 
 ## Port-fidelity workflow (current focus)
 
-Goal: a correct single-player Dungeon path the retail client plays end to end. Use C++ as the primary reference, the working-binary capture as wire ground-truth, and the Ghidra client as the arbiter of the client's required contract. Driven by the design spec, not by past "laws" (which proved stale and were purged 2026-05-31).
+Goal: a correct single-player Dungeon path the retail client plays end to end. **The Ghidra client is the primary reference and the arbiter of the required contract**; wire capture is ground-truth for on-wire bytes. C++ is a fallback hint only, always re-verified in Ghidra before use. Driven by the design spec, not by past "laws" (which proved stale and were purged 2026-05-31).
 
 - **Spec:** `docs/superpowers/specs/2026-05-31-port-fidelity-plan-design.md` — the methodology.
 - **Verified facts:** `docs/architecture/VERIFIED_FACTS.md` — the ONLY trusted protocol truths, each cited. Read this, not old "rule" docs.
 - **Divergence ledger:** `docs/architecture/planning/DIVERGENCE_LEDGER.md` — live field-level divergence list; one fix = one commit.
 - **Inventory:** `docs/architecture/planning/PORTING_MATRIX.md` — macro class/handler status (the ledger is the micro level).
-- **Method:** source-diff sweeps (vs C++) → wire-diff confirms (dumpcap on Npcap Loopback, game conv only) → fix → verify gate (wire-parity + client progress). Ghidra debugger only when a step stalls with no obvious wire divergence.
+- **Method:** Ghidra client decompile (builder/parser/struct per endpoint = the required fields) → wire-diff confirms (dumpcap on Npcap Loopback, game conv only) → fix → verify gate (wire-parity + client progress). Ghidra debugger for live runtime when a step stalls. (C++ source-diff only as a scavenge lead, never as the spec.)
 - **Model tiering (cost):** Haiku for mechanical lookups, Sonnet for the bulk (source-diff sweeps, wire analysis, multi-file fixes, agent fan-outs), Opus only for hard reasoning. Pass `model` override when spawning agents.
 
 ## Build & Run
