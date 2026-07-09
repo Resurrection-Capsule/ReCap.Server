@@ -15,10 +15,14 @@ public class Api
 {
     public const int DEFAULT_PORT = 8033;
     private List<object> restControllers;
+    private readonly PngStorageAdapter _pngAdapter;
+    private readonly QosStorageAdapter _qosAdapter;
 
     readonly int _port;
     public Api(SqliteConfig newSqliteConfig, int port = DEFAULT_PORT) {
         _port = port;
+        _pngAdapter = new PngStorageAdapter(newSqliteConfig);
+        _qosAdapter = new QosStorageAdapter(port);
         restControllers = new List<object>();
         var assembly = Assembly.GetExecutingAssembly();
         foreach(Type type in assembly.GetTypes()) {
@@ -89,6 +93,20 @@ public class Api
                 }
             }
             
+            // Portrait PNGs (/template_png, /creature_png, /game/service/png) — checked before
+            // GameStorageAdapter since /game/service/png also matches its /game/ prefix.
+            if (fileBytes == null && _pngAdapter.Handles(uri))
+            {
+                fileBytes = _pngAdapter.GetFile(uri, parameters);
+                context.Response.ContentType = "image/png";
+            }
+
+            if (fileBytes == null && _qosAdapter.Handles(uri))
+            {
+                fileBytes = _qosAdapter.GetFile(uri, parameters);
+                context.Response.ContentType = "text/xml";
+            }
+
             if (fileBytes == null && GameStorageAdapter.Handles(uri))
             {
                 fileBytes = GameStorageAdapter.GetFile(uri);

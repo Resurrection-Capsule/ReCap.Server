@@ -60,6 +60,14 @@ public class ReCapRestController
         return Encoding.ASCII.GetBytes("{\"success\":true}");
     }
 
+    [RequestMapping(Name="api.game.status", ContentType="application/json")]
+    public byte[] status(HttpListenerContext context, Dictionary<string,string> parameters)
+    {
+        // Launcher play-button/progress gate (C++ recap_game_status, API.cpp:833). ReCap bundles
+        // its assets — there is no async installer — so the button is always ready, no progress text.
+        return Encoding.ASCII.GetBytes("{\"enablePlayButton\":true,\"progressLabel\":\"\"}");
+    }
+
     [RequestMapping(Name="api.game.getCreatureLargePng")]
     public byte[] getCreatureLargePng(HttpListenerContext context, Dictionary<string,string> parameters)
     {

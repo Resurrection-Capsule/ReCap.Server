@@ -510,20 +510,28 @@ public class GameRestController
     [RequestMapping(Name="api.inventory.getPartOfferList")]
     public byte[] getPartOfferList(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        string authToken = parameters["token"];
+        // Store offer = the full part-template pool (client: ClientRest::ParsePartOfferListResponse
+        // reads timestamp + expires + parts). Per-rarity display pricing is applied client-side from
+        // server_tuning.itemstore_cost_multiplier_*; the server emits each part's base cost. expires
+        // aligns to the same 24h window as server_tuning.itemstore_current_expiration.
+        long expires = (long)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + ItemstoreOfferPeriodSeconds;
 
-        // TODO: Implement getPartOfferList
+        var offer = creaturePartService.getAllTemplates().Select(template => {
+            var part = creaturePartMapper.toCreaturePartModel(template, false);
+            part.ID = template.rigblockAssetId; // stable per-offer id (template key)
+            return creaturePartMapper.toContract(part);
+        }).ToList();
 
         var response = new PartListResponseContract{
             Stat = "ok",
             Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
-            Parts = new List<CreaturePartContract>()
+            Expires = expires,
+            Parts = offer
         };
 
         return XmlHelper.Serialize(response);
-
     }
 
     [RequestMapping(Name="api.inventory.updatePartStatus")]
@@ -563,58 +571,59 @@ public class GameRestController
     {
         var account = accountService.getAccountByAuthToken(parameters["token"]);
 
-        List<CreaturePartModel> creatureParts = new List<CreaturePartModel>();
-        string[] transactions = parameters["transactions"].Split(";"); // eg. w1
-        foreach (string transaction in transactions) {
+        // transactions = ';'-delimited list of <typeChar><partId> (C++ API.cpp:1097 explode ';';
+        // byte 0 = type, rest = id). Types: s=sell f=flair (implemented) / b,w,p=buy (no-op: this
+        // account already owns the full part pool, so the store is sell+flair only per design).
+        var touched = new List<CreaturePartModel>();
+        foreach (string transaction in parameters["transactions"].Split(";", StringSplitOptions.RemoveEmptyEntries)) {
             char type = transaction[0];
-            ulong partId = (ulong)Convert.ToInt64(transaction[1]);
-            CreaturePartModel? part = null;
-
-            if (type == 's') { // sell item
-                part = creaturePartService.getCreaturePartById(partId);
-                if (part != null) {
-                    creaturePartService.deleteCreaturePart(part);
-                    account.dna += part.Cost;
-                }
-                part = null;
-            }
-            else if (type == 'f') { // turn item into detail/flair
-                part = creaturePartService.getCreaturePartById(partId);
-                if (part != null) {
-                    part.IsFlair = true;
-                }
-            }
-            else if (type == 'w') { // buy weapon
-                // TODO: Implement buying weapon
-            }
-            else if (type == 'p') { // parts?
-                // TODO: Implement parts
-            }
-            else if (type == 'b') { // buyback?
-                // TODO: Implement buyback
-            }
-            else {
-                ReCap.Server.Util.Logging.Log.Rest.Info($"Unknown transaction: {transaction}");
-                // TODO: check for more later
+            if (!ulong.TryParse(transaction.AsSpan(1), out ulong partId)) {
+                ReCap.Server.Util.Logging.Log.Rest.Info($"vendorParts: bad transaction '{transaction}'");
+                continue;
             }
 
-            if (part != null) {
-                creatureParts.Add(part);
+            switch (type) {
+                case 's': { // sell — remove part, refund its cost as DNA
+                    var part = creaturePartService.getCreaturePartById(partId);
+                    if (part != null && part.AccountId == account.Id) {
+                        creaturePartService.deleteCreaturePart(part);
+                        account.dna += part.Cost;
+                    }
+                    break;
+                }
+                case 'f': { // flair — convert part to a cosmetic detail
+                    var part = creaturePartService.getCreaturePartById(partId);
+                    if (part != null && part.AccountId == account.Id && !part.IsFlair) {
+                        part.IsFlair = true;
+                        touched.Add(part);
+                    }
+                    break;
+                }
+                case 'b': case 'w': case 'p': // buy/weapon/parts — no-op (full pool already owned)
+                    break;
+                default:
+                    ReCap.Server.Util.Logging.Log.Rest.Info($"vendorParts: unknown type '{type}' in '{transaction}'");
+                    break;
             }
         }
 
+        if (touched.Count > 0) {
+            creaturePartService.updateCreatureParts(touched);
+        }
         accountService.updateAccount(account);
-        creaturePartService.updateCreatureParts(creatureParts);
+
+        // Response = updated inventory + new DNA balance (ClientRest::ParseVendorPartsResponse: parts + dna).
+        var inventory = creaturePartService.getCreaturePartsByAccount(account)
+            .Where(part => part.CreatureId is null).ToList();
 
         var response = new PartListResponseContract{
             Stat = "ok",
             Version = ServerConfig.GameVersionStr,
             Timestamp = 1,
             ExecTime = 1,
-            Parts = creatureParts.Select(creaturePart => creaturePartMapper.toContract(creaturePart)).ToList()
+            Parts = inventory.Select(part => creaturePartMapper.toContract(part)).ToList(),
+            Dna = account.dna
         };
-
-        // utils::xml_add_text_node(docResponse, "dna", user->get_account().dna);
 
         return XmlHelper.Serialize(response);
     }

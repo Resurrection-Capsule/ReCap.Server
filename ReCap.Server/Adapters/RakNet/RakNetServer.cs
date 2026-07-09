@@ -88,6 +88,14 @@ public class RakNetServer
                 client.UserId = helloPlayerRequestPacket.UserId;
                 client.PlaygroupId = helloPlayerRequestPacket.PlaygroupId;
 
+                // Reject a HelloPlayer whose (client-supplied) account id has no Blaze-authenticated
+                // session — closes the trust gap where RakNet accepted any spoofed UserId.
+                if (!SessionRegistry.Instance.IsAuthenticated(client.UserId))
+                {
+                    Log.RakNet.Warn($"HelloPlayer for account {client.UserId} with no authenticated Blaze session — refusing attach");
+                    return;
+                }
+
                 var account = accountService.getAccountById(client.UserId);
                 var game = gameService.GetGameByPlayer(account);
                 if (game == null)
@@ -98,6 +106,7 @@ public class RakNetServer
 
                 client.Game = game;
                 game.AttachPlayer(account, client);
+                SessionRegistry.Instance.GetOrCreate(client.UserId).CurrentGameId = game.Id;
                 return;
         }
 

@@ -96,6 +96,8 @@ public class Client
 
         CommStream.Close();
 
+        ReCap.Server.Services.SessionRegistry.Instance.OnBlazeDisconnect(UserId);
+
         Server.Disconnect(this);
 
         OnDisconnect?.Invoke();

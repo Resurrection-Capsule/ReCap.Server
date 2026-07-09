@@ -22,6 +22,10 @@ public class CreaturePartService
         return creaturePartRepository.getCreaturePartById(id);
     }
 
+    public List<CreaturePartTemplateModel> getAllTemplates() {
+        return creaturePartTemplateRepository.getAllTemplates();
+    }
+
     public List<CreaturePartModel> getCreaturePartsByAccount(AccountModel account) {
         return creaturePartRepository.getCreaturePartsByAccountId(account.Id);
     }

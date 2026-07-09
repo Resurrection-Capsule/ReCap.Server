@@ -76,13 +76,16 @@ public class UtilComponent : IComponent
         response.Config.Config.Add("voipHeadsetUpdateRate", "1000");
         response.Config.Config.Add("xlspConnectionIdleTimeout", "300");
 
+        // Point the client's QoS probes at the REST listener, which now serves /qos/* (was a dead
+        // 127.0.0.1:17502 nothing listened on). QoS HTTP shares the REST Api port.
+        const int qosPort = ReCap.Server.Adapters.Rest.Api.Api.DEFAULT_PORT;
         response.QosSettings.BandwithPingSiteInfo.Address = "127.0.0.1";
-        response.QosSettings.BandwithPingSiteInfo.Port = 17502;
+        response.QosSettings.BandwithPingSiteInfo.Port = qosPort;
         response.QosSettings.BandwithPingSiteInfo.SiteName = "ams";
 
         response.QosSettings.PingSiteInfoByAliasMap["ams"] = new();
         response.QosSettings.PingSiteInfoByAliasMap["ams"].Address = "127.0.0.1";
-        response.QosSettings.PingSiteInfoByAliasMap["ams"].Port = 17502;
+        response.QosSettings.PingSiteInfoByAliasMap["ams"].Port = qosPort;
         response.QosSettings.PingSiteInfoByAliasMap["ams"].SiteName = "ams";
 
         client.RespondTo(packet, response);

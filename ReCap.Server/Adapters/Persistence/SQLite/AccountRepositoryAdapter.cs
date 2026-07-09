@@ -6,6 +6,7 @@ using ReCap.Server.Config;
 using ReCap.Server.Domain;
 using ReCap.Server.Mappers;
 using ReCap.Server.Models;
+using ReCap.Server.Services;
 using ReCap.Server.Util;
 
 namespace ReCap.Server.Adapters.Persistence.SQLite;
@@ -18,30 +19,29 @@ public class AccountRepositoryAdapter
     private AccountMapper accountMapper;
     private DbSequenceAdapter sequenceRandomGenerator;
 
-    private static Dictionary<string,ulong> idByAuthToken = new Dictionary<string,ulong>();
-
     public AccountRepositoryAdapter(SqliteConfig newSqliteConfig) {
         sqliteConfig = newSqliteConfig;
         accountMapper = new AccountMapper();
         sequenceRandomGenerator = new DbSequenceAdapter(newSqliteConfig);
     }
 
+    // Auth-token <-> account now lives in the process-wide SessionRegistry (one source of truth,
+    // shared with the Blaze/RakNet session gate) instead of a static dict in the persistence layer.
     public void deleteAuthToken(string authToken)
     {
         ReCap.Server.Util.Logging.Log.Db.Info($"Removing auth token {authToken}");
-        idByAuthToken.Remove(authToken);
+        SessionRegistry.Instance.RemoveToken(authToken);
     }
 
     public void setAccountAuthToken(ulong accountId, string authToken)
     {
         ReCap.Server.Util.Logging.Log.Db.Info($"Setting auth token for account {accountId}: {authToken}");
-        idByAuthToken[authToken] = accountId;
+        SessionRegistry.Instance.SetToken(accountId, authToken);
     }
 
     public AccountModel? getAccountByAuthToken(string authToken)
     {
-        ulong accountId = 0;
-        if (idByAuthToken.TryGetValue(authToken, out accountId))
+        if (SessionRegistry.Instance.AccountIdForToken(authToken) is ulong accountId)
         {
             ReCap.Server.Util.Logging.Log.Db.Info($"Getting auth token for account {accountId}: {authToken}");
             return getAccountById(accountId);

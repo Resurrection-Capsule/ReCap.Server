@@ -29,6 +29,15 @@ public class CreatureMapper
     public static string CreaturePngUrl(ulong templateId)
         => $"/template_png/{templateId}_thumb.png";
 
+    // A player who rendered a custom portrait (updateCreature stored the PNG in the DB) gets a
+    // per-creature URL served from the blob by PngStorageAdapter; otherwise the shared per-template
+    // thumbnail on disk. Either path resolves — the adapter serves both.
+    private static string ThumbUrl(CreatureModel c)
+        => string.IsNullOrEmpty(c.ThumbPngBase64) ? $"/template_png/{c.TemplateID}_thumb.png" : $"/creature_png/{c.ID}_thumb.png";
+
+    private static string LargeUrl(CreatureModel c)
+        => string.IsNullOrEmpty(c.LargePngBase64) ? $"/template_png/{c.TemplateID}_thumb.png" : $"/creature_png/{c.ID}_large.png";
+
     public CreatureContract toContract(CreatureModel creature) => new()
     {
         ID = creature.ID,
@@ -37,8 +46,8 @@ public class CreatureMapper
         TemplateName = creature.TemplateName,
         GearScore = creature.GearScore,
         ItemPoints = creature.ItemPoints,
-        LargePngUrl = CreaturePngUrl(creature.TemplateID),
-        ThumbPngUrl = CreaturePngUrl(creature.TemplateID),
+        LargePngUrl = LargeUrl(creature),
+        ThumbPngUrl = ThumbUrl(creature),
     };
 
     public GetCreatureResponseContract toGetCreatureContract(CreatureTemplateModel creatureTemplate, CreatureModel creature, bool includeAbilities, bool includeParts) => new()
@@ -65,8 +74,8 @@ public class CreatureMapper
         TemplateID = creature.TemplateID,
         GearScore = creature.GearScore,
         ItemPoints = creature.ItemPoints,
-        LargePngUrl = CreaturePngUrl(creature.TemplateID),
-        ThumbPngUrl = CreaturePngUrl(creature.TemplateID),
+        LargePngUrl = LargeUrl(creature),
+        ThumbPngUrl = ThumbUrl(creature),
         Stats = creature.getStatsAsString(),
     };
 
