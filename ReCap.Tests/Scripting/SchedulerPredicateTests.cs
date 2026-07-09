@@ -111,6 +111,11 @@ public class SchedulerPredicateTests
         public uint AddAttributeModifier(uint id, int a, float v) => 0;
         public uint EmitEffect(uint id, uint fx, uint init) => 0;
         public uint CreateObject(uint n, float x, float y, float z) => 0;
+        public void BroadcastCombatEvent(uint target, uint source, float delta, int hp, ushort flags) { }
+        public IReadOnlyList<uint> GetAggroTargets(uint a) => System.Array.Empty<uint>();
+        public bool HasAggroTargets(uint a) => false;
+        public uint GetBestTarget(uint a) => 0;
+        public bool InPerceptionCircle(uint a, float x, float y, float z, float o) => false;
     }
 
     [Fact]

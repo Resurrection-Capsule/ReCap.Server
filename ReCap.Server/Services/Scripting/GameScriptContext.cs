@@ -1,6 +1,8 @@
+using System.Linq;
 using ReCap.Server.Adapters.Scripting;
 using ReCap.Server.Adapters.Scripting.Native;
 using ReCap.Server.Domain.Gameplay;
+using AI = ReCap.Server.Domain.Gameplay.AI;
 
 namespace ReCap.Server.Services.Scripting;
 
@@ -10,6 +12,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     private readonly LuaRuntime _runtime;
     private readonly LuaCoroutineScheduler _scheduler;
     private readonly ScriptRegistry _registry;
+    private readonly AI.AggroSystem _aggro;
     private double _clockSeconds;
     private uint _nextAbilityInstanceId;
     // lua_State is not thread-safe: Tick runs on the game loop, InvokeAbility on the RakNet
@@ -19,6 +22,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public GameScriptContext(Game game, ScriptEngine engine)
     {
         _game = game;
+        _aggro = new AI.AggroSystem(_game.Objects);
         _runtime = engine.CreateBootedRuntime($"game-{game.Id}");
         var state = ScriptContextRegistry.Get(_runtime.L)!;
         state.GameBridge = this;
@@ -275,4 +279,29 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
     public uint CreateObject(uint nounId, float x, float y, float z) =>
         _game.SpawnScriptObject(nounId, new System.Numerics.Vector3(x, y, z));
+
+    // Floating damage/heal number + combat-log entry (wire 0xBA). deltaHealth<0 = damage.
+    public void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags) =>
+        _game.BroadcastCombatEvent(new ReCap.Server.Adapters.RakNet.Packets.CombatEventPacket
+        {
+            TargetId = targetId,
+            SourceId = sourceId,
+            DeltaHealth = deltaHealth,
+            IntegerHpChange = integerHpChange,
+            Flags = flags,
+        });
+
+    public IReadOnlyList<uint> GetAggroTargets(uint agentId)
+        => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
+            ? bb.AggroList.Select(e => e.ObjectId).ToList() : [];
+
+    public bool HasAggroTargets(uint agentId)
+        => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { HasTargets: true };
+
+    public uint GetBestTarget(uint agentId)
+        => _game.Objects.Objects.TryGetValue(agentId, out var o) ? _aggro.BestTargetFor(o) : 0u;
+
+    public bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset)
+        => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
+           && AI.AggroSystem.InPerceptionCircle(o.Position, new System.Numerics.Vector3(x, y, z), bb.PerceptionRadius, offset);
 }

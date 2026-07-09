@@ -21,7 +21,7 @@ public static class StubNamespaces
         LuaApiModule.RegisterNamespace(L, "nObjectManager");
         LuaApiModule.RegisterNamespace(L, "nPlayer");
         LuaApiModule.RegisterNamespace(L, "nEvent");
-        LuaApiModule.RegisterNamespace(L, "nAgent");
+        NAgentModule.Register(L);
         LuaApiModule.RegisterNamespace(L, "nDebug");
         LuaApiModule.RegisterNamespace(L, "nMathUtil");
         LuaApiModule.RegisterNamespace(L, "nGameDirector");

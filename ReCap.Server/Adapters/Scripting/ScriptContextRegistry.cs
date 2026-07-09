@@ -30,6 +30,11 @@ public interface IScriptGameBridge
     uint AddAttributeModifier(uint objectId, int attributeId, float value);
     uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId);
     uint CreateObject(uint nounId, float x, float y, float z);
+    void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags);
+    IReadOnlyList<uint> GetAggroTargets(uint agentId);
+    bool HasAggroTargets(uint agentId);
+    uint GetBestTarget(uint agentId);
+    bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset);
 }
 
 public readonly record struct AbilityInvocation(

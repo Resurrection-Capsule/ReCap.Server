@@ -88,6 +88,15 @@ internal sealed class FakeBridge : IScriptGameBridge
         CreatedObjects.Add((nounId, x, y, z));
         return ++_nextCreatedId;
     }
+
+    public List<(uint target, uint source, float delta, int hp, ushort flags)> CombatEvents { get; } = new();
+    public void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags)
+        => CombatEvents.Add((targetId, sourceId, deltaHealth, integerHpChange, flags));
+
+    public IReadOnlyList<uint> GetAggroTargets(uint agentId) => agentId == 10 ? new uint[] { 55 } : System.Array.Empty<uint>();
+    public bool HasAggroTargets(uint agentId) => agentId == 10;
+    public uint GetBestTarget(uint agentId) => agentId == 10 ? 55u : 0u;
+    public bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset) => agentId == 10;
 }
 
 public class GameBridgeTests
