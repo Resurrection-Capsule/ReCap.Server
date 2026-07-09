@@ -53,7 +53,10 @@ public sealed class GameObject
     public float DesiredStopDistance { get; set; }
 
     public const float DefaultMoveSpeed = 5.0f;
+    public const float DefaultPerceptionRadius = 15f;
     public ObjectDirtyFlags DirtyFlags { get; set; }
+    // Non-null iff this object is an AI agent (mirrors cAgentBlackboard at client obj+0x2b0).
+    public AI.AgentBlackboard? Agent { get; set; }
 }
 
 public sealed class ObjectManager
@@ -133,6 +136,10 @@ public sealed class ObjectManager
         // TriggerVolumes bypass Initialize entirely (no locomotion). Static nouns default to false.
         if (!playerControlled && noun?.FindByName("hasLocomotion").AsBool() == true)
             obj.DirtyFlags = ObjectDirtyFlags.Locomotion;
+
+        // AI agent = non-player noun with a resolved AIDefinition (the client's obj+0x2b0 gate).
+        if (!playerControlled && aiDef is not null)
+            obj.Agent = new AI.AgentBlackboard { PerceptionRadius = GameObject.DefaultPerceptionRadius };
 
         _objects[objectId] = obj;
         return obj;
