@@ -18,6 +18,9 @@ namespace ReCap.Server.Adapters.Rest.Api;
 [RestController(Value="/game/api", ContentType="text/xml")]
 public class GameRestController
 {
+    // server_tuning item-store offer window (seconds). Server-authored tuning; 24h default.
+    private const int ItemstoreOfferPeriodSeconds = 24 * 60 * 60;
+
     private AccountMapper accountMapper;
     private AccountService accountService;
     private CreatureMapper creatureMapper;
@@ -84,19 +87,26 @@ public class GameRestController
         }
 
         if (includeSettings) {
+            // Client parses <settings> generically (each key -> store; "on"/"off"/int),
+            // ClientRest::OnAccountResponse settings loop (Ghidra @0x00469190). Emit the
+            // modelled toggles so the client has real values instead of an empty block.
             response.Settings = new SettingsContract{
-                // ShowConfigAlerts = true ? "on" : "off",
-                // Cheat = true ? "on" : "off",
-                // SafeMode = true ? "on" : "off"
+                ShowConfigAlerts = "on",
+                Cheat = "off",
+                SafeMode = "off"
             };
         }
 
         if (includeServerTuning) {
-            int timestamp = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            // server_tuning = item-store economy config the client reads to price/refresh the vendor
+            // (ClientRest::ParseServerTuningBlock @0x0045f8a0): offer_period = the offer window in
+            // SECONDS; current_expiration = unix SECONDS when the current offer set expires; the 7
+            // cost multipliers are per-rarity pricing. Server-authored tuning (defaults for now).
+            int nowUnix = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             response.ServerTuning = new ServerTuningContract{
-                ItemstoreOfferPeriod = timestamp,
-                ItemstoreCurrentExpiration = timestamp + (3 * 60 * 60 * 1000),
-                ItemstoreCostMultiplierBasic = 1,
+                ItemstoreOfferPeriod = ItemstoreOfferPeriodSeconds,
+                ItemstoreCurrentExpiration = nowUnix + ItemstoreOfferPeriodSeconds,
+                ItemstoreCostMultiplierBasic = 1.0,
                 ItemstoreCostMultiplierUncommon = 1.1,
                 ItemstoreCostMultiplierRare = 1.2,
                 ItemstoreCostMultiplierEpic = 1.3,

@@ -15,7 +15,7 @@ public class ServerTuningContract {
     public int? ItemstoreCurrentExpiration { get; set; }
 
     [XmlElement(ElementName = "itemstore_cost_multiplier_basic")]
-    public int? ItemstoreCostMultiplierBasic { get; set; }
+    public double? ItemstoreCostMultiplierBasic { get; set; }
 
     [XmlElement(ElementName = "itemstore_cost_multiplier_uncommon")]
     public double? ItemstoreCostMultiplierUncommon { get; set; }
