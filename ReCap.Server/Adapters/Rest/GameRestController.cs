@@ -464,7 +464,10 @@ public class GameRestController
     [RequestMapping(Name="api.game.exitGame")]
     public byte[]? exitGame(HttpListenerContext context, Dictionary<string,string> parameters)
     {
-        return null;
+        // Client response handler is a no-op (ignores the body); return a valid ack, not an empty body.
+        return XmlHelper.Serialize(new ResponseContract{
+            Stat = "ok", Version = ServerConfig.GameVersionStr, Timestamp = 1, ExecTime = 1
+        });
     }
 
     [RequestMapping(Name="api.game.getGame")]
