@@ -114,6 +114,11 @@ public class SchedulerPredicateTests
         public uint CreateObject(uint n, float x, float y, float z) => 0;
         public void BroadcastCombatEvent(uint target, uint source, float delta, int hp, ushort flags) { }
         public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds) { }
+        public uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank) => 0;
+        public bool RemoveModifier(uint instanceId) => false;
+        public uint FindModifierByGuid(uint targetId, uint modifierGuid) => 0;
+        public int GetModifierStackCount(uint instanceId) => 0;
+        public int IncrementModifierStack(uint instanceId) => 0;
         public IReadOnlyList<uint> GetAggroTargets(uint a) => System.Array.Empty<uint>();
         public bool HasAggroTargets(uint a) => false;
         public uint GetBestTarget(uint a) => 0;

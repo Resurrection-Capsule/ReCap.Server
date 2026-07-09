@@ -328,6 +328,48 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             GlobalCooldown = 0,
         });
 
+    // Modifier lifecycle (nModifier.RequestModifier / MarkForDelete / GetFirstModifierByGUID).
+    // Create allocates a server-side instance and replicates it via 0xA2 ModifierCreated. The 37B
+    // layout's uncertain fields (overdrive/stackCount, timestamp, source obj) are left at the safe
+    // C++-lead defaults; icon comes from modifierGuid (+0x04). DoT/attribute tick execution deferred.
+    public uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank)
+    {
+        var instance = _game.Modifiers.Create(targetId, casterId, modifierGuid, rank);
+        _game.BroadcastModifierCreated(new ReCap.Server.Adapters.RakNet.Packets.ModifierCreatedPacket
+        {
+            TargetId = targetId,
+            ModifierGuid = modifierGuid,
+            InstanceId = instance.InstanceId,
+            StackCount = (uint)instance.StackCount,
+        });
+        return instance.InstanceId;
+    }
+
+    public bool RemoveModifier(uint instanceId)
+    {
+        if (_game.Modifiers.Get(instanceId) is not { } instance) return false;
+        var targetId = instance.TargetId;
+        if (!_game.Modifiers.Remove(instanceId)) return false;
+        _game.BroadcastModifierDeleted(new ReCap.Server.Adapters.RakNet.Packets.ModifierDeletedPacket
+        {
+            TargetId = targetId,
+            InstanceId = instanceId,
+        });
+        return true;
+    }
+
+    public uint FindModifierByGuid(uint targetId, uint modifierGuid) =>
+        _game.Modifiers.FindByGuid(targetId, modifierGuid)?.InstanceId ?? 0u;
+
+    public int GetModifierStackCount(uint instanceId) =>
+        _game.Modifiers.Get(instanceId)?.StackCount ?? 0;
+
+    public int IncrementModifierStack(uint instanceId)
+    {
+        if (_game.Modifiers.Get(instanceId) is not { } instance) return 0;
+        return ++instance.StackCount;
+    }
+
     public IReadOnlyList<uint> GetAggroTargets(uint agentId)
         => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
             ? bb.AggroList.Select(e => e.ObjectId).ToList() : [];

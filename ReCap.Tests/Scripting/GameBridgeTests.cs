@@ -105,6 +105,25 @@ internal sealed class FakeBridge : IScriptGameBridge
     public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds)
         => CooldownUpdates.Add((objectId, abilityId, cooldownSeconds));
 
+    public readonly ReCap.Server.Domain.Gameplay.ModifierSystem Modifiers = new();
+    public List<(uint target, uint caster, uint guid, int rank, uint instanceId)> ModifiersCreated { get; } = new();
+    public List<uint> ModifiersDeleted { get; } = new();
+    public uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank)
+    {
+        var inst = Modifiers.Create(targetId, casterId, modifierGuid, rank);
+        ModifiersCreated.Add((targetId, casterId, modifierGuid, rank, inst.InstanceId));
+        return inst.InstanceId;
+    }
+    public bool RemoveModifier(uint instanceId)
+    {
+        if (!Modifiers.Remove(instanceId)) return false;
+        ModifiersDeleted.Add(instanceId);
+        return true;
+    }
+    public uint FindModifierByGuid(uint targetId, uint modifierGuid) => Modifiers.FindByGuid(targetId, modifierGuid)?.InstanceId ?? 0;
+    public int GetModifierStackCount(uint instanceId) => Modifiers.Get(instanceId)?.StackCount ?? 0;
+    public int IncrementModifierStack(uint instanceId) { if (Modifiers.Get(instanceId) is { } m) return ++m.StackCount; return 0; }
+
     public IReadOnlyList<uint> GetAggroTargets(uint agentId) => agentId == 10 ? new uint[] { 55 } : System.Array.Empty<uint>();
     public bool HasAggroTargets(uint agentId) => agentId == 10;
     public uint GetBestTarget(uint agentId) => agentId == 10 ? 55u : 0u;
@@ -131,6 +150,32 @@ public class GameBridgeTests
         b.SetLocomotionGoal(10, 1, 2, 3, 0.5f);
         Assert.Equal((10u, 1f, 2f, 3f, 0.5f), b.LastGoal);
         Assert.Equal(7.5f, b.GetModifiedMoveSpeed(10));
+    }
+
+    [Fact]
+    public void RequestModifierCreatesInstanceQueryableByGuidThenDeletable()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var bridge = new FakeBridge();
+        ScriptContextRegistry.Get(rt.L)!.GameBridge = bridge;
+
+        // GetAsset boxes the guid as a lossy float32; RequestModifier/GetFirstModifierByGUID must
+        // recover the exact hash so the created instance is found by the same guid.
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local guid = nUtil.GetAsset("SproutPoison")
+            local id = nModifier.RequestModifier(10, 2, guid)
+            if id == 0 then return false end
+            if nModifier.GetFirstModifierByGUID(10, guid) ~= id then return false end
+            if not nModifier.AgentHasModifierMatchingGUID(10, guid) then return false end
+            nModifier.MarkForDelete(id)
+            return nModifier.GetFirstModifierByGUID(10, guid) == 0
+            """)));
+
+        var created = Assert.Single(bridge.ModifiersCreated);
+        Assert.Equal(10u, created.target);
+        Assert.Equal(2u, created.caster);
+        Assert.Equal(ScriptVfs.Hash("SproutPoison"), created.guid);
+        Assert.Equal(created.instanceId, Assert.Single(bridge.ModifiersDeleted));
     }
 
     [Fact]

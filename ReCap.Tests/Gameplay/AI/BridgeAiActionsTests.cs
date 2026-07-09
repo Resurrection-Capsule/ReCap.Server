@@ -42,6 +42,11 @@ public class BridgeAiActionsTests
         public uint CreateObject(uint nounId, float x, float y, float z) => 0;
         public void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags) { }
         public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds) { }
+        public uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank) => 0;
+        public bool RemoveModifier(uint instanceId) => false;
+        public uint FindModifierByGuid(uint targetId, uint modifierGuid) => 0;
+        public int GetModifierStackCount(uint instanceId) => 0;
+        public int IncrementModifierStack(uint instanceId) => 0;
         public IReadOnlyList<uint> GetAggroTargets(uint agentId) => [];
         public bool HasAggroTargets(uint agentId) => false;
         public uint GetBestTarget(uint agentId) => 0;

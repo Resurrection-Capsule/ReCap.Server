@@ -34,6 +34,11 @@ public interface IScriptGameBridge
     uint CreateObject(uint nounId, float x, float y, float z);
     void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags);
     void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds);
+    uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank);
+    bool RemoveModifier(uint instanceId);
+    uint FindModifierByGuid(uint targetId, uint modifierGuid);
+    int GetModifierStackCount(uint instanceId);
+    int IncrementModifierStack(uint instanceId);
     IReadOnlyList<uint> GetAggroTargets(uint agentId);
     bool HasAggroTargets(uint agentId);
     uint GetBestTarget(uint agentId);
