@@ -315,6 +315,19 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             Flags = flags,
         });
 
+    // CooldownUpdate 0xC1 (UI swirl). Relative form: start=0 → client stamps end = its now + duration.
+    // Cooldown is authored in seconds (matches our scheduler); the client clock is milliseconds, so
+    // scale. global=0 leaves the client's global-cooldown flag untouched.
+    public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds) =>
+        _game.BroadcastCooldownUpdate(new ReCap.Server.Adapters.RakNet.Packets.CooldownUpdatePacket
+        {
+            ObjectId = objectId,
+            AbilityId = abilityId,
+            Duration = (ulong)(cooldownSeconds * 1000f),
+            Start = 0,
+            GlobalCooldown = 0,
+        });
+
     public IReadOnlyList<uint> GetAggroTargets(uint agentId)
         => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
             ? bb.AggroList.Select(e => e.ObjectId).ToList() : [];

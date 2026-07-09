@@ -93,7 +93,10 @@ public static unsafe class NAbilityContextModule
             {
                 var cooldown = ctx.Registry.Find(ScriptKind.Ability, inv.AbilityHash)?.Cooldown ?? 0f;
                 if (cooldown > 0f)
+                {
                     ctx.StampCooldown(inv.AgentId, inv.AbilityHash, (ctx.Scheduler?.Now ?? 0d) + cooldown);
+                    ctx.GameBridge?.SendCooldownUpdate(inv.AgentId, inv.AbilityHash, cooldown);
+                }
             }
         }
         catch { /* cooldown is best-effort; never fail the cast */ }

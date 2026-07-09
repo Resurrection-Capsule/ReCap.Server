@@ -1196,6 +1196,9 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // CombatEvent (0xBA) — floating damage/heal numbers + combat log; one per damage instance.
     public void BroadcastCombatEvent(CombatEventPacket packet) => BroadcastToAllPlayers(packet);
 
+    // CooldownUpdate (0xC1) — ability-button cooldown swirl; sent when an ability with cooldown fires.
+    public void BroadcastCooldownUpdate(CooldownUpdatePacket packet) => BroadcastToAllPlayers(packet);
+
     // nObjectManager.CreateObject: allocate id, spawn server-side, and announce via the existing 0x8C
     // ObjectCreate (client OnGmsObjectCreate @0x0053f550 — reflection envelope, tolerates optional
     // fields) using the wire-verified enemy-shape field set {6,7}. Announce is gated on the noun

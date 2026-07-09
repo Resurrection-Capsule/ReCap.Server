@@ -113,6 +113,7 @@ public class SchedulerPredicateTests
         public void EmitServerEvent(uint fx, uint id, uint attacker, bool critical, System.Numerics.Vector3? position, System.Numerics.Vector3? facing) { }
         public uint CreateObject(uint n, float x, float y, float z) => 0;
         public void BroadcastCombatEvent(uint target, uint source, float delta, int hp, ushort flags) { }
+        public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds) { }
         public IReadOnlyList<uint> GetAggroTargets(uint a) => System.Array.Empty<uint>();
         public bool HasAggroTargets(uint a) => false;
         public uint GetBestTarget(uint a) => 0;

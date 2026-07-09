@@ -33,6 +33,7 @@ public interface IScriptGameBridge
         System.Numerics.Vector3? position, System.Numerics.Vector3? facing);
     uint CreateObject(uint nounId, float x, float y, float z);
     void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags);
+    void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds);
     IReadOnlyList<uint> GetAggroTargets(uint agentId);
     bool HasAggroTargets(uint agentId);
     uint GetBestTarget(uint agentId);

@@ -101,6 +101,10 @@ internal sealed class FakeBridge : IScriptGameBridge
     public void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags)
         => CombatEvents.Add((targetId, sourceId, deltaHealth, integerHpChange, flags));
 
+    public List<(uint objectId, uint abilityId, float cooldown)> CooldownUpdates { get; } = new();
+    public void SendCooldownUpdate(uint objectId, uint abilityId, float cooldownSeconds)
+        => CooldownUpdates.Add((objectId, abilityId, cooldownSeconds));
+
     public IReadOnlyList<uint> GetAggroTargets(uint agentId) => agentId == 10 ? new uint[] { 55 } : System.Array.Empty<uint>();
     public bool HasAggroTargets(uint agentId) => agentId == 10;
     public uint GetBestTarget(uint agentId) => agentId == 10 ? 55u : 0u;
