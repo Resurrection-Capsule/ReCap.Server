@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using AssetData.Parser;
 using AssetData.Parser.Model;
@@ -38,6 +39,34 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     private DateTime _lastTick = DateTime.UtcNow;
 
+    // Inbound gameplay packets are enqueued from the RakNet receive thread and drained here on the
+    // game-loop thread at the top of every Update(). This makes the whole game simulation — packet
+    // handling, object/AI ticks, and all Lua — run single-threaded on the game loop. It removes the
+    // cross-thread lock-ordering deadlock between GameScriptContext._luaGate (held by the game loop
+    // while a broadcast calls RakNexus session.Send → ReliabilityLayer._syncLock) and the receive
+    // thread (holding ReliabilityLayer._syncLock while dispatching → HandlePacket → InvokeAbility →
+    // _luaGate). RakNexus already delivers reliably ordered, so FIFO drain preserves order.
+    private readonly ConcurrentQueue<(RakNetClient Client, IRakNetPacket Packet)> _inbound = new();
+
+    public void EnqueueInbound(RakNetClient client, IRakNetPacket packet) => _inbound.Enqueue((client, packet));
+
+    public int PendingInboundCount => _inbound.Count;
+
+    private void DrainInbound()
+    {
+        while (_inbound.TryDequeue(out var item))
+        {
+            try
+            {
+                HandlePacket(item.Client, item.Packet);
+            }
+            catch (Exception ex)
+            {
+                Log.Game.Error($"HandlePacket({item.Packet.Type}) failed: {ex}");
+            }
+        }
+    }
+
     private uint _nextObjectId = 1;
     private readonly Dictionary<byte, uint> _playerCharacterObjectIds = new();
     private readonly Dictionary<uint, LocomotionData> _objectLocomotion = new();
@@ -58,6 +87,8 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
     public void Update()
     {
+        DrainInbound();
+
         var now = DateTime.UtcNow;
         var delta = (now - _lastTick).TotalSeconds;
         _lastTick = now;

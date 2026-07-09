@@ -112,7 +112,11 @@ public class RakNetServer
 
         if (client.Game is not null)
         {
-            client.Game.HandlePacket(client, packet);
+            // Do NOT handle gameplay packets on the RakNet receive thread: that path runs while
+            // RakNexus holds ReliabilityLayer._syncLock, and HandlePacket → InvokeAbility acquires
+            // GameScriptContext._luaGate, which the game-loop thread holds while broadcasting (Send →
+            // _syncLock) — a lock-ordering deadlock. Enqueue; Game.Update drains on the game loop.
+            client.Game.EnqueueInbound(client, packet);
             return;
         }
 
