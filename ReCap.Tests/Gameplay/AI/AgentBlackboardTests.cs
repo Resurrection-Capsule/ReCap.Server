@@ -1,4 +1,3 @@
-using System.Numerics;
 using ReCap.Server.Domain.Gameplay.AI;
 
 namespace ReCap.Tests.Gameplay.AI;

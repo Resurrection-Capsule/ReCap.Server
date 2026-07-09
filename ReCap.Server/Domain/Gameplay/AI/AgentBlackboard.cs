@@ -9,7 +9,6 @@ public sealed class AgentBlackboard
     private readonly List<AggroEntry> _aggro = new();
 
     public float PerceptionRadius { get; set; }
-    public bool Aggroed { get; set; }
 
     public IReadOnlyList<AggroEntry> AggroList => _aggro;
     public bool HasTargets => _aggro.Count > 0;

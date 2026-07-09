@@ -4,6 +4,7 @@ using ReCap.Server.Adapters.Scripting.Native;
 
 namespace ReCap.Server.Adapters.Scripting.Api;
 
+// nAgent natives (client LuaFunctions::nAgent @0x00a05a90): aggro list + perception over AgentBlackboard.
 public static unsafe class NAgentModule
 {
     public static void Register(nint L)

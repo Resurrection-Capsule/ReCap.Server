@@ -67,7 +67,9 @@ public sealed class ObjectManager
     // a plain Dictionary threw "Collection was modified" and killed Update (2026-06-06 15:51 log).
     private readonly ConcurrentDictionary<uint, GameObject> _objects = new();
     private readonly AI.AggroSystem _aggro;
-    private readonly Dictionary<uint, AI.AIController> _controllers = new();
+    // Same cross-thread hazard as _objects above: AttachController/Remove run on the RakNet
+    // thread while Update enumerates on the game-loop thread.
+    private readonly ConcurrentDictionary<uint, AI.AIController> _controllers = new();
 
     public IReadOnlyDictionary<uint, GameObject> Objects => _objects;
 
@@ -152,7 +154,7 @@ public sealed class ObjectManager
 
     public bool Remove(uint objectId)
     {
-        _controllers.Remove(objectId);
+        _controllers.TryRemove(objectId, out _);
         return _objects.TryRemove(objectId, out _);
     }
 
@@ -168,7 +170,14 @@ public sealed class ObjectManager
         foreach (var (id, controller) in _controllers.ToArray())
         {
             if (!_objects.TryGetValue(id, out var agent) || agent.Dead || agent.Agent is null) continue;
-            controller.Tick(id, _aggro.BestTargetFor(agent));
+            try
+            {
+                controller.Tick(id, _aggro.BestTargetFor(agent));
+            }
+            catch (Exception ex)
+            {
+                ReCap.Server.Util.Logging.Log.Game.Error($"AI controller {id} tick failed: {ex}");
+            }
         }
     }
 }
