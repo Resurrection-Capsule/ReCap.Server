@@ -30,7 +30,7 @@ No length prefix — client reads to EOF. Total: 1 byte opcode + 4×N body.
 
 ## C++ writer (single)
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1518-1530`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1518-1530`:
 
 ```cpp
 void Server::SendObjectDelete(const ClientPtr& client, const Game::ObjectPtr& object) {

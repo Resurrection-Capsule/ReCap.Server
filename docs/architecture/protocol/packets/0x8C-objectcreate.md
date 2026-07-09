@@ -22,7 +22,7 @@ Variable size; both `WriteReflection` calls emit bitmap + present fields per [RE
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1442-1499`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1442-1499`:
 
 ```cpp
 void Server::SendObjectCreate(const ClientPtr& client, const Game::ObjectPtr& object) {

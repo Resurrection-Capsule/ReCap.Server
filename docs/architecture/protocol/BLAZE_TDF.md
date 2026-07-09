@@ -413,10 +413,10 @@ See [Phase 01](../flow/phases/01-redirector.md), [Phase 02](../flow/phases/02-bl
 ## Files referenced
 
 C++:
-- `recap_server_develop/darkspore_server/source/Blaze/TDF.h` (`enum Type`, `Header`, `Packet`, `Parser`)
-- `recap_server_develop/darkspore_server/source/Blaze/Packet.cpp` (`CompressLabel`, `DecompressLabel`, `Packet` ctor, `encode_integer`/`decode_integer`, `write_string`/`read_string`)
-- `recap_server_develop/darkspore_server/source/Blaze/Component/RedirectorComponent.cpp` (concrete `push_list`/`push_struct` usage, `WriteServerAddressInfo`)
-- `recap_server_develop/darkspore_server/source/Blaze/Component/UtilComponent.cpp` (`WritePostAuth` etc.)
+- `ReCap.Cpp/darkspore_server/source/Blaze/TDF.h` (`enum Type`, `Header`, `Packet`, `Parser`)
+- `ReCap.Cpp/darkspore_server/source/Blaze/Packet.cpp` (`CompressLabel`, `DecompressLabel`, `Packet` ctor, `encode_integer`/`decode_integer`, `write_string`/`read_string`)
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/RedirectorComponent.cpp` (concrete `push_list`/`push_struct` usage, `WriteServerAddressInfo`)
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/UtilComponent.cpp` (`WritePostAuth` etc.)
 
 C#:
 - `ReCap.Server/Adapters/Blaze/Tdf.cs` (`TdfType` enum, `LabelToTag`, base `Tdf` class)

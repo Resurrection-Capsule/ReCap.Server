@@ -1,7 +1,7 @@
 # GameReporting Component — 0x1C
 
 End-of-match telemetry component. C#-only skeleton: no `GameReportingComponent.cpp` exists under
-`ReCapCpp/darkspore_server/source/Blaze/Component/`. The C++ reference names the component in an
+`ReCap.Cpp/darkspore_server/source/Blaze/Component/`. The C++ reference names the component in an
 **"unused components"** enum and defines its error-code space, but deliberately never wires it into
 the dispatcher. All C++ cells are `— (no reference)` throughout. Not on the solo login path;
 **zero** GameReporting messages appear in a complete WORKING C++ runtime log.

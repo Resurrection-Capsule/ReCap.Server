@@ -190,7 +190,7 @@ OFFLINE_MESSAGE_DATA_ID = { 00 FF FF 00 FE FE FE FE FD FD FD FD 12 34 56 78 }
 
 Read both sides side-by-side. Sources:
 
-- Upstream RakNet 3.92 (Darkspore client + C++ server): `recap_server_develop/darkspore_server/build/_deps/raknet-src/Source/ReliabilityLayer.cpp`, `BitStream.cpp`, `DS_RangeList.h`, `MTUSize.h`, `PacketPriority.h`, `InternalPacket.h`, `RakNetDefines.h`, `CCRakNetSlidingWindow.h`.
+- Upstream RakNet 3.92 (Darkspore client + C++ server): `ReCap.Cpp/darkspore_server/build/_deps/raknet-src/Source/ReliabilityLayer.cpp`, `BitStream.cpp`, `DS_RangeList.h`, `MTUSize.h`, `PacketPriority.h`, `InternalPacket.h`, `RakNetDefines.h`, `CCRakNetSlidingWindow.h`.
 - RakNexus: `lib/RakNexus/src/Protocol/{ReliabilityLayer,DatagramHeader,InternalPacket,FrameFlags,PacketEnums}.cs`, `src/Core/RakConstants.cs`.
 
 ### Build-time switches that change the wire
@@ -375,10 +375,10 @@ RakNexus does **NOT** downconvert (`ReliabilityLayer.cs:580`). Combined with `Ra
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp`
-- `recap_server_develop/darkspore_server/source/RakNet/Server.h`
-- `recap_server_develop/darkspore_server/source/RakNet/Client.cpp`
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.h`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.cpp`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h`
 
 C#:
 

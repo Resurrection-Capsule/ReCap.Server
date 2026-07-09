@@ -311,10 +311,10 @@ C# `ChainVoteMsgsPacket.cs:47`: `writer.Write(StayInParty);` — 1 byte body.
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp`
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h`
-- `recap_server_develop/darkspore_server/source/RakNet/Types.cpp` (`ChainVoteData::WriteTo`)
-- `recap_server_develop/darkspore_server/source/Blaze/Component/GameManagerComponent.cpp` (`ResetDedicatedServer` calls `chainData.SetLevelByIndex` + `LoadLevel`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.cpp` (`ChainVoteData::WriteTo`)
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/GameManagerComponent.cpp` (`ResetDedicatedServer` calls `chainData.SetLevelByIndex` + `LoadLevel`)
 
 C#:
 

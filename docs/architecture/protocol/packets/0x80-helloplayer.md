@@ -23,7 +23,7 @@ Total: 10 bytes payload + 1 byte opcode = **11 bytes** on the wire (or 12 if acc
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1235-1266`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1235-1266`:
 
 ```cpp
 void Server::SendHelloPlayer(const ClientPtr& client) {

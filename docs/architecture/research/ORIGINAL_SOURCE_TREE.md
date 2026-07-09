@@ -4,7 +4,7 @@ Reconstructed from a screenshot shared by **foehammer (David Lee Swenson)**, an 
 
 > **Provenance:** File Explorer screenshot of `D:\work\darkspore\ml` on foehammer's machine. Solution files dated **2012-01-09** (last edited), `.ncb`/`.suo` **2014-10-06**, folders stamped **2015-03-22** (likely an archival copy). Toolchain: **Visual Studio 2008**.
 >
-> **Status:** transcription + annotation. Folder *contents* are not visible — purposes below are **inferred** (confidence marked) from the folder name, Darkspore/Spore engine knowledge, and cross-checks against the C++ reference server (`ReCapCpp/darkspore_server/source`) and our Ghidra findings. Treat unverified rows as leads to confirm via Ghidra / the C++ reference, not facts. (foehammer is unreachable — every "ask him" path is closed; verification is on us.)
+> **Status:** transcription + annotation. Folder *contents* are not visible — purposes below are **inferred** (confidence marked) from the folder name, Darkspore/Spore engine knowledge, and cross-checks against the C++ reference server (`ReCap.Cpp/darkspore_server/source`) and our Ghidra findings. Treat unverified rows as leads to confirm via Ghidra / the C++ reference, not facts. (foehammer is unreachable — every "ask him" path is closed; verification is on us.)
 
 ---
 

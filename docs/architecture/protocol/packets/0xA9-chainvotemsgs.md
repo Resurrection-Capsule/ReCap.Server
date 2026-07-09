@@ -37,7 +37,7 @@ Dispatched on the wire ID `0xA9` regardless of which logical content follows. Dr
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2140-2182`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2140-2182`:
 
 ```cpp
 void Server::SendChainVoteMessages(const ClientPtr& client, uint8_t value) {

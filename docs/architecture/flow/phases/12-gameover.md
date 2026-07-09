@@ -187,11 +187,11 @@ private void OnPartyWipe(RakNetClient sender)
 ## Files referenced
 
 C++:
-- `recap_server_develop/darkspore_server/source/RakNet/Client.h` (`GameState` enum)
-- `recap_server_develop/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.h` (`PacketID` 0xAD / 0xAE)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp` (`SendChainGame`, commented call sites at 1164/1188/1199/2105)
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h` (PacketID enum)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.h` (`GameState` enum)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.h` (`PacketID` 0xAD / 0xAE)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp` (`SendChainGame`, commented call sites at 1164/1188/1199/2105)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h` (PacketID enum)
 
 C#:
 - `ReCap.Server/Domain/Gameplay/GameplayState.cs` (missing `GameOver`, `Quit`)

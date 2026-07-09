@@ -40,7 +40,7 @@ Subtypes `1`, `2`, `6` are unused/unknown.
 
 ## C++ reader
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:688-984` — large switch. Excerpt:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:688-984` — large switch. Excerpt:
 
 ```cpp
 void Server::OnActionCommandMsgs(const ClientPtr& client) {

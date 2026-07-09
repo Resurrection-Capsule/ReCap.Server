@@ -20,7 +20,7 @@ Total: 1 byte opcode + 4 byte body = **5 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1268-1277`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1268-1277`:
 
 ```cpp
 void Server::SendReconnectPlayer(const ClientPtr& client, GameState gameState) {

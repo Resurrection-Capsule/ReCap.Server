@@ -1,6 +1,6 @@
 # VERIFIED FACTS — the only trusted protocol truths
 
-Every entry here is backed by **evidence**: a C++ `file:line` cite (tree root `C:\CodingProjects\Personal\ReCapCpp\darkspore_server\source`) and/or a wire capture frame. Nothing enters this file on the word of an old doc or memory. If a claim isn't here with a cite, treat it as **unverified** and confirm before relying on it.
+Every entry here is backed by **evidence**: a C++ `file:line` cite (tree root `C:\CodingProjects\Personal\ReCap.Cpp\darkspore_server\source`) and/or a wire capture frame. Nothing enters this file on the word of an old doc or memory. If a claim isn't here with a cite, treat it as **unverified** and confirm before relying on it.
 
 Created 2026-05-31 as part of the Phase-0 hard reset (see `docs/superpowers/specs/2026-05-31-port-fidelity-plan-design.md`). Replaces the deleted dogma docs (`PARITY.md`, `ENDIANNESS.md`) and the CLAUDE.md FROZEN section.
 
@@ -97,7 +97,7 @@ Handler `ClientNet::OnGmsServerEvent` @0x0053ec80; registrar `AssetData::Registe
 
 ## Capture build ≠ source tree (CRITICAL methodology note, 2026-05-31)
 
-The working C++ server is a **prebuilt binary** (`…/Darkspore/DarksporeBin/Server/`) that does NOT necessarily match the `ReCapCpp` **source tree** — they have drifted. Proven by the objectives packet: the `cpp_loopback` capture's `ObjectivesInitForLevel` (0xB7) is **37 bytes** = `u8 count(5) + 5×(u32 id + u24 value)` (**7 bytes/objective**), whereas `ReCapCpp` source `Objective::WriteTo` (Types.cpp:1335) writes **56 bytes/objective** (id + u32 value + 0x30 description). The 5 capture ids match the FNV-1 hashes of the 5 hardcoded objective names exactly (FinishLevelQuickly=0xFF9733EE, DoDamageOften=0xAC4273F3, TouchAllObelisks=0x61C07561, DefeatAllMonsters=0xA28485CC, HugeDamage=0x0478FACB), so it IS the objectives packet — just a different wire format.
+The working C++ server is a **prebuilt binary** (`…/Darkspore/DarksporeBin/Server/`) that does NOT necessarily match the `ReCap.Cpp` **source tree** — they have drifted. Proven by the objectives packet: the `cpp_loopback` capture's `ObjectivesInitForLevel` (0xB7) is **37 bytes** = `u8 count(5) + 5×(u32 id + u24 value)` (**7 bytes/objective**), whereas `ReCap.Cpp` source `Objective::WriteTo` (Types.cpp:1335) writes **56 bytes/objective** (id + u32 value + 0x30 description). The 5 capture ids match the FNV-1 hashes of the 5 hardcoded objective names exactly (FinishLevelQuickly=0xFF9733EE, DoDamageOften=0xAC4273F3, TouchAllObelisks=0x61C07561, DefeatAllMonsters=0xA28485CC, HugeDamage=0x0478FACB), so it IS the objectives packet — just a different wire format.
 - **Consequence:** for wire-format fidelity, the **capture is the ground truth**, not the source tree (the binary that actually drives the client is what matters). The source is a guide that may have regressed. Formats that did NOT drift (Character/LPU block, hero ObjectCreate {0,1,3,17}) matched both; objectives drifted.
 - **C# bug (high crash suspicion):** C# `ObjectiveData.WriteTo` emits 56-byte entries (id + u32 value + 48-byte description) → 282B ObjectivesInit, but the client (per the working capture) expects **7-byte entries (u32 id + u24 value)** → 37B. The 282B desyncs the client's per-objective read. Pending exact client-parse confirmation (Ghidra OnGms 0xB7 handler).
 

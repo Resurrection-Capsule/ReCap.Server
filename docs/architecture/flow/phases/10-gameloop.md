@@ -316,11 +316,11 @@ C# does **not** implement runtime SwapCharacter (Phase 09 finding). Action subty
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp` (`run_one`, `OnActionCommandMsgs`, `OnCrystalDragMessage`, `OnLootDropMessage`, broadcasts)
-- `recap_server_develop/darkspore_server/source/Game/Instance.cpp` (`Update`, `MoveObject`, `UseAbility`, `SwapCharacter`, `DropLoot`, `DropCatalyst`)
-- `recap_server_develop/darkspore_server/source/Game/ObjectManager.cpp` (`Update`)
-- `recap_server_develop/darkspore_server/source/Game/Lua.cpp`
-- `recap_server_develop/darkspore_server/source/Game/ServerEvent.h`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp` (`run_one`, `OnActionCommandMsgs`, `OnCrystalDragMessage`, `OnLootDropMessage`, broadcasts)
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.cpp` (`Update`, `MoveObject`, `UseAbility`, `SwapCharacter`, `DropLoot`, `DropCatalyst`)
+- `ReCap.Cpp/darkspore_server/source/Game/ObjectManager.cpp` (`Update`)
+- `ReCap.Cpp/darkspore_server/source/Game/Lua.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/ServerEvent.h`
 
 C#:
 

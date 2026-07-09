@@ -22,7 +22,7 @@ Total: 1 byte opcode + 8 byte body = **9 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2264-2272`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2264-2272`:
 
 ```cpp
 void Server::SendPartyMergeComplete(const ClientPtr& client) {

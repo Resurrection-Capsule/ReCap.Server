@@ -19,9 +19,9 @@ Priority of sources, in order:
    ground truth. This beat Ghidra twice historically and did so again here (see `nBit.Mask`).
 2. **Ghidra client (`Darkspore.exe`)** — the arbiter for *state semantics* + wire, because
    these natives live in the client, not the (divergent) C++ reference.
-3. **C++ reference (`ReCapCpp`, dalkon)** — cross-check only. Heavily modified/divergent.
+3. **C++ reference (`ReCap.Cpp`, dalkon)** — cross-check only. Heavily modified/divergent.
    Every claim from it is flagged `dalkon-approx`. Where it and Ghidra/disasm disagree,
-   ReCapCpp is wrong. (Confirmed this round: dalkon's `GetPrivateTable`,
+   ReCap.Cpp is wrong. (Confirmed this round: dalkon's `GetPrivateTable`,
    `WaitForHitpointsAbove`, `SetAttributeSnapshot` are incomplete stubs — do not copy.)
 
 **Operational caveat discovered this round:** subagents generally could **not** invoke the

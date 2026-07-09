@@ -23,7 +23,7 @@ First gameplay-wire packet from the client after RakNet handshake. Carries the B
 
 ## C++ reader
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:596-641`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:596-641`:
 
 ```cpp
 void Server::OnHelloPlayerRequest(const ClientPtr& client) {

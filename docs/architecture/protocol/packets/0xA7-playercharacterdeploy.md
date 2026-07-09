@@ -24,7 +24,7 @@ Total: 1 byte opcode + 9 byte body = **10 bytes**. C++ comment says "Packet size
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1421-1440`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1421-1440`:
 
 ```cpp
 void Server::SendPlayerCharacterDeploy(const ClientPtr& client, const Game::PlayerPtr& player, uint32_t creatureIndex) {

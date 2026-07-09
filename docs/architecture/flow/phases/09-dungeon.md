@@ -352,11 +352,11 @@ For completeness — if a future send path switches from `WriteReflection` to `W
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp` (`OnDebugPing`, `SendGameStart`, `SendDirectorState`, `SendQuickGame`, `SendObjectivesInitForLevel`, `SendObjectiveUpdate`, `SendObjectCreate`, `SendPlayerCharacterDeploy`)
-- `recap_server_develop/darkspore_server/source/Game/Instance.cpp` (`OnPlayerStart`, `SwapCharacter`)
-- `recap_server_develop/darkspore_server/source/Game/Level.cpp` (`Markerset`, `LoadLevel`)
-- `recap_server_develop/darkspore_server/source/Game/Lua.cpp` (`PreloadAbilities`)
-- `recap_server_develop/darkspore_server/source/Game/Object.cpp` (`Object` lifecycle)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp` (`OnDebugPing`, `SendGameStart`, `SendDirectorState`, `SendQuickGame`, `SendObjectivesInitForLevel`, `SendObjectiveUpdate`, `SendObjectCreate`, `SendPlayerCharacterDeploy`)
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.cpp` (`OnPlayerStart`, `SwapCharacter`)
+- `ReCap.Cpp/darkspore_server/source/Game/Level.cpp` (`Markerset`, `LoadLevel`)
+- `ReCap.Cpp/darkspore_server/source/Game/Lua.cpp` (`PreloadAbilities`)
+- `ReCap.Cpp/darkspore_server/source/Game/Object.cpp` (`Object` lifecycle)
 
 C#:
 

@@ -12,7 +12,7 @@ full C++ source tree grep (zero matches for `0x2678`, `9880`, `2678`), C# implem
 ## Component identity
 
 - **C# registration:** `Id => 0x2678` (9880 decimal). Instantiated and attached to lobby Blaze dispatcher. `[V]` `UnknownComponent1.cs:7`, `BlazeServer.cs:71`
-- **C++ absence:** Component ID `0x2678` does NOT appear in the C++ reference. Enum `ComponentType` lists only historical/unused ids: Stats 0x07, CensusData 0x0A, Clubs 0x0B, GameReporting 0x1C, RSP 0x801, Teams 0x816. `ComponentManager::Get` wires only 9 live handlers (Auth/GameManager/Redirector/Playgroups/Util/Messaging/Rooms/Association/UserSession); all others return `nullptr`. `[V]` `ReCapCpp/darkspore_server/source/Blaze/Component.cpp:16-94`
+- **C++ absence:** Component ID `0x2678` does NOT appear in the C++ reference. Enum `ComponentType` lists only historical/unused ids: Stats 0x07, CensusData 0x0A, Clubs 0x0B, GameReporting 0x1C, RSP 0x801, Teams 0x816. `ComponentManager::Get` wires only 9 live handlers (Auth/GameManager/Redirector/Playgroups/Util/Messaging/Rooms/Association/UserSession); all others return `nullptr`. `[V]` `ReCap.Cpp/darkspore_server/source/Blaze/Component.cpp:16-94`
 - **Zero hits in C++ source tree.** Grep `/darkspore_server/source` for `0x2678`, `9880`, `2678` → no matches. `[V]`
 - **Fallback name.** C# class name "UnknownComponent1" mirrors the C++ base `Component::GetName()` fallback, which literally returns `"UnknownComponent"`. `[V]` `Component.cpp:32-34`. The name is a placeholder, not a decoded real identity.
 - **No other unknown siblings.** Only `UnknownComponent1.cs` exists in the component directory; no `UnknownComponent2` or variants. `[V]`

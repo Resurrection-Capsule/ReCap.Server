@@ -275,7 +275,7 @@ DebugPing (Dungeon)                     →  OnPlayerStart:
 
 ## 5. C++ reference — authoritative deploy/HUD flow
 
-Source: `C:\CodingProjects\Personal\ReCapCpp\darkspore_server\source`.
+Source: `C:\CodingProjects\Personal\ReCap.Cpp\darkspore_server\source`.
 
 ```
 OnChainPlayerMsgs(byteCount=6) → PrepareGameStart(client, unknown, squadId):   Server.cpp:1208

@@ -16,7 +16,7 @@ Server's first packet to the client immediately after `ID_NEW_INCOMING_CONNECTIO
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1279-1286`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1279-1286`:
 
 ```cpp
 void Server::SendConnected(const ClientPtr& client) {

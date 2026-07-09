@@ -392,9 +392,9 @@ The server side looks healthy. The client is stuck in its own asset/Lua loading 
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp` (`OnChainPlayerMsgs`, `PrepareGameStart`, `SendGamePrepareForStart`, `OnPlayerStatusUpdate`)
-- `recap_server_develop/darkspore_server/source/Game/Player.cpp` (`SetSquad`, `SetStatus`, `ResetUpdateBits`)
-- `recap_server_develop/darkspore_server/source/Game/Character.cpp` (ctor + setters)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp` (`OnChainPlayerMsgs`, `PrepareGameStart`, `SendGamePrepareForStart`, `OnPlayerStatusUpdate`)
+- `ReCap.Cpp/darkspore_server/source/Game/Player.cpp` (`SetSquad`, `SetStatus`, `ResetUpdateBits`)
+- `ReCap.Cpp/darkspore_server/source/Game/Character.cpp` (ctor + setters)
 
 C#:
 

@@ -386,12 +386,12 @@ If the full redesign is too big to take in one go, these standalone fixes alread
 
 C++ (mirror for the redesign):
 
-- `recap_server_develop/darkspore_server/source/Game/Noun.h` (`NounDatabase` interface, lines 695-731)
-- `recap_server_develop/darkspore_server/source/Game/Noun.cpp` (`LoadNouns`, `LoadNonPlayerClasses`, etc., lines 993+)
-- `recap_server_develop/darkspore_server/source/Game/Level.h` (`Level`, `Markerset`, `LevelConfig`)
-- `recap_server_develop/darkspore_server/source/Game/Level.cpp` (`Level::Load`, `Markerset::Load`)
-- `recap_server_develop/darkspore_server/source/Game/AssetData/DBPFManager.h` (planned generic adapter, currently dormant)
-- `recap_server_develop/darkspore_server/source/Main.cpp:155-198` (background warm-up)
+- `ReCap.Cpp/darkspore_server/source/Game/Noun.h` (`NounDatabase` interface, lines 695-731)
+- `ReCap.Cpp/darkspore_server/source/Game/Noun.cpp` (`LoadNouns`, `LoadNonPlayerClasses`, etc., lines 993+)
+- `ReCap.Cpp/darkspore_server/source/Game/Level.h` (`Level`, `Markerset`, `LevelConfig`)
+- `ReCap.Cpp/darkspore_server/source/Game/Level.cpp` (`Level::Load`, `Markerset::Load`)
+- `ReCap.Cpp/darkspore_server/source/Game/AssetData/DBPFManager.h` (planned generic adapter, currently dormant)
+- `ReCap.Cpp/darkspore_server/source/Main.cpp:155-198` (background warm-up)
 
 C# (today):
 

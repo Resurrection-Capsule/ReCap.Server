@@ -270,14 +270,14 @@ C# (`UtilComponent.cs:92-122`):
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Blaze/Component/AuthComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/AuthComponent.h`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/UserSessionComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/UserSessionComponent.h`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/UtilComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/UtilComponent.h`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/CensusDataComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/CensusDataComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/AuthComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/AuthComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/UserSessionComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/UserSessionComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/UtilComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/UtilComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/CensusDataComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/CensusDataComponent.h`
 
 C#:
 

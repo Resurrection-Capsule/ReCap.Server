@@ -22,7 +22,7 @@ Total: 1 byte opcode + 1 byte body = **2 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1297-1304`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1297-1304`:
 
 ```cpp
 void Server::SendPlayerDeparted(const ClientPtr& client) {

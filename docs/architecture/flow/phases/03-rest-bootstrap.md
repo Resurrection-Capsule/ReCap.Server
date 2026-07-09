@@ -256,11 +256,11 @@ The launcher uses `/game/service/png` URLs in default Darkspore client builds. T
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Game/API.cpp`
-- `recap_server_develop/darkspore_server/source/Game/API.h`
-- `recap_server_develop/darkspore_server/source/HTTP/Router.cpp`
-- `recap_server_develop/darkspore_server/source/HTTP/Server.cpp`
-- `recap_server_develop/darkspore_server/source/HTTP/Session.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/API.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/API.h`
+- `ReCap.Cpp/darkspore_server/source/HTTP/Router.cpp`
+- `ReCap.Cpp/darkspore_server/source/HTTP/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/HTTP/Session.cpp`
 
 C#:
 

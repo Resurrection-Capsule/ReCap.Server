@@ -7,7 +7,7 @@ mapped in ReCap, what the C++ reference does, and what the client expects.
 - **C#** — `ReCap.Server/Adapters/RakNet/PacketType.cs` (enum, complete 0x7F–0xCC),
   `Packets/` (implemented classes), `PacketActivator.cs` (inbound parse),
   `Game.HandlePacket` + `RakNetServer` (inbound dispatch).
-- **C++ (ground truth)** — `ReCapCpp/.../RakNet/Server.cpp`; dispatch switch
+- **C++ (ground truth)** — `ReCap.Cpp/.../RakNet/Server.cpp`; dispatch switch
   `Server::ParseSporeNetPackets` (Server.cpp:458).
 - **Client (Darkspore.exe in Ghidra)** — `nSporeNet` transport; `kGms*` name table at
   `0x01036410+`; per-message `OnGms*` handlers. Confirms our enum names 1:1.

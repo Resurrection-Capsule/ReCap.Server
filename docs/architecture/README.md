@@ -45,7 +45,7 @@ architecture/
 
 | Document | Purpose |
 |---|---|
-| [`FLOW_CPP.md`](flow/FLOW_CPP.md) | Authoritative C++ flow. Event sequence from boot to gameplay loop, with mermaid diagrams and `file:line` citations into `recap_server_develop/`. |
+| [`FLOW_CPP.md`](flow/FLOW_CPP.md) | Authoritative C++ flow. Event sequence from boot to gameplay loop, with mermaid diagrams and `file:line` citations into `ReCap.Cpp/`. |
 | [`FLOW_CSHARP.md`](flow/FLOW_CSHARP.md) | Current C# flow (`ReCap.Server/`). Same phase structure; gaps and deviations annotated. |
 | [`PORTING_MATRIX.md`](planning/PORTING_MATRIX.md) | 1-row-per-phase summary index + macro parity. Replaces deleted `PARITY.md`. |
 | [`phases/NN-*.md`](flow/phases/00-boot.md) | Byte-level deep-dive per phase. Mermaid sequence, packet layout, BE/LE, bitmap sizes, file:line on both sides. |
@@ -113,7 +113,7 @@ Remaining P1 item: `UpdateCatalystBonuses` after `SetCatalyst×8` (not a stall b
 
 ## Citation conventions
 
-- C++: `Server.cpp:596` resolves to `C:\CodingProjects\Personal\ReCapCpp\darkspore_server\source\RakNet\Server.cpp` line 596.
+- C++: `Server.cpp:596` resolves to `C:\CodingProjects\Personal\ReCap.Cpp\darkspore_server\source\RakNet\Server.cpp` line 596.
 - C#: `RakNetServer.cs:NN` resolves to `ReCap.Server/Adapters/RakNet/RakNetServer.cs` line NN.
 - Endianness: **BE** = big-endian, **LE** = little-endian. `Write<T>` wrapper produces **LE** on the wire (double-bswap on x86). See `VERIFIED_FACTS.md`.
 

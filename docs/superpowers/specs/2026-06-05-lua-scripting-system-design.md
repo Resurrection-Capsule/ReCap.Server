@@ -10,7 +10,7 @@
 
 Run the **original compiled luac chunks** shipped in `ServerData.package` — no decompilation, no extracted script folder.
 
-dalkon's C++ server embeds **LuaJIT 2.1 + sol2** (`ReCapCpp CMakeLists.txt:101-104,133`). LuaJIT cannot load PUC bytecode (own format only) — *that* is why his server runs decompiled sources (`res/data/serverdata/lua/`, 87 files, unluac `L0_1` artifacts). The decompilation was a runtime consequence, not a design choice. We remove the cause: use a VM that loads the original chunks directly.
+dalkon's C++ server embeds **LuaJIT 2.1 + sol2** (`ReCap.Cpp CMakeLists.txt:101-104,133`). LuaJIT cannot load PUC bytecode (own format only) — *that* is why his server runs decompiled sources (`res/data/serverdata/lua/`, 87 files, unluac `L0_1` artifacts). The decompilation was a runtime consequence, not a design choice. We remove the cause: use a VM that loads the original chunks directly.
 
 Bonus paths this unlocks:
 - Scripts always in sync with the user's game install (no stale extracted copies).
@@ -228,6 +228,6 @@ Our native build also produces `luac.exe` (float) → tests compile tiny fixture
 
 - Ghidra audit (this session): addresses cited inline (F1–F12).
 - Package probe (this session): ServerData.package stats, header dumps, FNV matches.
-- C++ reference: `ReCapCpp` — LuaJIT+sol2 integration, API surface tables, known stubs (~40% missing vs F11).
+- C++ reference: `ReCap.Cpp` — LuaJIT+sol2 integration, API surface tables, known stubs (~40% missing vs F11).
 - Runtime research: [IzumiRaine/lua-5.1-32bit](https://github.com/IzumiRaine/lua-5.1-32bit), [tilkinsc/Lua.NET](https://github.com/tilkinsc/Lua.NET), [lua-l 2016-02 size_t patch thread](http://lua-users.org/lists/lua-l/2016-02/msg00176.html), [unluac](https://sourceforge.net/projects/unluac/) (fallback only).
 - Memory: `lua-system-contract.md`; related `dbpf-hash-domains.md`, `simulation-ghidra-mapping.md`, `client-vfs-and-cmdline-flags.md`.

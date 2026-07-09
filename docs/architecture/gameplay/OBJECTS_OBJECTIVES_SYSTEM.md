@@ -2,9 +2,9 @@
 
 End-to-end map of the in-game **object** and **objective** packet systems on the single-player Dungeon path: the C++ server source, the actual wire (working capture), and the client's consumption. Built 2026-05-31 because this area is the live crash lead (`D-003`/`D-009`) and was under-mapped.
 
-> **CRITICAL — capture ≠ source.** The working C++ server is a **prebuilt binary** (`…/DarksporeBin/Server/`) that has **drifted** from the `ReCapCpp` source tree. For wire-format truth, trust the **capture** (`captures/cpp_loopback.pcapng`, game conv UDP 3659↔57210), not the source. See the objectives format below for proof. C# was ported from the *source*, so where the source drifted, C# is wrong.
+> **CRITICAL — capture ≠ source.** The working C++ server is a **prebuilt binary** (`…/DarksporeBin/Server/`) that has **drifted** from the `ReCap.Cpp` source tree. For wire-format truth, trust the **capture** (`captures/cpp_loopback.pcapng`, game conv UDP 3659↔57210), not the source. See the objectives format below for proof. C# was ported from the *source*, so where the source drifted, C# is wrong.
 
-Roots: C++ source `…/ReCapCpp/darkspore_server/source`; C# `ReCap.Server/`.
+Roots: C++ source `…/ReCap.Cpp/darkspore_server/source`; C# `ReCap.Server/`.
 
 ---
 
@@ -57,7 +57,7 @@ The bulk is NOT diverse enemies — it is 278 copies of a single no-collision no
 
 ### 1.6 Authoritative spawn logic + ANOTHER build drift
 Level played = **zelems_1 (1-1)**; data at `…/DarksporeBin/Server/data/serverdata/level/1-1/`. C++ source `Instance::OnPlayerStart` (Instance.cpp:308-435) spawns: obelisks (health/boss) from `_obelisk_1`; teleporters = markers WITH `teleporterData` from `_design`+`_design_spawners`; one enemy per `_AI_Wander*` markerset (a `// temporary` **break** caps it at 1/set → ~4 enemies); then 3 heroes via `SetCharacter` (sent as ObjectUpdate). That's **~15 objects**.
-- **But the capture has 284 objects** — 278 distinct (unique objIds 4..281) `SecurityTeleporter.Noun` (0x2983C017) + 3 collidable specials + 3 heroes, each with its `0x98` companion. The level's markersets contain only ~14 SecurityTeleporter / 7 teleporter-components. **So the capture binary's spawn logic ≠ the ReCapCpp source** (build drift, same class as the objectives format). Likely the capture binary creates a SecurityTeleporter at every spawn-point/marker of some large set. We cannot predict the exact count from source.
+- **But the capture has 284 objects** — 278 distinct (unique objIds 4..281) `SecurityTeleporter.Noun` (0x2983C017) + 3 collidable specials + 3 heroes, each with its `0x98` companion. The level's markersets contain only ~14 SecurityTeleporter / 7 teleporter-components. **So the capture binary's spawn logic ≠ the ReCap.Cpp source** (build drift, same class as the objectives format). Likely the capture binary creates a SecurityTeleporter at every spawn-point/marker of some large set. We cannot predict the exact count from source.
 - **Reimplementation approach (Phase 1):** build a faithful markerset-driven loader (obelisks + teleporters + design markers + per-set enemies), populate the world, and **tune by client test** — the threshold of "enough world to not fall back" is the variable the run reveals. SecurityTeleporter is the level's security/respawn teleport node; the client's level/nav/HUD may require them, which would explain why the empty C# dungeon makes the client bail.
 - **Hash↔name resolution:** use the AssetData **catalog** (`Data/AssetData_Binary/**/catalog_*.bin`, exposes hash→name; AssetDatabase loads it) rather than grepping XML / brute-forcing FNV.
 
@@ -91,7 +91,7 @@ Objectives are **hardcoded** in `Instance::Instance()` (Instance.cpp:62-76): 5 o
 | | wire format (per objective) | total (5 objectives) |
 |---|---|---|
 | **Working capture (binary)** | `u32 id + u24 value` = **7 bytes** | **37B** (`b7 05` + 5×7) |
-| **ReCapCpp source `Objective::WriteTo`** | `u32 id + u32 value + 0x30 description` = **56 bytes** | **282B** |
+| **ReCap.Cpp source `Objective::WriteTo`** | `u32 id + u32 value + 0x30 description` = **56 bytes** | **282B** |
 | **C# `ObjectiveData.WriteTo`** | `u32 id + u32 value + 48B desc` = **56 bytes** | **282B** (matches source, NOT the working wire) |
 
 Capture `0xB7` bytes: `b705 ee3397ff 090000 f37342ac 010000 6175c061 010000 cc8584a2 010000 cbfa7804 010000` — count=5; obj0 `id=0xFF9733EE value=9`, obj1-4 `value=1`. The 5 ids match the FNV table above exactly ⇒ same objectives, **7-byte** wire.

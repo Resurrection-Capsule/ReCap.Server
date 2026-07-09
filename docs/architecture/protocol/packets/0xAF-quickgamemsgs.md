@@ -22,7 +22,7 @@ Total: 1 byte opcode + 1 byte body = **2 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2322-2332`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2322-2332`:
 
 ```cpp
 void Server::SendQuickGame(const ClientPtr& client) {

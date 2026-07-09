@@ -1,6 +1,6 @@
 # DIVERGENCE LEDGER — C# ↔ C++ field-level
 
-Living, field/byte-level list of every divergence between `ReCap.Server` (C#) and the C++ ground truth (`ReCapCpp`), walked along the single-player Dungeon critical path. The macro index stays in [`PORTING_MATRIX.md`](PORTING_MATRIX.md) (class/handler level); **this is the micro level** (field/byte).
+Living, field/byte-level list of every divergence between `ReCap.Server` (C#) and the C++ ground truth (`ReCap.Cpp`), walked along the single-player Dungeon critical path. The macro index stays in [`PORTING_MATRIX.md`](PORTING_MATRIX.md) (class/handler level); **this is the micro level** (field/byte).
 
 Method & rationale: [`../../superpowers/specs/2026-05-31-port-fidelity-plan-design.md`](../../superpowers/specs/2026-05-31-port-fidelity-plan-design.md). Verified protocol truths: [`../VERIFIED_FACTS.md`](../VERIFIED_FACTS.md).
 
@@ -8,7 +8,7 @@ Method & rationale: [`../../superpowers/specs/2026-05-31-port-fidelity-plan-desi
 - One row per divergence of a **field/packet** (not a whole class).
 - **Status:** `open` (found via source-diff) → `wire-confirmed` (seen in capture) → `fixed` (code changed, one commit) → `verified` (wire-parity + client advances).
 - One `fixed` item = **one commit** (bisect-friendly). Cite the commit short hash.
-- Refs are `file:line`. C++ root: `…/ReCapCpp/darkspore_server/source`. C# root: `ReCap.Server/`.
+- Refs are `file:line`. C++ root: `…/ReCap.Cpp/darkspore_server/source`. C# root: `ReCap.Server/`.
 
 ## Critical-path steps (walk order)
 1 Login/Blaze · 2 Lobby · 3 REST account · 4 RakNet connect/HelloPlayer · 5 Hello LPU · 6 Spaceship→ChainVoting · 7 ChainVoting · 8 Vote→PreDungeon · 9 PreDungeon · 10 Dungeon entry · 11 Frame loop

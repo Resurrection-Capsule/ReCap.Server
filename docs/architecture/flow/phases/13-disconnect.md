@@ -217,11 +217,11 @@ Handled by `Program.cs:151-157` (HttpListenerException elevation-retry fallback)
 ## Files referenced
 
 C++:
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp` (`ParseRakNetPackets`, `RemoveClient`, `SendPlayerDeparted`)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.h` (`Goodbye`, `PlayerDeparted`, `VoteKickStarted`, `GameAborted`)
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h` (PacketID enum)
-- `recap_server_develop/darkspore_server/source/Game/Instance.cpp` (`RemovePlayer`)
-- `recap_server_develop/darkspore_server/source/Main.cpp` (`OnExit`, `mSignals`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp` (`ParseRakNetPackets`, `RemoveClient`, `SendPlayerDeparted`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.h` (`Goodbye`, `PlayerDeparted`, `VoteKickStarted`, `GameAborted`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h` (PacketID enum)
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.cpp` (`RemovePlayer`)
+- `ReCap.Cpp/darkspore_server/source/Main.cpp` (`OnExit`, `mSignals`)
 
 C#:
 - `ReCap.Server/Adapters/RakNet/RakNetServer.cs` (`OnSessionConnected`, `OnSessionDisconnected`)

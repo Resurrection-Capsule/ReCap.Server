@@ -8,7 +8,7 @@ ReCap (Resurrection Capsule) = Darkspore private server reimpl in C#. Darkspore 
 
 Three codebases:
 1. **This repo (C#)** — clean architecture, main project
-2. **C++ reference** (`C:\CodingProjects\Personal\ReCapCpp`) — by @dalkon, authoritative source for protocol behavior
+2. **C++ reference** (`C:\CodingProjects\Personal\ReCap.Cpp`) — by @dalkon, authoritative source for protocol behavior
 3. **ReCap.Develop (C#)** — experimental/messy, separate dir (not branch)
 
 C++ reference = **ground truth** for packet structures, values, protocol flow. Debug client behavior → trace the C++ reference, not ReCap.Develop.
@@ -24,7 +24,7 @@ C++ reference = **ground truth** for packet structures, values, protocol flow. D
 
 ## North star: reimplement, don't transliterate
 
-C++ (`ReCapCpp`) is a **reverse-engineered approximation** with visible shortcuts/quirks (e.g. an enemy-spawn `break` that caps enemies at 1/set; a debug-pattern objective description; build drift between its prebuilt binary and its source tree). The goal is NOT to copy C++ byte-for-byte forever — it's to build a **robust, clean C# reimplementation that satisfies the retail client's real contract**, ideally *closer to what the original game did* than C++'s approximation. **But the client is strict** — it null-derefs on the smallest misread. So any "improve beyond C++" move requires **solid, verified confirmation** of the real behavior (wire capture of the working binary, and/or the client's own parse in Ghidra), never a guess/interpretation. Confirm first (VERIFIED_FACTS), then reimplement cleanly. The capture is wire ground-truth where C++ source has drifted.
+C++ (`ReCap.Cpp`) is a **reverse-engineered approximation** with visible shortcuts/quirks (e.g. an enemy-spawn `break` that caps enemies at 1/set; a debug-pattern objective description; build drift between its prebuilt binary and its source tree). The goal is NOT to copy C++ byte-for-byte forever — it's to build a **robust, clean C# reimplementation that satisfies the retail client's real contract**, ideally *closer to what the original game did* than C++'s approximation. **But the client is strict** — it null-derefs on the smallest misread. So any "improve beyond C++" move requires **solid, verified confirmation** of the real behavior (wire capture of the working binary, and/or the client's own parse in Ghidra), never a guess/interpretation. Confirm first (VERIFIED_FACTS), then reimplement cleanly. The capture is wire ground-truth where C++ source has drifted.
 
 ## Port-fidelity workflow (current focus)
 

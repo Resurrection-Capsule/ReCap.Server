@@ -24,7 +24,7 @@ Typical payload: 5 objectives ⇒ 1 + 5×72 + 4 = 365 B body.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2233-2253`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2233-2253`:
 
 ```cpp
 void Server::SendObjectivesComplete(const ClientPtr& client) {

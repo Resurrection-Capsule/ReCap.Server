@@ -1,7 +1,7 @@
 # Port-Fidelity Plan — design spec
 
 **Date:** 2026-05-31
-**Goal:** Reach 1:1 byte-level fidelity between the C# port (`ReCap.Server`) and the C++ ground truth (`ReCapCpp`) for the **single-player Dungeon path**, by enumerating and fixing divergences system-by-system — driven by evidence (C++ source + wire capture), not by the project's past "laws" (which have proven stale).
+**Goal:** Reach 1:1 byte-level fidelity between the C# port (`ReCap.Server`) and the C++ ground truth (`ReCap.Cpp`) for the **single-player Dungeon path**, by enumerating and fixing divergences system-by-system — driven by evidence (C++ source + wire capture), not by the project's past "laws" (which have proven stale).
 
 ---
 

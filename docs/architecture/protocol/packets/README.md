@@ -5,7 +5,7 @@ Per-opcode wire spec sheets. Single source of truth for byte-level layout. Phase
 > **Scope:** Tier-1 (gameplay-critical) packets get individual sheets. Tier-2/3/4 (Arena, Juggernaut, KillRace, Tutorial, exotic) tracked in this index only — implement on demand.
 
 > **Authoritative sources:**
-> - C++ enum: `recap_server_develop/darkspore_server/source/RakNet/Types.h:24-102`
+> - C++ enum: `ReCap.Cpp/darkspore_server/source/RakNet/Types.h:24-102`
 > - C# enum: `ReCap.Server/Adapters/RakNet/PacketType.cs`
 > - Activator: `ReCap.Server/Adapters/RakNet/Packets/PacketActivator.cs`
 > - All wire encoding follows [VERIFIED_FACTS.md](../../VERIFIED_FACTS.md) + [REFLECTION_SERIALIZER.md](../REFLECTION_SERIALIZER.md) rules. (ENDIANNESS.md deleted 2026-05-31 — superseded by VERIFIED_FACTS.md)

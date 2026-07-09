@@ -45,7 +45,7 @@ Total: 1 opcode + 1 body = **2 bytes**.
 
 ## C++ reader (server receives C→S)
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:643-686`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:643-686`:
 
 ```cpp
 void Server::OnPlayerStatusUpdate(const ClientPtr& client) {
@@ -82,7 +82,7 @@ void Server::OnPlayerStatusUpdate(const ClientPtr& client) {
 
 ## C++ writer (server sends S→C)
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1306-1312`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1306-1312`:
 
 ```cpp
 void Server::SendPlayerStatusUpdate(const ClientPtr& client, uint8_t playerState) {

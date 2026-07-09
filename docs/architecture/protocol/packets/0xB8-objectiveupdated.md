@@ -27,7 +27,7 @@ Total: 1 byte opcode + 23 byte body = **24 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2214-2231`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2214-2231`:
 
 ```cpp
 void Server::SendObjectiveUpdate(const ClientPtr& client, uint8_t id, uint32_t voiceover) {

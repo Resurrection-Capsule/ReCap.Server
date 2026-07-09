@@ -21,7 +21,7 @@ C++ comment hints `WriteReflection` was an option but commented out — the acti
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1749-1763`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1749-1763`:
 
 ```cpp
 void Server::SendLocomotionDataUpdate(const ClientPtr& client, const Game::ObjectPtr& object, const Game::Locomotion& locomotionData) {

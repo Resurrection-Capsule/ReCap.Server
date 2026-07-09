@@ -30,7 +30,7 @@ Total: 1 byte opcode + 8 + 8 + 1 + 4 + 4 = **26 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1314-1337`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1314-1337`:
 
 ```cpp
 void Server::SendGameState(const ClientPtr& client, const GameStateData& data) {

@@ -27,7 +27,7 @@ Sends the full objectives list at Dungeon entry. Each objective gets a fixed 72-
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2198-2212`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2198-2212`:
 
 ```cpp
 void Server::SendObjectivesInitForLevel(const ClientPtr& client) {

@@ -32,7 +32,7 @@ Total: 1 byte opcode + 8 byte body = **9 bytes**.
 
 ## C++ reader (server side)
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1134-1206`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1134-1206`:
 
 ```cpp
 void Server::OnDebugPing(const ClientPtr& client) {

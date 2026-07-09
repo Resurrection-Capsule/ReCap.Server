@@ -29,7 +29,7 @@ Total: 1 byte opcode + 80 byte body = **81 bytes**. C++ pre-sizes `BitStream(81)
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1698-1715`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1698-1715`:
 
 ```cpp
 void Server::SendObjectPlayerMove(const ClientPtr& client, const Game::ObjectPtr& object, const Game::Locomotion& locomotionData) {

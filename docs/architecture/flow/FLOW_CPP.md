@@ -1,6 +1,6 @@
 # FLOW_CPP — Ground-Truth Server Flow (C++)
 
-Source: `/Users/jeanxpereira/CodingProjects/recap_server_develop/darkspore_server/source/`. All `file:line` citations resolve into that tree.
+Source: `C:/CodingProjects/Personal/ReCap.Cpp/darkspore_server/source/`. All `file:line` citations resolve into that tree.
 
 > **Status:** skeleton. Each phase will be expanded into `phases/NN-*.md` with full byte-level layout and mermaid diagrams. This page = global view + pointers.
 

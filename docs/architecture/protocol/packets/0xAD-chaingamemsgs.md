@@ -26,7 +26,7 @@ Total: 1 byte opcode + 1 byte body = **2 bytes**.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2334-2348`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2334-2348`:
 
 ```cpp
 void Server::SendChainGame(const ClientPtr& client, uint8_t state) {

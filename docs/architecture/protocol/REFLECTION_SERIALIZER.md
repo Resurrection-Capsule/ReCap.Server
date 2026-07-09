@@ -20,7 +20,7 @@ The header is written **first**, then the field bodies in ascending field-index 
 
 ## C++ — `RakNet::reflection_serializer<N>`
 
-Source: `recap_server_develop/darkspore_server/source/RakNet/Types.h:300-440`.
+Source: `ReCap.Cpp/darkspore_server/source/RakNet/Types.h:300-440`.
 
 ```cpp
 template<uint8_t FieldCount>
@@ -262,11 +262,11 @@ Same as C++ plus:
 ## Files referenced
 
 C++:
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h` (`reflection_serializer` template, `bswap`, `Write`/`Read`)
-- `recap_server_develop/darkspore_server/source/RakNet/Types.cpp` (instantiations 2, 3, 5, 7, 8, 9, 10, 11, 15, 18, 23)
-- `recap_server_develop/darkspore_server/source/Game/Player.cpp` (`WriteReflection<24>`)
-- `recap_server_develop/darkspore_server/source/Game/Character.cpp` (`WriteReflection<124>`)
-- `recap_server_develop/darkspore_server/source/Game/Object.cpp` (`<2>` interactable, `<3>` loot)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h` (`reflection_serializer` template, `bswap`, `Write`/`Read`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.cpp` (instantiations 2, 3, 5, 7, 8, 9, 10, 11, 15, 18, 23)
+- `ReCap.Cpp/darkspore_server/source/Game/Player.cpp` (`WriteReflection<24>`)
+- `ReCap.Cpp/darkspore_server/source/Game/Character.cpp` (`WriteReflection<124>`)
+- `ReCap.Cpp/darkspore_server/source/Game/Object.cpp` (`<2>` interactable, `<3>` loot)
 
 C#:
 - `ReCap.Server/Adapters/RakNet/ReflectionSerializer.cs`

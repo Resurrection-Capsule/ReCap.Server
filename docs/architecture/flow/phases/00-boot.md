@@ -226,10 +226,10 @@ Implicit: process exit. The only explicit `Stop()` chain is in the `HttpListener
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Main.cpp`
-- `recap_server_develop/darkspore_server/source/Main.h`
-- `recap_server_develop/darkspore_server/source/Game/Config.h`
-- `recap_server_develop/darkspore_server/source/Game/Config.cpp`
+- `ReCap.Cpp/darkspore_server/source/Main.cpp`
+- `ReCap.Cpp/darkspore_server/source/Main.h`
+- `ReCap.Cpp/darkspore_server/source/Game/Config.h`
+- `ReCap.Cpp/darkspore_server/source/Game/Config.cpp`
 
 C#:
 

@@ -133,7 +133,7 @@ Catalyst `WriteTo` (field 13 of Player reflection) emits a **16-byte fixed-size 
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1369-1409`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1369-1409`:
 
 ```cpp
 void Server::SendLabsPlayerUpdate(const ClientPtr& client, const Game::PlayerPtr& player) {

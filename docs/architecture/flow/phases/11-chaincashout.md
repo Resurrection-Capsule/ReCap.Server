@@ -380,14 +380,14 @@ The cashout flow relies on flags inside `ChainData`. Audit `ReCap.Server/Domain/
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp`
   (`OnPlayerStatusUpdate`, `OnDebugPing`, `SendReconnectPlayer`, `SendChainCashOutMessages`,
   `SendObjectivesComplete`, `SendChainGame`)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.h` (`PacketID` declarations 0x81/0xAA/0xAB/0xAD/0xAE)
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h` (PacketID enum)
-- `recap_server_develop/darkspore_server/source/Game/Instance.cpp` (`CashOutData::WriteTo`, `BeamOut`)
-- `recap_server_develop/darkspore_server/source/Game/Instance.h` (`CashOutData` class layout)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.h` (`PacketID` declarations 0x81/0xAA/0xAB/0xAD/0xAE)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h` (PacketID enum)
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.cpp` (`CashOutData::WriteTo`, `BeamOut`)
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.h` (`CashOutData` class layout)
 
 C#:
 

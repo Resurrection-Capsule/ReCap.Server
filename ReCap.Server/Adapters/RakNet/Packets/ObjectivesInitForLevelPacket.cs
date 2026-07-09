@@ -8,7 +8,7 @@ namespace ReCap.Server.Adapters.RakNet.Packets;
 /// WIRE-VERIFIED against the working C++ binary capture (cpp_loopback, DIVERGENCE_LEDGER D-009):
 ///   [u8 count] [for each: u32 id + u24 value]  -> 7 bytes/objective, 37B for the 5 objectives.
 /// The 5 ids are the FNV-1 hashes of the objective names (confirmed exact). The client looks up
-/// the display text locally by id hash, so NO description is sent on the wire. The ReCapCpp SOURCE
+/// the display text locally by id hash, so NO description is sent on the wire. The ReCap.Cpp SOURCE
 /// tree drifted to a 56-byte (id+value+0x30 desc) layout, but the binary that actually drives the
 /// client uses the 7-byte form — the capture is the ground truth. See OBJECTS_OBJECTIVES_SYSTEM.md.
 /// </summary>

@@ -110,7 +110,7 @@ The diagram above is simplified — see the literal C++ switch below for the ful
 
 ## C++ `IsValidStateChange` — verbatim
 
-`recap_server_develop/darkspore_server/source/RakNet/Client.cpp:12-49`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Client.cpp:12-49`:
 
 ```cpp
 bool IsValidStateChange(GameState fromState, GameState toState) {
@@ -368,9 +368,9 @@ Plus an `IsValidStateChange(GameState from, GameState to)` helper mirroring the 
 ## Files referenced
 
 C++:
-- `recap_server_develop/darkspore_server/source/RakNet/Client.h` (`enum class GameState`)
-- `recap_server_develop/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`, `SetGameState`)
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp:132-155` (mirror enum used in gameplay namespace)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.h` (`enum class GameState`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Client.cpp` (`IsValidStateChange`, `to_string`, `SetGameState`)
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:132-155` (mirror enum used in gameplay namespace)
 
 C#:
 - `ReCap.Server/Domain/Gameplay/GameplayState.cs` (`enum GameState`)

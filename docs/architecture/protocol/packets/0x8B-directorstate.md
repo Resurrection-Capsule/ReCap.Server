@@ -29,7 +29,7 @@ The `ReallocateStream` call reserves the full 0x4D0-byte region. `SetWriteOffset
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1411-1419`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1411-1419`:
 
 ```cpp
 void Server::SendDirectorState(const ClientPtr& client, const cAIDirector& director) {
@@ -43,7 +43,7 @@ void Server::SendDirectorState(const ClientPtr& client, const cAIDirector& direc
 }
 ```
 
-`recap_server_develop/darkspore_server/source/RakNet/Types.cpp:147-168`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Types.cpp:147-168`:
 
 ```cpp
 void cAIDirector::WriteTo(BitStream& stream) const {
@@ -111,5 +111,5 @@ The C# writes 16 bytes total (4 × 4B). The C++ writes a 0x4D0-byte fixed blob w
 ## Related
 
 - [Phase 09 Dungeon Entry](../../flow/phases/09-dungeon.md) — call sequence
-- `recap_server_develop/darkspore_server/source/RakNet/Types.h:427-441` — `cAIDirector` struct definition
-- `recap_server_develop/darkspore_server/source/RakNet/Types.cpp:147-181` — `WriteTo` + `WriteReflection` bodies
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.h:427-441` — `cAIDirector` struct definition
+- `ReCap.Cpp/darkspore_server/source/RakNet/Types.cpp:147-181` — `WriteTo` + `WriteReflection` bodies

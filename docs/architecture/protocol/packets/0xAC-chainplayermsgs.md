@@ -43,7 +43,7 @@ Client-driven chain-mode request. Dispatched by `byteCount` (total body length e
 
 ## C++ reader
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:986-1022`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:986-1022`:
 
 ```cpp
 void Server::OnChainPlayerMsgs(const ClientPtr& client) {

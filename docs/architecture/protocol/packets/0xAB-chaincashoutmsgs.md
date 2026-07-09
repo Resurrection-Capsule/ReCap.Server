@@ -44,7 +44,7 @@ CashOutData field offsets (from `Game/Instance.cpp:30-52`):
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:2184-2196`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:2184-2196`:
 
 ```cpp
 void Server::SendChainCashOutMessages(const ClientPtr& client, uint8_t value) {

@@ -220,11 +220,11 @@ If `HostName` and `Ip` are both empty, the handler short-circuits with `ServerIn
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Blaze/Server.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Server.h`
-- `recap_server_develop/darkspore_server/source/Blaze/Client.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/RedirectorComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/RedirectorComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Server.h`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Client.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/RedirectorComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/RedirectorComponent.h`
 
 C#:
 

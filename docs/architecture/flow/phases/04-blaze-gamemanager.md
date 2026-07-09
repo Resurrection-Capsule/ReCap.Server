@@ -44,7 +44,7 @@ sequenceDiagram
 
 ## Command and notification IDs
 
-`recap_server_develop/.../GameManagerComponent.cpp` enums + `ReCap.Server/.../GameManagerComponent.cs:233-328`:
+`ReCap.Cpp/.../GameManagerComponent.cpp` enums + `ReCap.Server/.../GameManagerComponent.cs:233-328`:
 
 ### Commands
 
@@ -265,12 +265,12 @@ Client tells the server "I now have a connection to peer X". For dedicated-serve
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Blaze/Component/GameManagerComponent.cpp`
-- `recap_server_develop/darkspore_server/source/Blaze/Component/GameManagerComponent.h`
-- `recap_server_develop/darkspore_server/source/Game/GameManager.cpp`
-- `recap_server_develop/darkspore_server/source/Game/GameManager.h`
-- `recap_server_develop/darkspore_server/source/Game/Instance.h`
-- `recap_server_develop/darkspore_server/source/Game/Level.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/GameManagerComponent.cpp`
+- `ReCap.Cpp/darkspore_server/source/Blaze/Component/GameManagerComponent.h`
+- `ReCap.Cpp/darkspore_server/source/Game/GameManager.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/GameManager.h`
+- `ReCap.Cpp/darkspore_server/source/Game/Instance.h`
+- `ReCap.Cpp/darkspore_server/source/Game/Level.cpp`
 
 C#:
 

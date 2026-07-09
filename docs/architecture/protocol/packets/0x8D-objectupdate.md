@@ -21,7 +21,7 @@ Variable size depending on how many bits set since last reset.
 
 ## C++ writer
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1501-1516`:
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1501-1516`:
 
 ```cpp
 void Server::SendObjectUpdate(const ClientPtr& client, const Game::ObjectPtr& object) {

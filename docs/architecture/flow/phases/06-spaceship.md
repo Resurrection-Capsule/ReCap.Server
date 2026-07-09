@@ -342,11 +342,11 @@ C# sends a `GameStatePacket` **and** an LPU every single 50 ms tick. C++ only se
 
 C++:
 
-- `recap_server_develop/darkspore_server/source/Game/Player.h`
-- `recap_server_develop/darkspore_server/source/Game/Player.cpp`
-- `recap_server_develop/darkspore_server/source/Game/Character.cpp`
-- `recap_server_develop/darkspore_server/source/Game/Catalyst.cpp`
-- `recap_server_develop/darkspore_server/source/RakNet/Server.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/Player.h`
+- `ReCap.Cpp/darkspore_server/source/Game/Player.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/Character.cpp`
+- `ReCap.Cpp/darkspore_server/source/Game/Catalyst.cpp`
+- `ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp`
 
 C#:
 

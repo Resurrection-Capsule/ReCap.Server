@@ -32,7 +32,7 @@ Total: 1 opcode + 0x38 body = **57 bytes**.
 
 ## C++ writers (two overloads + cancel)
 
-`recap_server_develop/darkspore_server/source/RakNet/Server.cpp:1562-1571` (short form):
+`ReCap.Cpp/darkspore_server/source/RakNet/Server.cpp:1562-1571` (short form):
 
 ```cpp
 void Server::SendActionCommandResponse(const ClientPtr& client, uint8_t type) {
