@@ -122,6 +122,30 @@ public class SchedulerPredicateTests
         public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target) => false;
     }
 
+    // WaitUntilTime(t) is a RELATIVE wait of t seconds from the call — the retail impl (@0x00a02280)
+    // stores t as a duration and the wake predicate (@0x00a02230) fires when now-startTime >= t. The
+    // ability tick passes small hit-time offsets (e.g. 0.26); treating them as absolute sim time made
+    // the wait a no-op once the game clock passed 0.26, so basic-attack coroutines finished in one tick
+    // and the AI re-cast every 50ms.
+    [Fact]
+    public void WaitUntilTimeWaitsRelativeToNowNotAbsoluteSimTime()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var scheduler = ScriptContextRegistry.Get(rt.L)!.Scheduler!;
+        scheduler.Tick(10.0); // sim clock already well past the 0.26 hit-time offset
+
+        rt.Execute(LuaFixtures.Compile("""
+            nThread.CreateThreadForObject(10, function()
+                nThread.WaitUntilTime(0.26)
+            end)
+            """), "wut");
+
+        scheduler.Tick(10.1);
+        Assert.True(scheduler.HasThreadForObject(10));  // 0.26s not elapsed -> parked
+        scheduler.Tick(10.4);
+        Assert.False(scheduler.HasThreadForObject(10)); // 0.26s elapsed -> resumed
+    }
+
     [Fact]
     public void WaitForNearGoalResumesAfterEstimatedTravelTime()
     {

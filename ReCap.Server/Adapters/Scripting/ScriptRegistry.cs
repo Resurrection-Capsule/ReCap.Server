@@ -2,7 +2,17 @@ namespace ReCap.Server.Adapters.Scripting;
 
 public enum ScriptKind { Ability, Modifier, Affix, Condition, Objective }
 
-public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate, float Cooldown = 0f);
+// Cooldowns is the ability's ranked-value cooldown table (author writes {1.5, 1.25, 1} = rank 0/1/2,
+// or a scalar captured as a 1-element list). Empty = no cooldown. CooldownForRank mirrors the game's
+// GetRankedValue: pick the rank index, clamping to the last entry for ranks beyond the table.
+public sealed record ScriptEntry(string Name, uint Hash, int TableRef, bool HasTick, bool HasActivate, bool HasDeactivate, IReadOnlyList<float>? Cooldowns = null)
+{
+    public float CooldownForRank(int rank)
+    {
+        if (Cooldowns is not { Count: > 0 } cd) return 0f;
+        return cd[Math.Clamp(rank, 0, cd.Count - 1)];
+    }
+}
 
 public sealed class ScriptRegistry
 {

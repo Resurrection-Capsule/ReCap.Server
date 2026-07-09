@@ -116,19 +116,23 @@ public static unsafe class NThreadModule
         return LuaNative.lua_yield(L, 0);
     }
 
-    // Retail @0x00a02280: arg1 = absolute SIM time (seconds, clamped >= 0); optional args 2-3
-    // (cast-speed object + overdrive scale) deferred. Yields until the scheduler clock reaches it.
+    // Retail @0x00a02280: arg1 is a RELATIVE duration in seconds (clamped >= 0), NOT an absolute sim
+    // time — the impl stores it as a duration and the wake predicate (@0x00a02230) fires when
+    // now-castStart >= duration. So yield for `seconds` from now. The ability tick passes small
+    // hit-time offsets (e.g. 0.26); the old absolute reading made the wait a no-op once the clock
+    // passed 0.26, so basic-attack coroutines finished in one tick and the AI re-cast every 50ms.
+    // DEFERRED: cast-speed scaling (÷(1+castSpeed) via arg2 snapshot) and the multi-hit cast-start
+    // epoch (each WaitUntilTime relative to the same cast start) — the single-hit slice needs neither.
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int WaitUntilTime(nint L)
     {
         try
         {
             var scheduler = ScriptContextRegistry.Get(L)?.Scheduler;
-            var rawTime = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
-                ? (double)LuaNative.lua_tonumber(L, 1)
+            var seconds = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? Math.Max(0.0, (double)LuaNative.lua_tonumber(L, 1))
                 : 0.0;
-            var wakeAt = Math.Max(0.0, rawTime);
-            scheduler?.RegisterYield(L, sleeping: false, wakeAt: Math.Max(scheduler.Now, wakeAt));
+            scheduler?.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + seconds);
         }
         catch (Exception ex)
         {

@@ -91,7 +91,7 @@ public static unsafe class NAbilityContextModule
             var ctx = ScriptContextRegistry.Get(L);
             if (ctx?.GetInvocation(L) is { AbilityHash: not 0 } inv)
             {
-                var cooldown = ctx.Registry.Find(ScriptKind.Ability, inv.AbilityHash)?.Cooldown ?? 0f;
+                var cooldown = ctx.Registry.Find(ScriptKind.Ability, inv.AbilityHash)?.CooldownForRank(inv.Rank) ?? 0f;
                 if (cooldown > 0f)
                 {
                     ctx.StampCooldown(inv.AgentId, inv.AbilityHash, (ctx.Scheduler?.Now ?? 0d) + cooldown);

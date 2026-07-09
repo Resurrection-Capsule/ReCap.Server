@@ -46,12 +46,13 @@ public static unsafe class RegistrarModule
             var hasActivate = TableHasFunction(L, 2, "activate");
             var hasDeactivate = TableHasFunction(L, 2, "deactivate");
             // Ability props table carries the data the client def is populated from (AssetTypeRegistry
-            // "ability" descriptor). `cooldown` (schema id 38, seconds) gates re-cast — read it here so
-            // PayCooldownAndMana can stamp it. Non-abilities simply have no cooldown key (0).
-            var cooldown = TableNumberField(L, 2, "cooldown");
+            // "ability" descriptor). `cooldown` (seconds) gates re-cast — read it here so
+            // PayCooldownAndMana can stamp it. It is a ranked-value table ({1.5,1.25,1}) or a scalar;
+            // capture the whole thing so the cast's rank picks the right value. Non-abilities have none.
+            var cooldowns = TableRankedField(L, 2, "cooldown");
             LuaNative.lua_pushvalue(L, 2);
             var tableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
-            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldown));
+            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns));
             return 0;
         }
         catch (Exception ex)
@@ -69,11 +70,33 @@ public static unsafe class RegistrarModule
         return isFn;
     }
 
-    private static float TableNumberField(nint L, int tableIndex, string field)
+    // A ranked-value field is either a scalar number or a { } array of per-rank numbers.
+    // Returns null when the key is absent/malformed (no cooldown), a 1-element list for a scalar.
+    private static IReadOnlyList<float>? TableRankedField(nint L, int tableIndex, string field)
     {
         LuaNative.lua_getfield(L, tableIndex, field);
-        var value = LuaNative.lua_type(L, -1) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, -1) : 0f;
+        IReadOnlyList<float>? result = null;
+        var type = LuaNative.lua_type(L, -1);
+        if (type == LuaNative.LUA_TNUMBER)
+        {
+            result = new[] { LuaNative.lua_tonumber(L, -1) };
+        }
+        else if (type == LuaNative.LUA_TTABLE)
+        {
+            var n = (int)LuaNative.lua_objlen(L, -1);
+            if (n > 0)
+            {
+                var list = new float[n];
+                for (var i = 1; i <= n; i++)
+                {
+                    LuaNative.lua_rawgeti(L, -1, i);
+                    list[i - 1] = LuaNative.lua_type(L, -1) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, -1) : 0f;
+                    LuaNative.lua_settop(L, -2);
+                }
+                result = list;
+            }
+        }
         LuaNative.lua_settop(L, -2);
-        return value;
+        return result;
     }
 }
