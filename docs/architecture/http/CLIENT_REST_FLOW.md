@@ -77,8 +77,41 @@ Ghidra `decompile_function` is reachable only from the main session (subagents c
 3. `updateCreature` / `updateDecks` / `updatePartStatus` — persistence round-trips (mostly working; verify the read fields).
 4. `getGame` / `getRandomGame` / `getReplay` — game-history/replay; needs a history store for real data (lower priority, launcher feature).
 
+## Verified response contracts (decompiled)
+
+### `api.account.auth` / `getAccount` response — `ClientNet::OnAccountResponse` @0x00469190
+(vtable slot +0x30 of the auth request object). Walks `<response>` and reads, in order:
+
+| Node | Parser (renamed in Ghidra) | Into |
+|---|---|---|
+| `timestamp` | inline | — |
+| `account` | `ClientRest::ParseAccountBlock` @0x00471110 | obj+0x64 |
+| `creatures` | `ClientRest::ParseCreaturesBlock` @0x00463990 | obj+0x58 |
+| `decks` | `FUN_00468980` (generic list parser; not yet isolated) | obj+0x5c |
+| `items` (parts) | `ClientRest::ParseItemsBlock` @0x00463de0 | obj+0x60 |
+| `settings` | inline — key/value; values `"on"`/`"off"` → bool, else `_wtol` → int | settings store |
+| `server_tuning` | `ClientRest::ParseServerTuningBlock` @0x0045f8a0 (OPTIONAL, presence-guarded) | obj+0x68 |
+
+**★ Real gaps vs C++:** the client parses `settings` (on/off/int) and `server_tuning` — C++ leaves
+`settings` empty and never emits `server_tuning`. `include_feed` is requested but **no `feed` node is
+parsed** in OnAccountResponse (feed handled elsewhere or ignored — verify before implementing feed).
+
+### `server_tuning` block — `ClientRest::ParseServerTuningBlock` @0x0045f8a0
+**This block is the item-store (vendor) economy config** — the vendor is **server-driven pricing**, not
+the C++ hardcoded 100-149 fixture. Wide-string child fields the client reads:
+- `itemstore_offer_period` (int) — offer refresh period
+- `itemstore_current_expiration` (unix time) — current offer expiry
+- `itemstore_cost_multiplier_basic|uncommon|rare|epic|unique|rareunique|epicunique` (7× float) — per-rarity pricing
+
+→ To build the authentic vendor: the server emits these tuning values in the account response; the client
+prices/refreshes the store from them. `getPartOfferList` supplies the actual offered parts; `vendorParts`
+submits the buy/sell transaction batch. (`throttle`/`blaze_service_name` are a *different* server_tuning
+consumer — `FUN_0046bdd0` — likely the Blaze/connection config, not the item store.)
+
 ## Status
 - ✅ API-client location + per-endpoint builder pattern identified.
 - ✅ Request contracts: `auth`, `vendorParts`.
-- ⏳ Response-parse side (all endpoints) — next.
-- ⏳ Remaining request builders (TBD rows above).
+- ✅ Response contract: full `account`/`auth` top-level structure + `server_tuning` (item-store economy) fields.
+- ✅ Ghidra annotated: `ClientRest::Build{Auth,GetAccount,GetGame,GetPartOfferList,UpdateCreature,VendorParts}Request`, `ClientRest::Parse{Account,Creatures,Items,ServerTuning}Block`, plate comments on `OnAccountResponse` + `ParseServerTuningBlock`.
+- ⏳ Sub-parser field maps: `ParseAccountBlock` (account fields), `ParseCreaturesBlock`, `ParseItemsBlock`, `FUN_00468980` (decks), `ParseServerTuningBlock` done.
+- ⏳ Remaining endpoints' request+response: getGame/getRandomGame/getReplay, getPartOfferList response, updateCreature/updateDecks/updatePartStatus response, setSettings, unlock, logout.
