@@ -38,6 +38,7 @@ public class BridgeAiActionsTests
         public bool TryGetGoalDistance(uint id, out float distance) { distance = 0f; return false; }
         public uint AddAttributeModifier(uint id, int attributeId, float value) => 0;
         public uint EmitEffect(uint id, uint serverEventDef, uint initiatorId) => 0;
+        public void EmitServerEvent(uint serverEventDef, uint id, uint attackerId, bool critical, System.Numerics.Vector3? position, System.Numerics.Vector3? facing) { }
         public uint CreateObject(uint nounId, float x, float y, float z) => 0;
         public void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags) { }
         public IReadOnlyList<uint> GetAggroTargets(uint agentId) => [];

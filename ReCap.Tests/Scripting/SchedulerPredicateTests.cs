@@ -110,6 +110,7 @@ public class SchedulerPredicateTests
         public bool TryGetGoalDistance(uint id, out float d) { d = 20f; return true; }
         public uint AddAttributeModifier(uint id, int a, float v) => 0;
         public uint EmitEffect(uint id, uint fx, uint init) => 0;
+        public void EmitServerEvent(uint fx, uint id, uint attacker, bool critical, System.Numerics.Vector3? position, System.Numerics.Vector3? facing) { }
         public uint CreateObject(uint n, float x, float y, float z) => 0;
         public void BroadcastCombatEvent(uint target, uint source, float delta, int hp, ushort flags) { }
         public IReadOnlyList<uint> GetAggroTargets(uint a) => System.Array.Empty<uint>();

@@ -81,6 +81,14 @@ internal sealed class FakeBridge : IScriptGameBridge
         return (uint)Effects.Count;
     }
 
+    public List<(uint ServerEventDef, uint ObjectId, uint AttackerId, bool Critical, System.Numerics.Vector3? Position)> ServerEvents { get; } = [];
+    public void EmitServerEvent(uint serverEventDef, uint objectId, uint attackerId, bool critical,
+        System.Numerics.Vector3? position, System.Numerics.Vector3? facing)
+    {
+        if (serverEventDef == 0) return;
+        ServerEvents.Add((serverEventDef, objectId, attackerId, critical, position));
+    }
+
     public List<(uint Noun, float X, float Y, float Z)> CreatedObjects { get; } = [];
     private uint _nextCreatedId;
     public uint CreateObject(uint nounId, float x, float y, float z)
@@ -127,6 +135,46 @@ public class GameBridgeTests
         using var rt = Make();
         Assert.True(rt.EvalBool(LuaFixtures.Compile(
             "local x, y, z = nGameObject.GetPosition(10) return x == 1.5 and y == 2.5 and z == 3.5")));
+    }
+
+    [Fact]
+    public void NotifyEmitsServerEventAndRecoversExactAssetHash()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var bridge = new FakeBridge();
+        ScriptContextRegistry.Get(rt.L)!.GameBridge = bridge;
+
+        // GetAsset boxes the 32-bit hash as a float32 Lua number (lossy > 16.7M); Notify must recover
+        // the EXACT hash via the handle table, not the rounded float.
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nEvent.Notify({ asset = nUtil.GetAsset("HitEffect"), objectId = 10, attackerId = 2, bCritical = true })
+            return true
+            """)));
+
+        var ev = Assert.Single(bridge.ServerEvents);
+        Assert.Equal(ScriptVfs.Hash("HitEffect"), ev.ServerEventDef);
+        Assert.Equal(10u, ev.ObjectId);
+        Assert.Equal(2u, ev.AttackerId);
+        Assert.True(ev.Critical);
+    }
+
+    [Fact]
+    public void NotifyAtPositionRecipeParsesVectorTable()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        var bridge = new FakeBridge();
+        ScriptContextRegistry.Get(rt.L)!.GameBridge = bridge;
+
+        // The melee-hit notify has {facing, asset, position} (no objectId) → at-position recipe.
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            nEvent.Notify({ asset = nUtil.GetAsset("spacetime_bite.ServerEventDef"), position = { -156.0, -62.0, 0.0 } })
+            return true
+            """)));
+
+        var ev = Assert.Single(bridge.ServerEvents);
+        Assert.Equal(ScriptVfs.Hash("spacetime_bite.ServerEventDef"), ev.ServerEventDef);
+        Assert.Equal(0u, ev.ObjectId);
+        Assert.Equal(new System.Numerics.Vector3(-156f, -62f, 0f), ev.Position);
     }
 
     [Fact]

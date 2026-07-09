@@ -29,6 +29,8 @@ public interface IScriptGameBridge
     bool TryGetGoalDistance(uint objectId, out float distance);
     uint AddAttributeModifier(uint objectId, int attributeId, float value);
     uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId);
+    void EmitServerEvent(uint serverEventDef, uint objectId, uint attackerId, bool critical,
+        System.Numerics.Vector3? position, System.Numerics.Vector3? facing);
     uint CreateObject(uint nounId, float x, float y, float z);
     void BroadcastCombatEvent(uint targetId, uint sourceId, float deltaHealth, int integerHpChange, ushort flags);
     IReadOnlyList<uint> GetAggroTargets(uint agentId);
@@ -135,6 +137,21 @@ public sealed class ScriptStateContext
         return handle;
     }
     public int TriggerVolumeCount => _triggerVolumes.Count;
+
+    // nUtil.GetAsset/SPID box a 32-bit FNV hash as a Lua number, but LUA_NUMBER is float32 in this
+    // build (24-bit mantissa) so hashes above ~16.7M lose precision on the round-trip through Lua.
+    // Register the boxed-float → exact hash at production so a consumer that reads the same float
+    // back (nEvent.Notify → ServerEventDef, spawn nouns) recovers the exact hash instead of a
+    // rounded one that never resolves an asset. Same float32 on both sides ⇒ exact key match.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<float, uint> _assetHashByBoxed = new();
+    public float RegisterAssetHash(uint hash)
+    {
+        var boxed = (float)hash;
+        _assetHashByBoxed[boxed] = hash;
+        return boxed;
+    }
+    public uint ResolveAssetHash(float boxed)
+        => _assetHashByBoxed.TryGetValue(boxed, out var hash) ? hash : (uint)boxed;
 }
 
 public static class ScriptContextRegistry

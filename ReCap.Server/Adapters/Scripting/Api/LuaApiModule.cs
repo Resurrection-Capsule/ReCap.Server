@@ -6,6 +6,14 @@ namespace ReCap.Server.Adapters.Scripting.Api;
 
 public static unsafe class LuaApiModule
 {
+    // Push a 32-bit asset hash as the Lua number scripts pass around, registering the lossy
+    // float32→exact-hash map on the context so downstream consumers (nEvent.Notify → ServerEventDef)
+    // recover the exact value. EVERY string→hash boxing site (GetAsset, SPID, PreloadAsset/Animation)
+    // must route through here — an unregistered box (e.g. an effect preloaded once, fired later)
+    // reaches the wire as a rounded hash that never resolves an asset. See ScriptStateContext.
+    public static void PushHash(nint L, uint hash)
+        => LuaNative.lua_pushnumber(L, ScriptContextRegistry.Get(L)?.RegisterAssetHash(hash) ?? (float)hash);
+
     public static void RegisterNamespace(nint L, string name,
         params (string Name, nint Fn)[] entries)
     {

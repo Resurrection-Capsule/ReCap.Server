@@ -20,7 +20,7 @@ public static unsafe class PreloadModule
             if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TSTRING)
             {
                 var name = LuaNative.ToManagedString(L, 1);
-                LuaNative.lua_pushnumber(L, name is null ? 0f : (float)ScriptVfs.Hash(name));
+                if (name is null) LuaNative.lua_pushnumber(L, 0f); else LuaApiModule.PushHash(L, ScriptVfs.Hash(name));
             }
             else
             {
@@ -46,7 +46,7 @@ public static unsafe class PreloadModule
             if (LuaNative.lua_type(L, 1) == LuaNative.LUA_TSTRING)
             {
                 var name = LuaNative.ToManagedString(L, 1);
-                LuaNative.lua_pushnumber(L, name is null ? 0f : (float)ScriptVfs.Hash(name));
+                if (name is null) LuaNative.lua_pushnumber(L, 0f); else LuaApiModule.PushHash(L, ScriptVfs.Hash(name));
             }
             else
             {

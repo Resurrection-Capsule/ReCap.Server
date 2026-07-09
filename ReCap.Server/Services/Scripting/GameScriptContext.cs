@@ -277,6 +277,26 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         return ++_nextEffectHandle;
     }
 
+    // nEvent.Notify FX recipe → ServerEvent 0x9B. Ability hit/impact scripts fire two recipe shapes:
+    // ATTACHED ({6 ServerEventDef, 7 ObjectId}) when the effect rides an object, and AT-POSITION
+    // ({6, 10 Position}, +11 Facing) when it plays at a world point (the melee-hit notify carries
+    // {facing, asset, position}, no objectId). Critical (field 5) tints it. ServerEventDef=0
+    // (unresolved asset) is a client-side silent skip, so gate it.
+    public void EmitServerEvent(uint serverEventDef, uint objectId, uint attackerId, bool critical,
+        System.Numerics.Vector3? position, System.Numerics.Vector3? facing)
+    {
+        if (serverEventDef == 0) return;
+        _game.BroadcastServerEvent(new ReCap.Server.Adapters.RakNet.Packets.ServerEventPacket
+        {
+            ServerEventDef = serverEventDef,
+            ObjectId = objectId,
+            AttackerId = attackerId,
+            Critical = critical,
+            Position = objectId == 0 ? position : null,
+            Facing = facing,
+        });
+    }
+
     public uint CreateObject(uint nounId, float x, float y, float z) =>
         _game.SpawnScriptObject(nounId, new System.Numerics.Vector3(x, y, z));
 

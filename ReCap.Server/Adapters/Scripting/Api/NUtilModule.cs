@@ -20,7 +20,7 @@ public static unsafe class NUtilModule
             var s = LuaNative.lua_type(L, 1) == LuaNative.LUA_TSTRING
                 ? LuaNative.ToManagedString(L, 1)
                 : null;
-            LuaNative.lua_pushnumber(L, s is null ? 0f : (float)ScriptVfs.Hash(s));
+            if (s is null) LuaNative.lua_pushnumber(L, 0f); else LuaApiModule.PushHash(L, ScriptVfs.Hash(s));
             return 1;
         }
         catch
@@ -63,7 +63,7 @@ public static unsafe class NUtilModule
             var s = LuaNative.lua_type(L, 1) == LuaNative.LUA_TSTRING
                 ? LuaNative.ToManagedString(L, 1)
                 : null;
-            LuaNative.lua_pushnumber(L, s is null ? 0f : (float)ScriptVfs.Hash(s));
+            if (s is null) LuaNative.lua_pushnumber(L, 0f); else LuaApiModule.PushHash(L, ScriptVfs.Hash(s));
             return 1;
         }
         catch
