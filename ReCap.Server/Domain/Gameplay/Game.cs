@@ -30,6 +30,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     public AssetDatabase? Assets { get; } = assetDatabase;
     public ChainData Chain { get; } = new();
     public ObjectManager Objects { get; } = new(assetDatabase);
+    public GameScheduler Scheduler { get; } = new();
 
     // Resolves the player's chosen squad (account, 1-based squadId) into the creatures
     // they own and saved in that deck. Set by GameService; mirrors C++ user->GetSquadById.
@@ -61,6 +62,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         var delta = (now - _lastTick).TotalSeconds;
         _lastTick = now;
         Objects.Update(delta);
+        Scheduler.Tick(delta);
         ScriptContext?.Tick();
         FlushObjectUpdates();
 
@@ -1155,6 +1157,9 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // nGameObject.AddEffect → 0x9B ServerEvent (client OnGmsServerEvent @0x0053ec80). Attached FX
     // recipe {6 ServerEventDef, 7 ObjectId} (+ AttackerId when an initiator is given).
     public void BroadcastServerEvent(ServerEventPacket packet) => BroadcastToAllPlayers(packet);
+
+    // CombatEvent (0xBA) — floating damage/heal numbers + combat log; one per damage instance.
+    public void BroadcastCombatEvent(CombatEventPacket packet) => BroadcastToAllPlayers(packet);
 
     // nObjectManager.CreateObject: allocate id, spawn server-side, and announce via the existing 0x8C
     // ObjectCreate (client OnGmsObjectCreate @0x0053f550 — reflection envelope, tolerates optional

@@ -133,6 +133,14 @@ public static unsafe class NGameObjectModule
         try { dealt = damage > 0f ? -bridge!.ApplyHeal(targetId, -damage) : 0f; }
         catch { dealt = 0f; }
 
+        // Floating damage number + combat log (0xBA). deltaHealth<0 = damage; flags left 0 (the crit
+        // bit is not yet Ghidra-confirmed — isCrit is already returned to Lua for gameplay).
+        if (dealt != 0f)
+        {
+            try { bridge!.BroadcastCombatEvent(targetId, 0, -dealt, -(int)MathF.Round(dealt), 0); }
+            catch { /* feedback packet is best-effort; never fail the cast */ }
+        }
+
         LuaNative.lua_pushboolean(L, 1);
         LuaNative.lua_pushnumber(L, dealt);
         LuaNative.lua_pushboolean(L, isCrit ? 1 : 0);
