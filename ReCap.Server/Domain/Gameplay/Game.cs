@@ -1202,6 +1202,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // Modifier (buff/debuff) lifecycle 0xA2/0xA4 — RequestModifier creates, MarkForDelete/expiry removes.
     public ModifierSystem Modifiers { get; } = new();
     public void BroadcastModifierCreated(ModifierCreatedPacket packet) => BroadcastToAllPlayers(packet);
+    public void BroadcastModifierUpdated(ModifierUpdatedPacket packet) => BroadcastToAllPlayers(packet);
     public void BroadcastModifierDeleted(ModifierDeletedPacket packet) => BroadcastToAllPlayers(packet);
 
     // nObjectManager.CreateObject: allocate id, spawn server-side, and announce via the existing 0x8C

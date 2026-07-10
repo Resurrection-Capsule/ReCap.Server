@@ -50,9 +50,13 @@ public static unsafe class RegistrarModule
             // PayCooldownAndMana can stamp it. It is a ranked-value table ({1.5,1.25,1}) or a scalar;
             // capture the whole thing so the cast's rank picks the right value. Non-abilities have none.
             var cooldowns = TableRankedField(L, 2, "cooldown");
+            // activationType (ability schema int, def+0x190) is the modifier stack policy the retail
+            // create path switches on (nAbility::RequestModifier -> FUN_009e6420): 0 stack, 1 replace-all,
+            // 2 replace-per-caster, 3 reject-per-initiator, 4/5 unique-per-caster, 6 single, 7 refresh.
+            var activationType = TableIntField(L, 2, "activationType");
             LuaNative.lua_pushvalue(L, 2);
             var tableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
-            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns));
+            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns, activationType));
             return 0;
         }
         catch (Exception ex)
@@ -60,6 +64,15 @@ public static unsafe class RegistrarModule
             try { Util.Logging.Log.Lua.Error($"[registrar] {kind} failed: {ex.Message}"); } catch { }
             return 0;
         }
+    }
+
+    // Scalar int field (0 when absent/non-numeric). LUA_NUMBER is float32 here, exact for small ints.
+    private static int TableIntField(nint L, int tableIndex, string field)
+    {
+        LuaNative.lua_getfield(L, tableIndex, field);
+        var value = LuaNative.lua_type(L, -1) == LuaNative.LUA_TNUMBER ? (int)LuaNative.lua_tonumber(L, -1) : 0;
+        LuaNative.lua_settop(L, -2);
+        return value;
     }
 
     private static bool TableHasFunction(nint L, int tableIndex, string field)

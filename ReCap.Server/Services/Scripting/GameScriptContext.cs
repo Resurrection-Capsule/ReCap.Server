@@ -334,6 +334,16 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // C++-lead defaults; icon comes from modifierGuid (+0x04). DoT/attribute tick execution deferred.
     public uint CreateModifier(uint targetId, uint casterId, uint modifierGuid, int rank)
     {
+        var entry = _registry.Find(ScriptKind.Modifier, modifierGuid);
+
+        // Stack policy (activationType, def+0x190): retail runs this switch BEFORE creating — it may
+        // drop existing same-def instances, reject the request, or reuse/refresh an existing one. Apply
+        // the removes/refresh here (so [3] deactivate + 0xA3/0xA4 replicate), then create only if asked.
+        var decision = _game.Modifiers.ResolveStackPolicy(targetId, casterId, modifierGuid, entry?.ActivationType ?? 0);
+        foreach (var removeId in decision.RemoveInstanceIds) RemoveModifier(removeId);
+        if (decision.RefreshInstanceId != 0) RefreshModifierDuration(decision.RefreshInstanceId);
+        if (!decision.ShouldCreate) return decision.ReturnInstanceId;
+
         var instance = _game.Modifiers.Create(targetId, casterId, modifierGuid, rank);
         _game.BroadcastModifierCreated(new ReCap.Server.Adapters.RakNet.Packets.ModifierCreatedPacket
         {
@@ -351,10 +361,25 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         // duration auto-expiry. Removal is script-driven via nModifier.MarkForDelete for now.
         lock (_luaGate)
         {
-            if (_registry.Find(ScriptKind.Modifier, modifierGuid) is { } entry)
+            if (entry is not null)
                 instance.ThreadHandle = SpawnModifierIndex(entry, 2, ModifierInvocation(instance));
         }
         return instance.InstanceId;
+    }
+
+    // Stack-policy case 7 (refresh): recompute the modifier's duration start and replicate 0xA3 so the
+    // client restarts its buff timer. StartTime mirrors the 0xA2 create convention (relative epoch, 0);
+    // the exact wire timestamp is pending a capture, but the record patch (stack count kept) is faithful.
+    private void RefreshModifierDuration(uint instanceId)
+    {
+        if (_game.Modifiers.Get(instanceId) is not { } instance) return;
+        _game.BroadcastModifierUpdated(new ReCap.Server.Adapters.RakNet.Packets.ModifierUpdatedPacket
+        {
+            TargetId = instance.TargetId,
+            InstanceId = instanceId,
+            StartTime = 0,
+            StackCount = (uint)instance.StackCount,
+        });
     }
 
     public bool RemoveModifier(uint instanceId)
