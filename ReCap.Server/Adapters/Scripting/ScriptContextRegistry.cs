@@ -41,6 +41,7 @@ public interface IScriptGameBridge
     int IncrementModifierStack(uint instanceId);
     void ResetModifierDuration(uint instanceId);
     void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors);
+    void DispatchDealtDamage(uint attackerId, uint targetId);
     IReadOnlyList<uint> GetAggroTargets(uint agentId);
     bool HasAggroTargets(uint agentId);
     uint GetBestTarget(uint agentId);
@@ -68,6 +69,13 @@ public sealed class ModifierEventData
         Guids = new Dictionary<int, uint> { [1] = attacker },
         Floats = new Dictionary<int, float> { [2] = amount },
         Ints = new Dictionary<int, int> { [3] = descriptors },
+    };
+
+    // DealtDamage fires on the ATTACKER; the only real consumer (QuantumStateBuff) reads GUID[1] = the
+    // victim it hit (slots 2/6 are read but unused, left absent). On-hit procs record that target.
+    public static ModifierEventData DealtDamage(uint target) => new()
+    {
+        Guids = new Dictionary<int, uint> { [1] = target },
     };
 }
 

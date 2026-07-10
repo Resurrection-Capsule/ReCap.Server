@@ -231,6 +231,39 @@ public class ModifierSharedContextTests
     }
 
     [Fact]
+    public void DealtDamageEvent_FiresIndex4OnAttackersModifier_WithVictimInSlot1()
+    {
+        using var ctx = MakeContext(out var game);
+        // DealtDamage(8192) fires on the ATTACKER's subscribed modifiers; the handler reads GUID[1] =
+        // the victim it hit (QuantumStateBuff on-hit proc).
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            DealtType, DealtVictim, WrongFire = -1, -1, 0
+            nModifier.RegisterModifier("recap_dealt_probe", {
+                handledEvents = 8192,
+                [2] = function() nThread.WaitForever() end,
+                [4] = function(ev)
+                        DealtType = nAbility.GetAbilityEventType(ev)
+                        if DealtType == 8192 then DealtVictim = nAbility.GetAbilityEventGUIDData(ev, 1) end
+                        return true
+                      end,
+            })
+            nModifier.RegisterModifier("recap_tookonly_probe", {
+                handledEvents = 1,
+                [4] = function(ev) WrongFire = WrongFire + 1 return true end,
+            })
+            """), "probe");
+
+        ctx.CreateModifier(50, 20, ScriptVfs.Hash("recap_dealt_probe"), 0);
+        ctx.CreateModifier(50, 20, ScriptVfs.Hash("recap_tookonly_probe"), 0);
+
+        ctx.DispatchDealtDamage(attackerId: 50, targetId: 77);
+
+        Assert.True(ctx.Runtime.EvalBool(LuaFixtures.Compile("return DealtType == 8192 and DealtVictim == 77")));
+        Assert.True(ctx.Runtime.EvalBool(LuaFixtures.Compile("return WrongFire == 0"))); // TookDamage-only must not fire
+        Assert.Equal(0, ctx.Scheduler.ErrorCount);
+    }
+
+    [Fact]
     public void RemovedModifierFreesPrivateTable_NoLeakOnReuse()
     {
         using var ctx = MakeContext(out var game);

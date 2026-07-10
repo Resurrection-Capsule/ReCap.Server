@@ -164,6 +164,7 @@ public static unsafe class NGameObjectModule
                 var attacker = ScriptContextRegistry.Get(L)?.GetInvocation(L)?.AgentId ?? 0;
                 var descriptors = LuaNative.lua_type(L, 7) == LuaNative.LUA_TNUMBER ? (int)(long)LuaNative.lua_tonumber(L, 7) : 0;
                 bridge!.DispatchTookDamage(targetId, attacker, dealt, descriptors);
+                if (attacker != 0) bridge!.DispatchDealtDamage(attacker, targetId);
             }
             catch { /* event dispatch is best-effort; never fail the cast */ }
         }

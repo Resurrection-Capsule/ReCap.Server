@@ -566,6 +566,11 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors) =>
         DispatchCombatEvent(targetId, 1, Adapters.Scripting.ModifierEventData.TookDamage(attackerId, amount, descriptors));
 
+    // nAbilityEventFlags.DealtDamage (8192): the attacker dealt damage — fire [4] on ITS subscribed
+    // modifiers (on-hit procs); the handler reads GUID[1] = the victim it hit.
+    public void DispatchDealtDamage(uint attackerId, uint targetId) =>
+        DispatchCombatEvent(attackerId, 8192, Adapters.Scripting.ModifierEventData.DealtDamage(targetId));
+
     public IReadOnlyList<uint> GetAggroTargets(uint agentId)
         => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb
             ? bb.AggroList.Select(e => e.ObjectId).ToList() : [];
