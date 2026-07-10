@@ -353,18 +353,33 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             StackCount = (uint)instance.StackCount,
         });
 
-        // Retail (FUN_009e5c50): the modifier's index [2] runs as a persistent per-instance coroutine
-        // (the DoT/aura loop, resumed each frame), carrying instance context so nModifier.GetMyAgentID
-        // /GetMyInitiatorID/GetMyStackCount/GetRank resolve. DEFERRED: [1] activate + [4] event handler
-        // (both need the shared per-instance context region so their nThreadData private table is the
-        // same one [2] reads — our private table is per-thread), stack policy (nActivationType) and
-        // duration auto-expiry. Removal is script-driven via nModifier.MarkForDelete for now.
+        // Retail (nModifier_CreateInstance @0x009e5c50): the modifier's index [2] runs as a persistent
+        // per-instance coroutine (the DoT/aura loop, resumed each frame), then index [1] activate runs
+        // once. Both — and [3] deactivate on removal — share the instance's private table (retail
+        // instance+0x170) so state set in activate is visible to tick/deactivate. [4] event handler
+        // (bitmask def+0x1a4) is deferred. Removal is script-driven via nModifier.MarkForDelete / expiry.
         lock (_luaGate)
         {
             if (entry is not null)
-                instance.ThreadHandle = SpawnModifierIndex(entry, 2, ModifierInvocation(instance));
+            {
+                var sharedPrivateRef = EnsureModifierPrivateTable(instance);
+                instance.ThreadHandle = SpawnModifierIndex(entry, 2, ModifierInvocation(instance), sharedPrivateRef);
+                SpawnModifierIndex(entry, 1, ModifierInvocation(instance), sharedPrivateRef);
+            }
         }
         return instance.InstanceId;
+    }
+
+    // The instance-scoped private table (retail instance+0x170), created once and shared by the
+    // modifier's [1]/[2]/[3] index coroutines. Owned by the instance — freed in RemoveModifier, not by
+    // the scheduler when an individual index coroutine ends. Caller holds _luaGate.
+    private int EnsureModifierPrivateTable(Domain.Gameplay.ModifierInstance instance)
+    {
+        if (instance.PrivateTableRef != 0) return instance.PrivateTableRef;
+        var L = _runtime.L;
+        LuaNative.lua_createtable(L, 0, 0);
+        instance.PrivateTableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
+        return instance.PrivateTableRef;
     }
 
     // Stack-policy case 7 (refresh): recompute the modifier's duration start and replicate 0xA3 so the
@@ -389,11 +404,17 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
         lock (_luaGate)
         {
-            // Retail runs index [3] deactivate once on removal, then tears down the tick thread.
+            // Retail runs index [3] deactivate once on removal (sharing the instance table), then tears
+            // down the tick thread and frees the private table.
             if (_registry.Find(ScriptKind.Modifier, instance.ModifierGuid) is { } entry)
-                SpawnModifierIndex(entry, 3, ModifierInvocation(instance));
+                SpawnModifierIndex(entry, 3, ModifierInvocation(instance), instance.PrivateTableRef);
             if (instance.ThreadHandle != 0)
                 _scheduler.StopThread(instance.ThreadHandle);
+            if (instance.PrivateTableRef != 0)
+            {
+                LuaNative.luaL_unref(_runtime.L, LuaNative.LUA_REGISTRYINDEX, instance.PrivateTableRef);
+                instance.PrivateTableRef = 0;
+            }
         }
 
         if (!_game.Modifiers.Remove(instanceId)) return false;
@@ -413,7 +434,8 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // Spawn modTable[index] (numeric — modifiers use [1]/[2]/[3]/[4], NOT a named field like abilities)
     // as a detached coroutine (objectId 0 = no per-object gate; a target can carry many modifiers plus
     // its own ability thread). Returns the thread handle, or 0 if the index is not a function.
-    private nint SpawnModifierIndex(ScriptEntry entry, int index, Adapters.Scripting.AbilityInvocation invocation)
+    private nint SpawnModifierIndex(ScriptEntry entry, int index, Adapters.Scripting.AbilityInvocation invocation,
+        int sharedPrivateRef = 0)
     {
         var L = _runtime.L;
         LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
@@ -425,7 +447,12 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         }
         LuaNative.lua_remove(L, -2); // drop the table, leave the function on top
         return _scheduler.SpawnFromStack(L, objectId: 0, valuesOnTop: 1,
-            beforeFirstResume: t => ScriptContextRegistry.Get(_runtime.L)?.SetInvocation(t, invocation));
+            beforeFirstResume: t =>
+            {
+                var c = ScriptContextRegistry.Get(_runtime.L);
+                c?.SetInvocation(t, invocation);
+                if (sharedPrivateRef != 0) c?.BindSharedPrivateTable(t, sharedPrivateRef);
+            });
     }
 
     public uint FindModifierByGuid(uint targetId, uint modifierGuid) =>

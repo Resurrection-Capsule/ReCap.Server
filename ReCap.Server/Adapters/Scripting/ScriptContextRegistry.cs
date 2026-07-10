@@ -122,6 +122,15 @@ public sealed class ScriptStateContext
 
     public bool TryTakePrivateTableRef(nint threadL, out int reference) => _privateTableRefs.TryRemove(threadL, out reference);
 
+    // Instance-scoped private table binding (retail modifier instance+0x170): a modifier's [1]/[2]/[3]
+    // index coroutines all resolve nThreadData.GetPrivateTable to the SAME table instead of a per-thread
+    // one, so state written in activate is visible to tick/deactivate. The ref is owned by the modifier
+    // instance (freed on removal), so a thread finishing only unbinds — it must NOT unref the table.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, int> _sharedPrivateByThread = new();
+    public void BindSharedPrivateTable(nint threadL, int reference) => _sharedPrivateByThread[threadL] = reference;
+    public bool TryGetSharedPrivateTable(nint threadL, out int reference) => _sharedPrivateByThread.TryGetValue(threadL, out reference);
+    public void UnbindSharedPrivateTable(nint threadL) => _sharedPrivateByThread.TryRemove(threadL, out _);
+
     public void SetGuidSlot(nint threadL, int slot, double guid) =>
         _guidSlots.GetOrAdd(threadL, _ => new()).AddOrUpdate(slot, guid, (_, _) => guid);
 

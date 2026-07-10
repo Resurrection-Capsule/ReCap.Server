@@ -17,6 +17,11 @@ public sealed class ModifierInstance
     // The per-instance Lua coroutine running the modifier's tick (index [2]); 0 = none (tickless
     // modifier or unresolved script). Stopped when the modifier is removed.
     public nint ThreadHandle { get; set; }
+
+    // Registry ref of the instance-scoped private Lua table (retail instance+0x170) shared across the
+    // modifier's index [1] activate / [2] tick / [3] deactivate invocations; 0 = not yet created.
+    // Owned by the instance — freed on removal, NOT when an individual index coroutine finishes.
+    public int PrivateTableRef { get; set; }
 }
 
 // The outcome of the stack-policy switch: which existing instances to remove first, whether to create

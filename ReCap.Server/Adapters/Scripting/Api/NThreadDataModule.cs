@@ -24,6 +24,15 @@ public static unsafe class NThreadDataModule
                 LuaNative.lua_pushnil(L);
                 return 1;
             }
+            // A modifier index coroutine borrows its instance's shared table (retail instance+0x170) —
+            // return that so activate/tick/deactivate see one another's state. It is instance-owned, so
+            // do not touch the per-thread ref map here.
+            if (ctx.TryGetSharedPrivateTable(L, out var sharedRef))
+            {
+                LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, sharedRef);
+                if (LuaNative.lua_type(L, -1) == LuaNative.LUA_TTABLE) return 1;
+                LuaNative.lua_settop(L, -2);
+            }
             if (ctx.TryGetPrivateTableRef(L, out var existing))
             {
                 LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, existing);

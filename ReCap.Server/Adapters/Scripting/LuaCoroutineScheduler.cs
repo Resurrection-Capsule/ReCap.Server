@@ -143,6 +143,9 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         {
             if (context.TryTakePrivateTableRef(entry.ThreadL, out var privateRef))
                 LuaNative.luaL_unref(mainState, LuaNative.LUA_REGISTRYINDEX, privateRef);
+            // Instance-owned shared table (modifier +0x170): unbind this thread only; the owning
+            // modifier instance frees the table on removal.
+            context.UnbindSharedPrivateTable(entry.ThreadL);
             context.RemoveThreadData(entry.ThreadL);
         }
         ScriptContextRegistry.Unregister(entry.ThreadL);
