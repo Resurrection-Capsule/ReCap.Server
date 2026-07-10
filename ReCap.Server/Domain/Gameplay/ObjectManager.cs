@@ -85,6 +85,8 @@ public sealed class ObjectManager
     {
         float maxHealth = 0f;
         float strength = 0f, dexterity = 0f, mind = 0f;
+        float maxMana = 0f, physDefense = 0f, energyDefense = 0f, critical = 0f;
+        float nonCombatSpeed = 0f, combatSpeed = 0f;
         AssetValue? aiDef = null;
         AssetValue? noun = null;
 
@@ -102,6 +104,19 @@ public sealed class ObjectManager
                 strength = attrs.FindByName("baseStrength").AsFloat();
                 dexterity = attrs.FindByName("baseDexterity").AsFloat();
                 mind = attrs.FindByName("baseMind").AsFloat();
+                // Full ClassAttributes base block for NPCs → combatant attribute ids, so the object can
+                // be replicated as a complete combatant to the client (C++ fills these for every object
+                // with stats). Same fields the hero squad reads; also feeds server-side combat later.
+                if (!playerControlled)
+                {
+                    maxMana = attrs.FindByName("maxMana").AsFloat();
+                    if (maxMana <= 0f) maxMana = attrs.FindByName("baseMana").AsFloat();
+                    physDefense = attrs.FindByName("basePhysicalDefense").AsFloat();
+                    energyDefense = attrs.FindByName("baseEnergyDefense").AsFloat();
+                    critical = attrs.FindByName("baseCritical").AsFloat();
+                    nonCombatSpeed = attrs.FindByName("baseNonCombatSpeed").AsFloat();
+                    combatSpeed = attrs.FindByName("baseCombatSpeed").AsFloat();
+                }
             }
 
             noun = _db.GetNoun(nounId);
@@ -129,6 +144,15 @@ public sealed class ObjectManager
         obj.Attributes[1] = dexterity;
         obj.Attributes[2] = mind;
         obj.Attributes[4] = maxHealth;
+        if (!playerControlled)
+        {
+            obj.Attributes[5] = maxMana;          // MaxMana
+            obj.Attributes[7] = physDefense;      // PhysicalDefense
+            obj.Attributes[9] = energyDefense;    // EnergyDefense
+            obj.Attributes[10] = critical;        // CriticalRating
+            obj.Attributes[11] = nonCombatSpeed;  // NonCombatSpeed
+            obj.Attributes[12] = combatSpeed;     // CombatSpeed
+        }
         // C++ Object::Initialize player path SetWeaponDamage(1,5) base (Object.cpp:608-662, mirrored
         // on the wire at Game.cs MinWeaponDamage/MaxWeaponDamage); melee GetDamage reads these
         // (kAttribute 101/102) when the agent is player-controlled. NPC weapon damage = parts, deferred.

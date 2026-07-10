@@ -616,7 +616,51 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             },
             ObjectData = objData
         });
+
+        // A combatant enemy (has ClassAttributes → MaxHealth) must be replicated as a full combatant,
+        // not just a static create: C++ Object::Initialize fills ClassAttributes for every object with
+        // stats and sends CombatantData + AttributeData (0x96). Without them the client keeps the enemy
+        // as a bare prop — no combat/animation state controller — so SetAnimationState (attack/death)
+        // and movement never apply. Obelisks/teleporters have no ClassAttributes (MaxHealth 0) → skipped.
+        if (enemy.MaxHealth > 0f)
+            SendCombatantSetup(client, objId, enemy);
         Log.Game.Debug($"WorldObject obj=0x{objId:X} noun=0x{noun:X8} at ({pos.X:F0},{pos.Y:F0},{pos.Z:F0}){(bindMarker ? $" marker=0x{markerId:X8}" : " (enemy shape)")}");
+    }
+
+    // Replicate an NPC as a full combatant (mirrors the hero setup in OnPlayerStart): CombatantData
+    // (HP/mana bars) + AttributeData 0x96 (the stats the client's combat/movement/animation setup keys
+    // off). Move speeds fall back to a sane default when the creature's ClassAttributes omit them, so a
+    // combatant always has locomotion capability rather than reading 0 (frozen).
+    private static void SendCombatantSetup(RakNetClient client, uint objId, GameObject enemy)
+    {
+        var maxMana = enemy.Attributes.GetValueOrDefault(5, 0f);
+        var nonCombatSpeed = enemy.Attributes.GetValueOrDefault(11, 0f);
+        var combatSpeed = enemy.Attributes.GetValueOrDefault(12, 0f);
+        if (nonCombatSpeed <= 0f) nonCombatSpeed = 6.0f;
+        if (combatSpeed <= 0f) combatSpeed = 6.0f;
+
+        client.SendPacket(new CombatantDataUpdatePacket
+        {
+            ObjectId = objId,
+            HitPoints = enemy.MaxHealth,
+            ManaPoints = maxMana > 0f ? maxMana : 100f,
+        });
+
+        var attrs = new AttributeDataUpdatePacket { ObjectId = objId };
+        void SetIf(byte id, float v) { if (v > 0f) attrs.Set(id, v); }
+        SetIf(AttributeDataUpdatePacket.Strength, enemy.Attributes.GetValueOrDefault(0, 0f));
+        SetIf(AttributeDataUpdatePacket.Dexterity, enemy.Attributes.GetValueOrDefault(1, 0f));
+        SetIf(AttributeDataUpdatePacket.Mind, enemy.Attributes.GetValueOrDefault(2, 0f));
+        attrs.Set(AttributeDataUpdatePacket.MaxHealth, enemy.MaxHealth);
+        attrs.Set(AttributeDataUpdatePacket.MaxMana, maxMana > 0f ? maxMana : 100f);
+        SetIf(AttributeDataUpdatePacket.PhysicalDefense, enemy.Attributes.GetValueOrDefault(7, 0f));
+        SetIf(AttributeDataUpdatePacket.EnergyDefense, enemy.Attributes.GetValueOrDefault(9, 0f));
+        SetIf(AttributeDataUpdatePacket.CriticalRating, enemy.Attributes.GetValueOrDefault(10, 0f));
+        attrs.Set(AttributeDataUpdatePacket.NonCombatSpeed, nonCombatSpeed);
+        attrs.Set(AttributeDataUpdatePacket.CombatSpeed, combatSpeed);
+        attrs.Set(AttributeDataUpdatePacket.AttackSpeedScale, 1f);
+        attrs.Set(AttributeDataUpdatePacket.CooldownScale, 1f);
+        client.SendPacket(attrs);
     }
 
     private void OnPlayerStart(RakNetClient client)
