@@ -31,11 +31,15 @@ public readonly record struct StackDecision(
     bool ShouldCreate,
     uint ReturnInstanceId,
     uint RefreshInstanceId,
-    IReadOnlyList<uint> RemoveInstanceIds)
+    IReadOnlyList<uint> RemoveInstanceIds,
+    uint StackEventInstanceId = 0)
 {
     public static StackDecision Create => new(true, 0, 0, []);
     public static StackDecision Reject => new(false, 0, 0, []);
     public static StackDecision Existing(uint id) => new(false, id, 0, []);
+    // Stacks (activationType 4/5): reuse the existing instance and fire its [4] StackModifier event
+    // (retail nModifier_RunReapplyEvent @0x009e6060) so its Lua bumps the stack + resets duration.
+    public static StackDecision StackOntoExisting(uint id) => new(false, id, 0, [], id);
     public static StackDecision CreateAfterRemoving(IEnumerable<uint> ids) => new(true, 0, 0, ids.ToList());
     public static StackDecision RefreshOldest(uint keepId, IEnumerable<uint> removeIds) =>
         new(false, keepId, keepId, removeIds.ToList());
@@ -99,10 +103,10 @@ public sealed class ModifierSystem
                     : StackDecision.Create;
             case 3: // CasterUniqueIrreplaceable — if this caster already has one, no new instance (SproutPoison)
                 return same.Any(m => m.CasterId == casterId) ? StackDecision.Reject : StackDecision.Create;
-            case 4: // Stacks — reuse this caster's existing instance (retail runs its [4] event to bump the
-            case 5: // StacksAndCasterUnique — stack count; that [4] stack-increment is deferred), else create
+            case 4: // Stacks — reuse this caster's existing instance and fire its [4] StackModifier event
+            case 5: // StacksAndCasterUnique — (bumps stack + resets duration in Lua), else create fresh
                 return same.FirstOrDefault(m => m.CasterId == casterId) is { } existing
-                    ? StackDecision.Existing(existing.InstanceId)
+                    ? StackDecision.StackOntoExisting(existing.InstanceId)
                     : StackDecision.Create;
             case 6: // UniqueIrreplaceable — if any same-def instance exists on the target, reject
                 return same.Count > 0 ? StackDecision.Reject : StackDecision.Create;

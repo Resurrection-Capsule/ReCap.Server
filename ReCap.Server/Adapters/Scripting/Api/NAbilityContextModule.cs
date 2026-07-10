@@ -19,7 +19,34 @@ public static unsafe class NAbilityContextModule
             ("TargetInRangeAtStart", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TargetInRangeAtStart),
             ("GetAnimationSequenceIndex", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAnimationSequenceIndex),
             ("PlayAnimationSequence", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&PlayAnimationSequence),
+            ("GetAbilityEventType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventType),
+            ("GetAbilityEventGUIDData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventGUIDData),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
+    }
+
+    // A modifier's [4] event handler reads the event type (nAbilityEventFlags) via
+    // GetAbilityEventType(eventHandle). We stash the type in the invocation's EventType slot when firing
+    // the handler; the opaque handle arg is ignored. Only StackModifier (32) is wired so far.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAbilityEventType(nint L)
+    {
+        try
+        {
+            var inv = ScriptContextRegistry.Get(L)?.GetInvocation(L);
+            LuaNative.lua_pushnumber(L, inv.HasValue ? (float)inv.Value.EventType : 0f);
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    // GetAbilityEventGUIDData(eventHandle, index) — payload fields of a combat-driven event
+    // (DealtDamage/TookDamage). Those events are not fired yet; return 0 so a handler that reaches this
+    // (it won't for the StackModifier path) degrades gracefully instead of erroring.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAbilityEventGUIDData(nint L)
+    {
+        LuaNative.lua_pushnumber(L, 0f);
+        return 1;
     }
 
     // Retail contracts (Ghidra 2026-06-06, VERIFIED_FACTS C3 addendum):

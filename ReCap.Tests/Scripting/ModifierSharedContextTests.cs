@@ -93,6 +93,40 @@ public class ModifierSharedContextTests
     }
 
     [Fact]
+    public void StacksReapply_FiresIndex4StackEvent_BumpsStackCount()
+    {
+        using var ctx = MakeContext(out var game);
+        // activationType Stacks(4): re-requesting on the same caster reuses the instance and fires its
+        // [4] StackModifier(32) event, whose Lua bumps the stack + resets duration (retail FirebombDot).
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            nModifier.RegisterModifier("recap_stacks_probe", {
+                activationType = 4,
+                [2] = function() nThread.WaitForever() end,
+                [4] = function(ev)
+                        if nAbility.GetAbilityEventType(ev) == 32 then
+                            nModifier.IncrementStackCount()
+                            nModifier.ResetDuration()
+                        end
+                        return true
+                      end,
+            })
+            """), "probe");
+        var hash = ScriptVfs.Hash("recap_stacks_probe");
+
+        var id1 = ctx.CreateModifier(10, 20, hash, 0);
+        Assert.Equal(1, game.Modifiers.Get(id1)!.StackCount);
+
+        var id2 = ctx.CreateModifier(10, 20, hash, 0); // same caster → reuse + [4] bump
+        Assert.Equal(id1, id2);
+        Assert.Equal(2, game.Modifiers.Get(id1)!.StackCount);
+
+        var id3 = ctx.CreateModifier(10, 20, hash, 0);
+        Assert.Equal(id1, id3);
+        Assert.Equal(3, game.Modifiers.Get(id1)!.StackCount);
+        Assert.Equal(0, ctx.Scheduler.ErrorCount);
+    }
+
+    [Fact]
     public void RemovedModifierFreesPrivateTable_NoLeakOnReuse()
     {
         using var ctx = MakeContext(out var game);

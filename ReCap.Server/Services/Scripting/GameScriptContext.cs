@@ -342,6 +342,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         var decision = _game.Modifiers.ResolveStackPolicy(targetId, casterId, modifierGuid, entry?.ActivationType ?? 0);
         foreach (var removeId in decision.RemoveInstanceIds) RemoveModifier(removeId);
         if (decision.RefreshInstanceId != 0) RefreshModifierDuration(decision.RefreshInstanceId);
+        if (decision.StackEventInstanceId != 0) FireStackModifierEvent(decision.StackEventInstanceId);
         if (!decision.ShouldCreate) return decision.ReturnInstanceId;
 
         var instance = _game.Modifiers.Create(targetId, casterId, modifierGuid, rank);
@@ -461,10 +462,38 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public int GetModifierStackCount(uint instanceId) =>
         _game.Modifiers.Get(instanceId)?.StackCount ?? 0;
 
+    // nModifier.IncrementStackCount: bump the stack and replicate it via 0xA3 (KeepDuration sentinel so
+    // the pure stack bump does not disturb the client's buff timer — ResetDuration handles that).
     public int IncrementModifierStack(uint instanceId)
     {
         if (_game.Modifiers.Get(instanceId) is not { } instance) return 0;
-        return ++instance.StackCount;
+        instance.StackCount++;
+        _game.BroadcastModifierUpdated(new ReCap.Server.Adapters.RakNet.Packets.ModifierUpdatedPacket
+        {
+            TargetId = instance.TargetId,
+            InstanceId = instanceId,
+            StartTime = ReCap.Server.Adapters.RakNet.Packets.ModifierUpdatedPacket.KeepDuration,
+            StackCount = (uint)instance.StackCount,
+        });
+        return instance.StackCount;
+    }
+
+    // nModifier.ResetDuration: restart the modifier's duration and replicate via 0xA3.
+    public void ResetModifierDuration(uint instanceId) => RefreshModifierDuration(instanceId);
+
+    // Stacks (activationType 4/5) re-application: run the existing instance's [4] with a StackModifier
+    // event (retail nModifier_RunReapplyEvent @0x009e6060 fires index [4] event code 32); the Lua bumps
+    // the stack + resets duration. DEFERRED: honoring a false [4] return (retail removes the instance)
+    // and the combat-driven events (DealtDamage/TookDamage) — only the StackModifier reapply is wired.
+    private void FireStackModifierEvent(uint instanceId)
+    {
+        if (_game.Modifiers.Get(instanceId) is not { } instance) return;
+        if (_registry.Find(ScriptKind.Modifier, instance.ModifierGuid) is not { } entry) return;
+        lock (_luaGate)
+        {
+            var invocation = ModifierInvocation(instance) with { EventType = 32 }; // nAbilityEventFlags.StackModifier
+            SpawnModifierIndex(entry, 4, invocation, instance.PrivateTableRef);
+        }
     }
 
     public IReadOnlyList<uint> GetAggroTargets(uint agentId)

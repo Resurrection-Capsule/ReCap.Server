@@ -21,6 +21,7 @@ public static unsafe class NModifierModule
             ("AgentHasModifierMatchingGUID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AgentHasModifierMatchingGUID),
             ("GetStackCount", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetStackCount),
             ("IncrementStackCount", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IncrementStackCount),
+            ("ResetDuration", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetDuration),
             ("MarkForDelete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MarkForDelete),
             ("GetRank", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetRank));
 
@@ -106,22 +107,40 @@ public static unsafe class NModifierModule
         catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
     }
 
+    // nModifier.IncrementStackCount([instanceId]) — with a handle, that instance; without one, the
+    // running modifier's own instance (context slot — the [4] StackModifier handler calls it no-arg).
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int IncrementStackCount(nint L)
     {
         try
         {
             var ctx = ScriptContextRegistry.Get(L);
-            if (ctx?.GameBridge is { } bridge && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER)
-            {
-                var id = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
-                LuaNative.lua_pushnumber(L, (float)bridge.IncrementModifierStack(id));
-                return 1;
-            }
-            LuaNative.lua_pushnumber(L, 0f);
+            if (ctx?.GameBridge is not { } bridge) { LuaNative.lua_pushnumber(L, 0f); return 1; }
+            var id = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1))
+                : ctx.GetInvocation(L)?.InstanceId ?? 0;
+            LuaNative.lua_pushnumber(L, id != 0 ? (float)bridge.IncrementModifierStack(id) : 0f);
             return 1;
         }
         catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    // nModifier.ResetDuration([instanceId]) — restart the modifier's duration (0xA3); no-arg = the
+    // running modifier's own instance (the [4] StackModifier handler calls it no-arg after stacking).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int ResetDuration(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is not { } bridge) return 0;
+            var id = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER
+                ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1))
+                : ctx.GetInvocation(L)?.InstanceId ?? 0;
+            if (id != 0) bridge.ResetModifierDuration(id);
+        }
+        catch { }
+        return 0;
     }
 
     // nModifier.MarkForDelete(instanceId) — tear down the instance and replicate 0xA4 ModifierDeleted.

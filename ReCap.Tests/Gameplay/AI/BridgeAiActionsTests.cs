@@ -47,6 +47,7 @@ public class BridgeAiActionsTests
         public uint FindModifierByGuid(uint targetId, uint modifierGuid) => 0;
         public int GetModifierStackCount(uint instanceId) => 0;
         public int IncrementModifierStack(uint instanceId) => 0;
+        public void ResetModifierDuration(uint instanceId) { }
         public IReadOnlyList<uint> GetAggroTargets(uint agentId) => [];
         public bool HasAggroTargets(uint agentId) => false;
         public uint GetBestTarget(uint agentId) => 0;
