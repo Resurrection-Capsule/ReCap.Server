@@ -319,6 +319,40 @@ public class GameBridgeTests
     }
 
     [Fact]
+    public void GetAttributeSnapshotFreezesObjectAttributes()
+    {
+        using var rt = Make();
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("""
+            local snap = nGameObject.GetAttributeSnapshot(10)
+            return snap > 0 and nAttribute.GetAttributeValue_FromSnapshot(snap, 0) == 12
+            """)));
+    }
+
+    [Fact]
+    public void WaitForProjectileYieldsThenResumesWithResult()
+    {
+        using var rt = LuaRuntime.CreateSandboxedState();
+        ScriptContextRegistry.Get(rt.L)!.GameBridge = new FakeBridge();
+        var sched = ScriptContextRegistry.Get(rt.L)!.Scheduler!;
+        // Flight = mRange/mSpeed = 10/10 = 1.0s; FakeBridge has no object within 2u of the impact so the
+        // shot misses — the point is the coroutine yields for the flight then resumes WITH the result.
+        rt.Execute(LuaFixtures.Compile("""
+            ProjDone = false; ProjHit = "?"; ProjX = -1
+            nThread.CreateThreadForObject(5, function()
+                local hit, x = nThread.WaitForProjectile(5, 10, { mDirection = {1,0,0}, mSpeed = 10, mRange = 10 })
+                ProjHit = (hit == nil) and "miss" or "hit"
+                ProjX = x
+                ProjDone = true
+            end)
+            """), "proj");
+        Assert.False(rt.EvalBool(LuaFixtures.Compile("return ProjDone")));
+        sched.Tick(0.5);
+        Assert.False(rt.EvalBool(LuaFixtures.Compile("return ProjDone")));
+        sched.Tick(1.1);
+        Assert.True(rt.EvalBool(LuaFixtures.Compile("return ProjDone and ProjHit == 'miss' and ProjX == 11.5")));
+    }
+
+    [Fact]
     public void SnapshotFallsBackToInvocationAgent()
     {
         using var rt = Make();

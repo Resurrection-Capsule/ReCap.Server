@@ -13,6 +13,9 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         public bool Sleeping { get; set; }
         public double? WakeAtSeconds { get; set; }
         public Func<bool>? WakeWhen { get; set; }
+        // Optional: pushes return values onto the thread stack when it wakes and returns their count,
+        // so a wait can hand results back to the yielding Lua (e.g. WaitForProjectile's impact result).
+        public Func<nint, int>? ResumeValues { get; set; }
         // Fired when the coroutine finishes normally (LUA_OK), before teardown, with its thread L on
         // the stack — lets a pcall-style handler ([4] event) read its return value. Not fired on error
         // or on StopThread.
@@ -75,12 +78,14 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         Resume(entry, argCount);
     }
 
-    public void RegisterYield(nint threadL, bool sleeping, double? wakeAt, Func<bool>? wakeWhen = null)
+    public void RegisterYield(nint threadL, bool sleeping, double? wakeAt, Func<bool>? wakeWhen = null,
+        Func<nint, int>? resumeValues = null)
     {
         if (!_threads.TryGetValue(threadL, out var entry)) return;
         entry.Sleeping = sleeping;
         entry.WakeAtSeconds = wakeAt;
         entry.WakeWhen = wakeWhen;
+        entry.ResumeValues = resumeValues;
     }
 
     public void WakeObject(uint objectId)
@@ -116,7 +121,13 @@ public sealed class LuaCoroutineScheduler(nint mainState)
             else if (entry.WakeAtSeconds is double wake && nowSeconds < wake) continue;
             entry.WakeAtSeconds = null;
             entry.WakeWhen = null;
-            Resume(entry, 0);
+            var resumeArgs = 0;
+            if (entry.ResumeValues is { } push)
+            {
+                resumeArgs = SafeResumeValues(push, entry.ThreadL);
+                entry.ResumeValues = null;
+            }
+            Resume(entry, resumeArgs);
         }
     }
 
@@ -128,6 +139,11 @@ public sealed class LuaCoroutineScheduler(nint mainState)
     private static void SafeComplete(Action<nint> onComplete, nint threadL)
     {
         try { onComplete(threadL); } catch { }
+    }
+
+    private static int SafeResumeValues(Func<nint, int> push, nint threadL)
+    {
+        try { return push(threadL); } catch { return 0; }
     }
 
     private void Resume(ThreadEntry entry, int argCount)

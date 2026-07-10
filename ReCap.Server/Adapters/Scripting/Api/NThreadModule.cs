@@ -18,7 +18,89 @@ public static unsafe class NThreadModule
             ("WaitForHitpointsAbove", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForHitpointsAbove),
             ("WaitForFadeOutInXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForFadeOutInXSeconds),
             ("WaitForNearGoal", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForNearGoal),
+            ("WaitForProjectile", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForProjectile),
             ("WaitForJumpComplete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForJumpComplete));
+    }
+
+    private const float ProjectileImpactRadius = 2.0f;
+
+    // nThread.WaitForProjectile(projectileObj, caster, params{mDirection={x,y,z}, mSpeed, mRange}) —
+    // the projectile ability yields until its shot lands, then resumes with the hit result the caller
+    // branches on (hitObject or nil, then impact x/y/z). We have no projectile physics, so approximate:
+    // fly `mRange` along `mDirection` at `mSpeed` (flight time = range/speed), then on wake report the
+    // nearest hostile within a small radius of the impact point as the hit (else a miss). Enough for a
+    // ranged enemy to actually connect; true collision/homing simulation is deferred.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int WaitForProjectile(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var scheduler = ctx?.Scheduler;
+            var bridge = ctx?.GameBridge;
+            if (scheduler is null || bridge is null) return 0;
+
+            var caster = LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER
+                ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2)) : 0u;
+
+            float speed = 8f, range = 10f, dx = 0f, dy = 0f, dz = 0f;
+            if (LuaNative.lua_type(L, 3) == LuaNative.LUA_TTABLE)
+            {
+                speed = TableNumber(L, 3, "mSpeed", 8f);
+                range = TableNumber(L, 3, "mRange", 10f);
+                (dx, dy, dz) = TableVector(L, 3, "mDirection");
+            }
+
+            bridge.TryGetPosition(caster, out var sx, out var sy, out var sz);
+            var len = MathF.Sqrt(dx * dx + dy * dy + dz * dz);
+            if (len > 0f) { dx /= len; dy /= len; dz /= len; }
+            var impactX = sx + dx * range;
+            var impactY = sy + dy * range;
+            var impactZ = sz + dz * range;
+            var casterTeam = bridge.GetTeam(caster);
+            var flight = speed > 0f ? range / speed : 0.3f;
+
+            scheduler.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + flight, wakeWhen: null,
+                resumeValues: t =>
+                {
+                    uint hitId = 0;
+                    foreach (var id in bridge.QueryObjectsInRadius(impactX, impactY, impactZ, ProjectileImpactRadius, true))
+                        if (id != caster && bridge.GetTeam(id) != casterTeam) { hitId = id; break; }
+                    if (hitId != 0) LuaNative.lua_pushnumber(t, hitId); else LuaNative.lua_pushnil(t);
+                    LuaNative.lua_pushnumber(t, impactX);
+                    LuaNative.lua_pushnumber(t, impactY);
+                    LuaNative.lua_pushnumber(t, impactZ);
+                    return 4;
+                });
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] WaitForProjectile failed: {ex.Message}"); } catch { }
+            return 0;
+        }
+        return LuaNative.lua_yield(L, 0);
+    }
+
+    private static float TableNumber(nint L, int tableIndex, string field, float fallback)
+    {
+        LuaNative.lua_getfield(L, tableIndex, field);
+        var v = LuaNative.lua_type(L, -1) == LuaNative.LUA_TNUMBER ? (float)LuaNative.lua_tonumber(L, -1) : fallback;
+        LuaNative.lua_settop(L, -2);
+        return v;
+    }
+
+    private static (float, float, float) TableVector(nint L, int tableIndex, string field)
+    {
+        LuaNative.lua_getfield(L, tableIndex, field);
+        float x = 0f, y = 0f, z = 0f;
+        if (LuaNative.lua_type(L, -1) == LuaNative.LUA_TTABLE)
+        {
+            LuaNative.lua_rawgeti(L, -1, 1); x = (float)LuaNative.lua_tonumber(L, -1); LuaNative.lua_settop(L, -2);
+            LuaNative.lua_rawgeti(L, -1, 2); y = (float)LuaNative.lua_tonumber(L, -1); LuaNative.lua_settop(L, -2);
+            LuaNative.lua_rawgeti(L, -1, 3); z = (float)LuaNative.lua_tonumber(L, -1); LuaNative.lua_settop(L, -2);
+        }
+        LuaNative.lua_settop(L, -2);
+        return (x, y, z);
     }
 
     // DEFERRED (no server-side movement integration): resume on a time estimate, not a live position

@@ -33,6 +33,7 @@ public static unsafe class NGameObjectModule
             ("IsModifierActive", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsModifierActive),
             ("ResetAnimationState", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetAnimationState),
             ("SetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAttributeSnapshot),
+            ("GetAttributeSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeSnapshot),
             ("SetTargetPosition", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetPosition),
             ("SetNavCollision", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetNavCollision),
             ("GetModifiedMoveSpeed", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetModifiedMoveSpeed),
@@ -534,6 +535,28 @@ public static unsafe class NGameObjectModule
         }
         catch { }
         return 0;
+    }
+
+    // nGameObject.GetAttributeSnapshot(obj) -> snapshot handle: the object's stored cast-time snapshot
+    // if one was set (e.g. a projectile that carries its caster's), else a fresh snapshot of the
+    // object's live attributes. Used as SetAttributeSnapshot(newObj, GetAttributeSnapshot(srcObj)).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAttributeSnapshot(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_type(L, 1) != LuaNative.LUA_TNUMBER)
+            { LuaNative.lua_pushnumber(L, 0f); return 1; }
+            var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            if (ctx.TryGetObjectSnapshot(objId, out var existing))
+            { LuaNative.lua_pushnumber(L, existing); return 1; }
+            var table = ctx.GameBridge?.GetAttributeTable(objId);
+            var handle = table is null ? 0u : ctx.StoreAttributeSnapshot(new Dictionary<int, float>(table));
+            LuaNative.lua_pushnumber(L, handle);
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
     }
 
     // Projectile carries the caster's cast-time snapshot handle (catalog §Mechanical).
