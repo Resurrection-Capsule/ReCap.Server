@@ -191,6 +191,46 @@ public class ModifierSharedContextTests
     }
 
     [Fact]
+    public void PriorityDispel_AgentModifierDispelsLowerInterruptible_KeepsNonInterruptibleAndHigher()
+    {
+        using var ctx = MakeContext(out var game);
+        // requiresAgent gates the pre-pass; a new modifier dispels existing ones flagged
+        // deactivateOnInterrupt whose modifierPriority is <= the newcomer's (retail dispel loop).
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            local function persist() return function() nThread.WaitForever() end end
+            nModifier.RegisterModifier("recap_slow", { requiresAgent=true, modifierPriority=450, deactivateOnInterrupt=true, [2]=persist() })
+            nModifier.RegisterModifier("recap_root", { requiresAgent=true, modifierPriority=500, deactivateOnInterrupt=true, [2]=persist() })
+            nModifier.RegisterModifier("recap_poison", { requiresAgent=true, modifierPriority=100, deactivateOnInterrupt=false, [2]=persist() })
+            """), "probe");
+
+        var slowId = ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_slow"), 0);
+        var poisonId = ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_poison"), 0);
+        // Applying the higher-priority Root dispels the interruptible Slow but not the poison DoT.
+        var rootId = ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_root"), 0);
+
+        Assert.Null(game.Modifiers.Get(slowId));      // dispelled (450 <= 500, deactivateOnInterrupt)
+        Assert.NotNull(game.Modifiers.Get(poisonId)); // survives — not deactivateOnInterrupt
+        Assert.NotNull(game.Modifiers.Get(rootId));
+        Assert.Equal(0, ctx.Scheduler.ErrorCount);
+    }
+
+    [Fact]
+    public void PriorityDispel_LowerPriorityNewcomer_DoesNotDispelHigher()
+    {
+        using var ctx = MakeContext(out var game);
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            local function persist() return function() nThread.WaitForever() end end
+            nModifier.RegisterModifier("recap_root2", { requiresAgent=true, modifierPriority=500, deactivateOnInterrupt=true, [2]=persist() })
+            nModifier.RegisterModifier("recap_slow2", { requiresAgent=true, modifierPriority=450, deactivateOnInterrupt=true, [2]=persist() })
+            """), "probe");
+
+        var rootId = ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_root2"), 0);
+        ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_slow2"), 0); // weaker — must not dispel the root
+
+        Assert.NotNull(game.Modifiers.Get(rootId)); // higher priority outranks the newcomer
+    }
+
+    [Fact]
     public void RemovedModifierFreesPrivateTable_NoLeakOnReuse()
     {
         using var ctx = MakeContext(out var game);

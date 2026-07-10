@@ -336,6 +336,13 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     {
         var entry = _registry.Find(ScriptKind.Modifier, modifierGuid);
 
+        // Priority-dispel pre-pass (retail ApplyStackPolicyAndCreate @0x009e6595, gated on the new
+        // modifier's requiresAgent): applying an agent modifier dispels existing modifiers on the target
+        // that are flagged deactivateOnInterrupt and rank at or below the new modifierPriority — the
+        // cross-def CC/interrupt system. Runs before the same-def stack policy switch.
+        if (entry is { RequiresAgent: true })
+            ApplyPriorityDispel(targetId, modifierGuid, entry.ModifierPriority, entry.ActivationType);
+
         // Stack policy (activationType, def+0x190): retail runs this switch BEFORE creating — it may
         // drop existing same-def instances, reject the request, or reuse/refresh an existing one. Apply
         // the removes/refresh here (so [3] deactivate + 0xA3/0xA4 replicate), then create only if asked.
@@ -381,6 +388,24 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         LuaNative.lua_createtable(L, 0, 0);
         instance.PrivateTableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
         return instance.PrivateTableRef;
+    }
+
+    // Remove existing modifiers on the target that a new agent modifier outranks (retail dispel loop
+    // @0x009e65d9): skip existing that outrank the newcomer (existing.modifierPriority > new), skip
+    // those not flagged deactivateOnInterrupt, and skip a same-def UniqueIrreplaceable (activationType
+    // 6, handled by the stack switch). DEFERRED edges (need unmodelled state): the "new is too weak ->
+    // reject" gate (FUN_009e3be0), the channelled-modifier lock (component+0x23c), and the
+    // existing-mid-dispatch (+0x16c) reject.
+    private void ApplyPriorityDispel(uint targetId, uint newGuid, int newPriority, int newActivationType)
+    {
+        foreach (var existing in _game.Modifiers.ModifiersOn(targetId))
+        {
+            if (_registry.Find(ScriptKind.Modifier, existing.ModifierGuid) is not { } e) continue;
+            if (e.ModifierPriority > newPriority) continue;
+            if (!e.DeactivateOnInterrupt) continue;
+            if (existing.ModifierGuid == newGuid && newActivationType == 6) continue;
+            RemoveModifier(existing.InstanceId);
+        }
     }
 
     // Stack-policy case 7 (refresh): recompute the modifier's duration start and replicate 0xA3 so the

@@ -58,9 +58,15 @@ public static unsafe class RegistrarModule
             // modifier's [4] handler subscribes to (e.g. TookDamage/StackModifier). Combat dispatch
             // fires [4] only on modifiers whose bitmask includes the event.
             var handledEvents = TableIntField(L, 2, "handledEvents");
+            // Priority-dispel pre-pass fields (ability schema, AssetData.Parser ability.cs offsets):
+            // requiresAgent (0x5a) gates the pre-pass; deactivateOnInterrupt (0x17c) marks an existing
+            // modifier as dispellable by a >= priority one; modifierPriority (0x178) is the rank.
+            var requiresAgent = TableBoolField(L, 2, "requiresAgent");
+            var modifierPriority = TableIntField(L, 2, "modifierPriority");
+            var deactivateOnInterrupt = TableBoolField(L, 2, "deactivateOnInterrupt");
             LuaNative.lua_pushvalue(L, 2);
             var tableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
-            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns, activationType, handledEvents));
+            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns, activationType, handledEvents, requiresAgent, modifierPriority, deactivateOnInterrupt));
             return 0;
         }
         catch (Exception ex)
@@ -75,6 +81,15 @@ public static unsafe class RegistrarModule
     {
         LuaNative.lua_getfield(L, tableIndex, field);
         var value = LuaNative.lua_type(L, -1) == LuaNative.LUA_TNUMBER ? (int)LuaNative.lua_tonumber(L, -1) : 0;
+        LuaNative.lua_settop(L, -2);
+        return value;
+    }
+
+    // Bool field (false when absent/nil). Lua truthiness via lua_toboolean.
+    private static bool TableBoolField(nint L, int tableIndex, string field)
+    {
+        LuaNative.lua_getfield(L, tableIndex, field);
+        var value = LuaNative.lua_toboolean(L, -1) != 0;
         LuaNative.lua_settop(L, -2);
         return value;
     }
