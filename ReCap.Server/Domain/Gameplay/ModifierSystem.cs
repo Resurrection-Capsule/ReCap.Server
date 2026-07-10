@@ -119,6 +119,11 @@ public sealed class ModifierSystem
         }
     }
 
+    // All modifier instances currently on a target (any def) — the combat-event dispatch iterates these
+    // to fire the [4] event on modifiers whose handledEvents bitmask includes the event.
+    public IReadOnlyList<ModifierInstance> ModifiersOn(uint targetId) =>
+        _byTarget.TryGetValue(targetId, out var list) ? list.ToList() : [];
+
     public bool Remove(uint instanceId)
     {
         if (!_byId.Remove(instanceId, out var instance)) return false;

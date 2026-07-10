@@ -13,6 +13,10 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         public bool Sleeping { get; set; }
         public double? WakeAtSeconds { get; set; }
         public Func<bool>? WakeWhen { get; set; }
+        // Fired when the coroutine finishes normally (LUA_OK), before teardown, with its thread L on
+        // the stack — lets a pcall-style handler ([4] event) read its return value. Not fired on error
+        // or on StopThread.
+        public Action<nint>? OnComplete { get; set; }
     }
 
     private readonly Dictionary<nint, ThreadEntry> _threads = [];
@@ -44,20 +48,22 @@ public sealed class LuaCoroutineScheduler(nint mainState)
     // Moves valuesOnTop stack values (fn first, then args) from callerL to a new thread.
     // beforeFirstResume is invoked after thread registration but before the first resume,
     // allowing the caller to set per-thread state (e.g. SetInvocation) before Lua runs.
-    public nint SpawnFromStack(nint callerL, uint objectId, int valuesOnTop, Action<nint>? beforeFirstResume = null)
+    public nint SpawnFromStack(nint callerL, uint objectId, int valuesOnTop, Action<nint>? beforeFirstResume = null,
+        Action<nint>? onComplete = null)
     {
         if (objectId != 0 && _byObject.ContainsKey(objectId)) return 0;
         var threadL = LuaNative.lua_newthread(mainState);
         var threadRef = LuaNative.luaL_ref(mainState, LuaNative.LUA_REGISTRYINDEX);
         var argCount = valuesOnTop - 1;
         LuaNative.lua_xmove(callerL, threadL, valuesOnTop);
-        RegisterAndResume(threadL, threadRef, objectId, argCount, beforeFirstResume);
+        RegisterAndResume(threadL, threadRef, objectId, argCount, beforeFirstResume, onComplete);
         return threadL;
     }
 
-    private void RegisterAndResume(nint threadL, int threadRef, uint objectId, int argCount, Action<nint>? beforeFirstResume)
+    private void RegisterAndResume(nint threadL, int threadRef, uint objectId, int argCount, Action<nint>? beforeFirstResume,
+        Action<nint>? onComplete = null)
     {
-        var entry = new ThreadEntry { ThreadL = threadL, ThreadRef = threadRef, ObjectId = objectId };
+        var entry = new ThreadEntry { ThreadL = threadL, ThreadRef = threadRef, ObjectId = objectId, OnComplete = onComplete };
         _threads[threadL] = entry;
         if (objectId != 0) _byObject[objectId] = threadL;
         var context = ScriptContextRegistry.Get(mainState);
@@ -119,11 +125,20 @@ public sealed class LuaCoroutineScheduler(nint mainState)
         try { return predicate(); } catch { return false; }
     }
 
+    private static void SafeComplete(Action<nint> onComplete, nint threadL)
+    {
+        try { onComplete(threadL); } catch { }
+    }
+
     private void Resume(ThreadEntry entry, int argCount)
     {
         var status = LuaNative.lua_resume(entry.ThreadL, argCount);
         if (status == LuaNative.LUA_YIELD) return;
-        if (status != LuaNative.LUA_OK)
+        if (status == LuaNative.LUA_OK)
+        {
+            if (entry.OnComplete is { } onComplete) SafeComplete(onComplete, entry.ThreadL);
+        }
+        else
         {
             var message = LuaNative.ToManagedString(entry.ThreadL, -1) ?? "unknown";
             Util.Logging.Log.Lua.Error($"[coroutine] object {entry.ObjectId}: {message}");

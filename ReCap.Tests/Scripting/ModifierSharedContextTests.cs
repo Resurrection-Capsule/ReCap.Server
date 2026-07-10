@@ -127,6 +127,70 @@ public class ModifierSharedContextTests
     }
 
     [Fact]
+    public void StacksReapply_Index4ReturnsFalse_RemovesInstance()
+    {
+        using var ctx = MakeContext(out var game);
+        // Retail RunReapplyEvent removes the instance when the [4] handler returns false.
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            nModifier.RegisterModifier("recap_reject_probe", {
+                activationType = 4,
+                [2] = function() nThread.WaitForever() end,
+                [4] = function(ev) return false end,
+            })
+            """), "probe");
+        var hash = ScriptVfs.Hash("recap_reject_probe");
+
+        var id1 = ctx.CreateModifier(10, 20, hash, 0);
+        Assert.NotNull(game.Modifiers.Get(id1));
+
+        var id2 = ctx.CreateModifier(10, 20, hash, 0); // reuse → [4] returns false → existing removed
+        Assert.Equal(id1, id2);
+        Assert.Null(game.Modifiers.Get(id1));
+        Assert.Equal(0, ctx.Scheduler.ErrorCount);
+    }
+
+    [Fact]
+    public void TookDamageEvent_FiresIndex4OnSubscribedModifier_WithTypedPayload()
+    {
+        using var ctx = MakeContext(out var game);
+        // A modifier subscribed to TookDamage(1) gets its [4] fired when its target takes damage, with
+        // the typed payload the real handlers read (ThornsPassive/QuantumStateBuff).
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            EvType, EvAtk, EvAmt, EvDesc, EvMelee = -1, -1, -1, -1, false
+            nModifier.RegisterModifier("recap_tookdmg_probe", {
+                handledEvents = 1,
+                [2] = function() nThread.WaitForever() end,
+                [4] = function(ev)
+                        EvType = nAbility.GetAbilityEventType(ev)
+                        if EvType == 1 then
+                            EvAtk = nAbility.GetAbilityEventGUIDData(ev, 1)
+                            EvAmt = nAbility.GetAbilityEventFloatData(ev, 2)
+                            EvDesc = nAbility.GetAbilityEventIntData(ev, 3)
+                            EvMelee = nAbility.CheckDescriptors_AnyMatch(8, EvDesc)
+                        end
+                        return true
+                      end,
+            })
+            NoEvent = 0
+            nModifier.RegisterModifier("recap_noevent_probe", {
+                handledEvents = 0,
+                [4] = function(ev) NoEvent = NoEvent + 1 return true end,
+            })
+            """), "probe");
+
+        ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_tookdmg_probe"), 0);
+        ctx.CreateModifier(10, 20, ScriptVfs.Hash("recap_noevent_probe"), 0);
+
+        ctx.DispatchTookDamage(targetId: 10, attackerId: 99, amount: 42f, descriptors: 8);
+
+        Assert.True(ctx.Runtime.EvalBool(LuaFixtures.Compile(
+            "return EvType == 1 and EvAtk == 99 and EvAmt == 42 and EvDesc == 8 and EvMelee == true")));
+        // The unsubscribed modifier's [4] must NOT fire.
+        Assert.True(ctx.Runtime.EvalBool(LuaFixtures.Compile("return NoEvent == 0")));
+        Assert.Equal(0, ctx.Scheduler.ErrorCount);
+    }
+
+    [Fact]
     public void RemovedModifierFreesPrivateTable_NoLeakOnReuse()
     {
         using var ctx = MakeContext(out var game);

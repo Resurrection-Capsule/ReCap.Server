@@ -40,6 +40,7 @@ public interface IScriptGameBridge
     int GetModifierStackCount(uint instanceId);
     int IncrementModifierStack(uint instanceId);
     void ResetModifierDuration(uint instanceId);
+    void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors);
     IReadOnlyList<uint> GetAggroTargets(uint agentId);
     bool HasAggroTargets(uint agentId);
     uint GetBestTarget(uint agentId);
@@ -53,6 +54,23 @@ public readonly record struct AbilityInvocation(
     uint AbilityHash = 0, uint InstanceId = 0, bool TargetInRangeAtStart = false,
     uint InitiatorId = 0, int StackCount = 0, int EventType = 0);
 
+// Payload of a modifier [4] event, read by nAbility.GetAbilityEvent{GUID,Float,Int}Data(handle, index).
+// Retail carries a typed slot array; we model the slots each real handler actually reads. TookDamage
+// (verified: ThornsPassive/QuantumStateBuff): GUID[1]=attacker, Float[2]=amount, Int[3]=descriptors.
+public sealed class ModifierEventData
+{
+    public IReadOnlyDictionary<int, uint> Guids { get; init; } = System.Collections.Immutable.ImmutableDictionary<int, uint>.Empty;
+    public IReadOnlyDictionary<int, float> Floats { get; init; } = System.Collections.Immutable.ImmutableDictionary<int, float>.Empty;
+    public IReadOnlyDictionary<int, int> Ints { get; init; } = System.Collections.Immutable.ImmutableDictionary<int, int>.Empty;
+
+    public static ModifierEventData TookDamage(uint attacker, float amount, int descriptors) => new()
+    {
+        Guids = new Dictionary<int, uint> { [1] = attacker },
+        Floats = new Dictionary<int, float> { [2] = amount },
+        Ints = new Dictionary<int, int> { [3] = descriptors },
+    };
+}
+
 public sealed class ScriptStateContext
 {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, AbilityInvocation> _invocations = new();
@@ -65,6 +83,12 @@ public sealed class ScriptStateContext
 
     public void SetInvocation(nint threadL, AbilityInvocation invocation) => _invocations[threadL] = invocation;
 
+    // Per-thread modifier [4] event payload (read by GetAbilityEvent*Data). Set when firing the handler,
+    // cleared with the invocation on thread release.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<nint, ModifierEventData> _modifierEvents = new();
+    public void SetModifierEvent(nint threadL, ModifierEventData data) => _modifierEvents[threadL] = data;
+    public ModifierEventData? GetModifierEvent(nint callerL) => _modifierEvents.TryGetValue(callerL, out var e) ? e : null;
+
     public AbilityInvocation? GetInvocation(nint callerL)
     {
         if (_invocations.TryGetValue(callerL, out var inv)) return inv;
@@ -75,6 +99,7 @@ public sealed class ScriptStateContext
     {
         _invocations.TryRemove(threadL, out _);
         _animSequenceCurrent.TryRemove(threadL, out _);
+        _modifierEvents.TryRemove(threadL, out _);
     }
 
     // nAbilityAnimationSelection.Sequence rotation: one counter per (agent, ability) across

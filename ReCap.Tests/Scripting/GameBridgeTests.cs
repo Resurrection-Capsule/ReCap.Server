@@ -124,6 +124,7 @@ internal sealed class FakeBridge : IScriptGameBridge
     public int GetModifierStackCount(uint instanceId) => Modifiers.Get(instanceId)?.StackCount ?? 0;
     public int IncrementModifierStack(uint instanceId) { if (Modifiers.Get(instanceId) is { } m) return ++m.StackCount; return 0; }
     public void ResetModifierDuration(uint instanceId) { }
+    public void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors) { }
 
     public IReadOnlyList<uint> GetAggroTargets(uint agentId) => agentId == 10 ? new uint[] { 55 } : System.Array.Empty<uint>();
     public bool HasAggroTargets(uint agentId) => agentId == 10;

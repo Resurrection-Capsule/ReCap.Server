@@ -120,6 +120,7 @@ public class SchedulerPredicateTests
         public int GetModifierStackCount(uint instanceId) => 0;
         public int IncrementModifierStack(uint instanceId) => 0;
         public void ResetModifierDuration(uint instanceId) { }
+        public void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors) { }
         public IReadOnlyList<uint> GetAggroTargets(uint a) => System.Array.Empty<uint>();
         public bool HasAggroTargets(uint a) => false;
         public uint GetBestTarget(uint a) => 0;

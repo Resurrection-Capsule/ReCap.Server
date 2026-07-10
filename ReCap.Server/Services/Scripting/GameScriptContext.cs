@@ -436,7 +436,7 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // as a detached coroutine (objectId 0 = no per-object gate; a target can carry many modifiers plus
     // its own ability thread). Returns the thread handle, or 0 if the index is not a function.
     private nint SpawnModifierIndex(ScriptEntry entry, int index, Adapters.Scripting.AbilityInvocation invocation,
-        int sharedPrivateRef = 0)
+        int sharedPrivateRef = 0, Action<nint>? onComplete = null, Adapters.Scripting.ModifierEventData? eventData = null)
     {
         var L = _runtime.L;
         LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
@@ -453,7 +453,9 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
                 var c = ScriptContextRegistry.Get(_runtime.L);
                 c?.SetInvocation(t, invocation);
                 if (sharedPrivateRef != 0) c?.BindSharedPrivateTable(t, sharedPrivateRef);
-            });
+                if (eventData is not null) c?.SetModifierEvent(t, eventData);
+            },
+            onComplete: onComplete);
     }
 
     public uint FindModifierByGuid(uint targetId, uint modifierGuid) =>
@@ -487,14 +489,57 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // and the combat-driven events (DealtDamage/TookDamage) — only the StackModifier reapply is wired.
     private void FireStackModifierEvent(uint instanceId)
     {
-        if (_game.Modifiers.Get(instanceId) is not { } instance) return;
+        if (_game.Modifiers.Get(instanceId) is { } instance)
+            FireModifierEvent(instance, 32); // nAbilityEventFlags.StackModifier
+    }
+
+    // Fire a modifier's index [4] event handler for one event type (retail dispatch FUN_008f5060 with
+    // index 4). The handler reads the type via nAbility.GetAbilityEventType and returns a bool; retail
+    // removes the instance when it returns false (nModifier_RunReapplyEvent @0x009e6060). A modifier
+    // with no [4] (or a [4] that yields) keeps the instance.
+    private void FireModifierEvent(Domain.Gameplay.ModifierInstance instance, int eventType,
+        Adapters.Scripting.ModifierEventData? eventData = null)
+    {
         if (_registry.Find(ScriptKind.Modifier, instance.ModifierGuid) is not { } entry) return;
+        var handlerRan = false;
+        var keep = true;
         lock (_luaGate)
         {
-            var invocation = ModifierInvocation(instance) with { EventType = 32 }; // nAbilityEventFlags.StackModifier
-            SpawnModifierIndex(entry, 4, invocation, instance.PrivateTableRef);
+            var invocation = ModifierInvocation(instance) with { EventType = eventType };
+            SpawnModifierIndex(entry, 4, invocation, instance.PrivateTableRef,
+                onComplete: t => { handlerRan = true; keep = LuaNative.lua_toboolean(t, -1) != 0; },
+                eventData: eventData);
         }
+        if (handlerRan && !keep) RemoveModifier(instance.InstanceId);
     }
+
+    // Combat-event dispatch: fire the [4] event on every modifier on `objectId` whose handledEvents
+    // bitmask includes `eventType` (retail fires index [4] on the object's modifier list). Guarded
+    // against re-entrancy so a thorns [4] that deals damage back doesn't recurse into another dispatch.
+    private bool _inCombatEventDispatch;
+    private void DispatchCombatEvent(uint objectId, int eventType, Adapters.Scripting.ModifierEventData data)
+    {
+        if (_inCombatEventDispatch) return;
+        var mods = _game.Modifiers.ModifiersOn(objectId);
+        if (mods.Count == 0) return;
+        _inCombatEventDispatch = true;
+        try
+        {
+            foreach (var m in mods)
+            {
+                if (_game.Modifiers.Get(m.InstanceId) is null) continue; // a prior handler removed it
+                if (_registry.Find(ScriptKind.Modifier, m.ModifierGuid) is not { HandledEvents: var flags }
+                    || (flags & eventType) == 0) continue;
+                FireModifierEvent(m, eventType, data);
+            }
+        }
+        finally { _inCombatEventDispatch = false; }
+    }
+
+    // nAbilityEventFlags.TookDamage (1): the target took damage — fire [4] on its subscribed modifiers
+    // (thorns retaliation, on-hit procs). Attacker/amount/descriptors match the handlers' slot reads.
+    public void DispatchTookDamage(uint targetId, uint attackerId, float amount, int descriptors) =>
+        DispatchCombatEvent(targetId, 1, Adapters.Scripting.ModifierEventData.TookDamage(attackerId, amount, descriptors));
 
     public IReadOnlyList<uint> GetAggroTargets(uint agentId)
         => _game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb

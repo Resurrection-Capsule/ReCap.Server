@@ -156,6 +156,16 @@ public static unsafe class NGameObjectModule
         {
             try { bridge!.BroadcastCombatEvent(targetId, 0, dealt, (int)MathF.Round(dealt), 0); }
             catch { /* feedback packet is best-effort; never fail the cast */ }
+
+            // TookDamage event: fire the target's subscribed modifier [4] handlers (thorns/on-hit procs).
+            // Attacker = the caster running this cast; descriptors = arg 7 (IsMelee etc.).
+            try
+            {
+                var attacker = ScriptContextRegistry.Get(L)?.GetInvocation(L)?.AgentId ?? 0;
+                var descriptors = LuaNative.lua_type(L, 7) == LuaNative.LUA_TNUMBER ? (int)(long)LuaNative.lua_tonumber(L, 7) : 0;
+                bridge!.DispatchTookDamage(targetId, attacker, dealt, descriptors);
+            }
+            catch { /* event dispatch is best-effort; never fail the cast */ }
         }
 
         LuaNative.lua_pushboolean(L, 1);

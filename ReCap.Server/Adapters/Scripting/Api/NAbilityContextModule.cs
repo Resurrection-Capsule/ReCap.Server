@@ -21,8 +21,14 @@ public static unsafe class NAbilityContextModule
             ("PlayAnimationSequence", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&PlayAnimationSequence),
             ("GetAbilityEventType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventType),
             ("GetAbilityEventGUIDData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventGUIDData),
+            ("GetAbilityEventFloatData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventFloatData),
+            ("GetAbilityEventIntData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventIntData),
+            ("CheckDescriptors_AnyMatch", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CheckDescriptorsAnyMatch),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
     }
+
+    private static int EventSlotIndex(nint L) =>
+        LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER ? (int)Math.Round((double)LuaNative.lua_tonumber(L, 2)) : 0;
 
     // A modifier's [4] event handler reads the event type (nAbilityEventFlags) via
     // GetAbilityEventType(eventHandle). We stash the type in the invocation's EventType slot when firing
@@ -39,14 +45,58 @@ public static unsafe class NAbilityContextModule
         catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
     }
 
-    // GetAbilityEventGUIDData(eventHandle, index) — payload fields of a combat-driven event
-    // (DealtDamage/TookDamage). Those events are not fired yet; return 0 so a handler that reaches this
-    // (it won't for the StackModifier path) degrades gracefully instead of erroring.
+    // GetAbilityEventGUIDData/FloatData/IntData(eventHandle, index) — typed payload slots of the current
+    // [4] event (TookDamage: GUID[1]=attacker, Float[2]=amount, Int[3]=descriptors). 0 when absent.
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int GetAbilityEventGUIDData(nint L)
     {
-        LuaNative.lua_pushnumber(L, 0f);
-        return 1;
+        try
+        {
+            var evt = ScriptContextRegistry.Get(L)?.GetModifierEvent(L);
+            var value = evt?.Guids.GetValueOrDefault(EventSlotIndex(L)) ?? 0u;
+            LuaNative.lua_pushnumber(L, value); // object ids are small — exact as a Lua float
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAbilityEventFloatData(nint L)
+    {
+        try
+        {
+            var evt = ScriptContextRegistry.Get(L)?.GetModifierEvent(L);
+            LuaNative.lua_pushnumber(L, evt?.Floats.GetValueOrDefault(EventSlotIndex(L)) ?? 0f);
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAbilityEventIntData(nint L)
+    {
+        try
+        {
+            var evt = ScriptContextRegistry.Get(L)?.GetModifierEvent(L);
+            LuaNative.lua_pushnumber(L, evt?.Ints.GetValueOrDefault(EventSlotIndex(L)) ?? 0);
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    // CheckDescriptors_AnyMatch(flags, descriptors) -> bool: whether any bit of `flags` is set in the
+    // event's descriptors bitmask (e.g. IsMelee). Pure bitwise AND != 0.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int CheckDescriptorsAnyMatch(nint L)
+    {
+        try
+        {
+            var flags = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER ? (uint)(long)LuaNative.lua_tonumber(L, 1) : 0u;
+            var descriptors = LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER ? (uint)(long)LuaNative.lua_tonumber(L, 2) : 0u;
+            LuaNative.lua_pushboolean(L, (flags & descriptors) != 0 ? 1 : 0);
+            return 1;
+        }
+        catch { LuaNative.lua_pushboolean(L, 0); return 1; }
     }
 
     // Retail contracts (Ghidra 2026-06-06, VERIFIED_FACTS C3 addendum):

@@ -54,9 +54,13 @@ public static unsafe class RegistrarModule
             // create path switches on (nAbility::RequestModifier -> FUN_009e6420): 0 stack, 1 replace-all,
             // 2 replace-per-caster, 3 reject-per-initiator, 4/5 unique-per-caster, 6 single, 7 refresh.
             var activationType = TableIntField(L, 2, "activationType");
+            // handledEvents (ability schema int bitmask, def+0x1a4) — which nAbilityEventFlags a
+            // modifier's [4] handler subscribes to (e.g. TookDamage/StackModifier). Combat dispatch
+            // fires [4] only on modifiers whose bitmask includes the event.
+            var handledEvents = TableIntField(L, 2, "handledEvents");
             LuaNative.lua_pushvalue(L, 2);
             var tableRef = LuaNative.luaL_ref(L, LuaNative.LUA_REGISTRYINDEX);
-            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns, activationType));
+            context.Registry.TryAdd(kind, new ScriptEntry(name, hash, tableRef, hasTick, hasActivate, hasDeactivate, cooldowns, activationType, handledEvents));
             return 0;
         }
         catch (Exception ex)
