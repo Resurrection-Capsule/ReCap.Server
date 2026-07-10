@@ -85,27 +85,28 @@ public sealed class ModifierSystem
     // switch(*(def+0x190)) cases 0-7 (default = reject). Verified 2026-07-10 (Ghidra jump table @0x9e6978).
     public StackDecision ResolveStackPolicy(uint targetId, uint casterId, uint modifierGuid, int activationType)
     {
+        // Enum values verified against GlobalDefinitions.lua nActivationType 2026-07-10.
         var same = FindAllByGuid(targetId, modifierGuid);
         switch (activationType)
         {
-            case 0: // stack — always create a new instance alongside any existing
+            case 0: // Default — always create a new instance alongside any existing
                 return StackDecision.Create;
-            case 1: // replace-all — remove every same-def instance, then create
+            case 1: // Unique — remove every same-def instance, then create
                 return StackDecision.CreateAfterRemoving(same.Select(m => m.InstanceId));
-            case 2: // replace-per-caster — remove this caster's instance, then create
+            case 2: // CasterUnique — remove this caster's instance, then create
                 return same.FirstOrDefault(m => m.CasterId == casterId) is { } prior
                     ? StackDecision.CreateAfterRemoving([prior.InstanceId])
                     : StackDecision.Create;
-            case 3: // reject-per-initiator — if this caster already has one, no new instance
+            case 3: // CasterUniqueIrreplaceable — if this caster already has one, no new instance (SproutPoison)
                 return same.Any(m => m.CasterId == casterId) ? StackDecision.Reject : StackDecision.Create;
-            case 4: // unique-per-caster — reuse this caster's existing instance if present
-            case 5:
+            case 4: // Stacks — reuse this caster's existing instance (retail runs its [4] event to bump the
+            case 5: // StacksAndCasterUnique — stack count; that [4] stack-increment is deferred), else create
                 return same.FirstOrDefault(m => m.CasterId == casterId) is { } existing
                     ? StackDecision.Existing(existing.InstanceId)
                     : StackDecision.Create;
-            case 6: // single — if any same-def instance exists on the target, reject
+            case 6: // UniqueIrreplaceable — if any same-def instance exists on the target, reject
                 return same.Count > 0 ? StackDecision.Reject : StackDecision.Create;
-            case 7: // refresh — keep the oldest, drop the rest, refresh its duration (0xA3), reuse it
+            case 7: // UniqueResets — keep the oldest, drop the rest, reset its duration (0xA3), reuse it
                 return same.Count == 0
                     ? StackDecision.Create
                     : StackDecision.RefreshOldest(same[0].InstanceId, same.Skip(1).Select(m => m.InstanceId));

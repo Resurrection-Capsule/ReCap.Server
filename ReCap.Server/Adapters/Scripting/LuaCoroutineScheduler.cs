@@ -134,7 +134,11 @@ public sealed class LuaCoroutineScheduler(nint mainState)
 
     private void Release(ThreadEntry entry)
     {
-        _threads.Remove(entry.ThreadL);
+        // Idempotent: a modifier tick that removes itself (nModifier.MarkForDelete → RemoveModifier →
+        // StopThread) Releases its own thread mid-resume; when that resume later returns, Resume calls
+        // Release again. Guard so the registry ref is unref'd exactly once (a double luaL_unref corrupts
+        // the ref free list). Expiry is script-driven this way — see modifier DoT [2] self-removal.
+        if (!_threads.Remove(entry.ThreadL)) return;
         if (entry.ObjectId != 0 && _byObject.TryGetValue(entry.ObjectId, out var l) && l == entry.ThreadL)
             _byObject.Remove(entry.ObjectId);
         var context = ScriptContextRegistry.Get(entry.ThreadL);

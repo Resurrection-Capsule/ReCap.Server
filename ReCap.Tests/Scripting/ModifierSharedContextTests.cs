@@ -60,6 +60,39 @@ public class ModifierSharedContextTests
     }
 
     [Fact]
+    public void TickCanSelfMarkForDelete_ScriptDrivenExpiry_NoDoubleRelease()
+    {
+        using var ctx = MakeContext(out var game);
+        // Retail modifier expiry is script-driven: the [2] tick removes its own instance via
+        // nModifier.MarkForDelete (there is no C++ duration sweep). That StopThreads the running tick
+        // from inside its own resume — the scheduler must survive the re-entrant release.
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            SelfId = 0
+            nModifier.RegisterModifier("recap_self_expire", {
+                [2] = function()
+                        nThread.WaitForXSeconds(0.1)
+                        nModifier.MarkForDelete(SelfId)
+                      end,
+            })
+            """), "probe");
+        var hash = ScriptVfs.Hash("recap_self_expire");
+
+        var id = ctx.CreateModifier(10, 20, hash, 0);
+        Assert.NotEqual(0u, id);
+        ctx.Runtime.Execute(LuaFixtures.Compile($"SelfId = {id}"), "id");
+
+        for (var i = 0; i < 5; i++) ctx.Tick(); // cross the 0.1s tick; [2] self-removes
+
+        Assert.Null(game.Modifiers.Get(id));       // gone, replicated via 0xA4
+        Assert.Equal(0, ctx.Scheduler.ErrorCount); // no crash / no corruption from the self-release
+
+        // The registry ref free list is intact — a fresh modifier still creates and removes cleanly.
+        var id2 = ctx.CreateModifier(10, 20, hash, 0);
+        Assert.NotEqual(0u, id2);
+        Assert.True(ctx.RemoveModifier(id2));
+    }
+
+    [Fact]
     public void RemovedModifierFreesPrivateTable_NoLeakOnReuse()
     {
         using var ctx = MakeContext(out var game);
