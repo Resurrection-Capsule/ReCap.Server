@@ -12,7 +12,6 @@ public static class StubNamespaces
         LuaApiModule.RegisterNamespace(L, "nAbility");
         LuaApiModule.RegisterNamespace(L, "nModifier");
         LuaApiModule.RegisterNamespace(L, "nCondition");
-        LuaApiModule.RegisterNamespace(L, "nPhysics");
         LuaApiModule.RegisterNamespace(L, "nUtil");
         LuaApiModule.RegisterNamespace(L, "nBit");
         LuaApiModule.RegisterNamespace(L, "nGameObject");
@@ -24,12 +23,10 @@ public static class StubNamespaces
         NAgentModule.Register(L);
         LuaApiModule.RegisterNamespace(L, "nDebug");
         LuaApiModule.RegisterNamespace(L, "nMathUtil");
-        LuaApiModule.RegisterNamespace(L, "nGameDirector");
         LuaApiModule.RegisterNamespace(L, "nGameSimulator");
         LuaApiModule.RegisterNamespace(L, "nLevel");
         LuaApiModule.RegisterNamespace(L, "nAffix");
         LuaApiModule.RegisterNamespace(L, "nJuggernaut");
         LuaApiModule.RegisterNamespace(L, "nTuning");
-        LuaApiModule.RegisterNamespace(L, "nClient");
     }
 }

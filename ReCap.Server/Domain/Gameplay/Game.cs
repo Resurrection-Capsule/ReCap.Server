@@ -623,7 +623,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
         // as a bare prop — no combat/animation state controller — so SetAnimationState (attack/death)
         // and movement never apply. Obelisks/teleporters have no ClassAttributes (MaxHealth 0) → skipped.
         if (enemy.MaxHealth > 0f)
+        {
+            _enemiesSpawned++;
             SendCombatantSetup(client, objId, enemy);
+        }
         Log.Game.Debug($"WorldObject obj=0x{objId:X} noun=0x{noun:X8} at ({pos.X:F0},{pos.Y:F0},{pos.Z:F0}){(bindMarker ? $" marker=0x{markerId:X8}" : " (enemy shape)")}");
     }
 
@@ -1225,9 +1228,15 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // being a valid target (ends the corpse re-target loop) and tells every client to delete it via
     // ObjectDelete 0x8E. The client handler (OnGmsObjectDelete @0x0053ddc0) removes immediately — no
     // death animation is driven by this message. Loot/objective hooks land with the loot phase.
+    // nGameDirector.GetKillPercent (@0x00a00400): fraction of spawned combatant enemies defeated (0..1).
+    private int _enemiesSpawned;
+    private int _enemiesKilled;
+    public float KillPercent => _enemiesSpawned == 0 ? 0f : (float)_enemiesKilled / _enemiesSpawned;
+
     public void OnObjectDeath(uint objectId)
     {
         if (!Objects.Objects.TryGetValue(objectId, out var obj)) return;
+        if (!obj.PlayerControlled && obj.MaxHealth > 0f) _enemiesKilled++;
         Log.Game.Info($"[death] object={objectId} noun=0x{obj.NounId:X8} despawned");
         BroadcastToAllPlayers(new ObjectDeletePacket { ObjectIds = [objectId] });
         Objects.Remove(objectId);

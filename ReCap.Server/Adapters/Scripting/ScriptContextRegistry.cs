@@ -100,6 +100,12 @@ public interface IScriptGameBridge
     void DispatchObjectiveEvent(int eventType, uint eventHandle) { }
     uint GetRegisteredDestructibles() => 0u;
 
+    // nGameDirector.GetKillPercent — fraction of spawned combatant enemies defeated (0..1).
+    float GetKillPercent() => 0f;
+    // nPhysics.ForceClientUpdate — flag the object for a fresh locomotion replicate. IsInLineOfSight —
+    // we model no occluders, so line of sight is always clear (true).
+    void ForceClientUpdate(uint objectId) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)

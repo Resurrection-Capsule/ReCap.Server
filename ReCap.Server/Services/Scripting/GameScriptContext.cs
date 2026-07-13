@@ -405,6 +405,15 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // GetRegisteredDestructibles: we don't track destructible ornaments yet -> 0.
     public uint GetRegisteredDestructibles() => 0u;
 
+    public float GetKillPercent() => _game.KillPercent;
+
+    // nPhysics.ForceClientUpdate @client: nudge a fresh locomotion replicate for the object.
+    public void ForceClientUpdate(uint objectId)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+            o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
+    }
+
     public void SetNavCollision(uint objectId, bool collidable)
     {
         // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.
