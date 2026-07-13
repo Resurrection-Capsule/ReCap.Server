@@ -76,9 +76,14 @@ internal sealed class FakeBridge : IScriptGameBridge
     public List<(uint ObjectId, uint Effect, uint Initiator)> Effects { get; } = [];
     public uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId)
     {
-        if (serverEventDef == 0) return 0;
-        Effects.Add((objectId, serverEventDef, initiatorId));
-        return (uint)Effects.Count;
+        var slot = AddObjectEffect(objectId, serverEventDef, initiatorId, null);
+        return slot < 0 ? 0u : (uint)(slot + 1);
+    }
+    public int AddObjectEffect(uint objectId, uint effectId, uint initiatorId, System.Numerics.Vector3? position)
+    {
+        if (effectId == 0) return -1;
+        Effects.Add((objectId, effectId, initiatorId));
+        return Effects.Count - 1; // slot index
     }
 
     public List<(uint ServerEventDef, uint ObjectId, uint AttackerId, bool Critical, System.Numerics.Vector3? Position)> ServerEvents { get; } = [];
@@ -664,7 +669,7 @@ public class GameBridgeTests
         Assert.True(rt.EvalBool(LuaFixtures.Compile("""
             local fx = nAbility.PreloadAsset("boom.ServerEventDef", "Owner")
             local h = nGameObject.AddEffect(10, fx, 20)
-            return h > 0
+            return h == 0
             """)));
         Assert.Single(b.Effects);
         Assert.Equal(10u, b.Effects[0].ObjectId);

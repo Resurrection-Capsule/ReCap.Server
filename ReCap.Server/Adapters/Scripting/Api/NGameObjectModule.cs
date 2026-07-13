@@ -45,7 +45,9 @@ public static unsafe class NGameObjectModule
             ("SetOrientation", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetOrientation),
             ("AddAggroForObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAggroForObject),
             ("AlertObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AlertObject),
-            ("GetNPCType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetNPCType));
+            ("GetNPCType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetNPCType),
+            ("RemoveEffect", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveEffect),
+            ("RemoveEffectIndex", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveEffectIndex));
     }
 
     private static uint Oid(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
@@ -766,30 +768,77 @@ public static unsafe class NGameObjectModule
         }
     }
 
-    // nGameObject.AddEffect(objId, serverEventDefHandle, [initiatorId]) -> effect-instance handle;
-    // emits 0x9B attached FX (catalog §Modifier/FX). Effect handle is for a future RemoveEffect (deferred).
+    // nGameObject.AddEffect(objId, effectId, [initiatorObj]) OR (objId, effectId, x, y, z) @0x00a05f10.
+    // 3-arg form attaches to an initiator; 5-arg form pins a position offset. Fills the first free effect
+    // slot and replicates the attached recipe, returning the slot index (0-15) or -1 when full. effectId
+    // is a lossy-float32-boxed ServerEventDef hash → resolve it exactly (else the wire hash never
+    // resolves an asset and the client silently drops the FX).
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int AddEffect(nint L)
     {
         try
         {
-            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
-            if (bridge is null || LuaNative.lua_type(L, 1) != LuaNative.LUA_TNUMBER || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is not { } bridge || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
             {
-                LuaNative.lua_pushnumber(L, 0f);
+                LuaNative.lua_pushnumber(L, -1f);
                 return 1;
             }
-            var objId = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
-            var effect = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
-            var initiator = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? (uint)Math.Round((double)LuaNative.lua_tonumber(L, 3)) : 0u;
-            LuaNative.lua_pushnumber(L, bridge.EmitEffect(objId, effect, initiator));
+            var objId = Oid(L, 1);
+            var effect = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2));
+            var top = LuaNative.lua_gettop(L);
+            uint initiator = 0;
+            System.Numerics.Vector3? position = null;
+            if (top >= 5)
+                position = new System.Numerics.Vector3(
+                    (float)LuaNative.lua_tonumber(L, 3), (float)LuaNative.lua_tonumber(L, 4), (float)LuaNative.lua_tonumber(L, 5));
+            else if (top == 3)
+                initiator = Oid(L, 3);
+            LuaNative.lua_pushnumber(L, bridge.AddObjectEffect(objId, effect, initiator, position));
             return 1;
         }
         catch
         {
-            LuaNative.lua_pushnumber(L, 0f);
+            LuaNative.lua_pushnumber(L, -1f);
             return 1;
         }
+    }
+
+    // RemoveEffect(objId, effectId, [hardStop]) @0x009fbcc0 — clear the slot playing effectId + replicate
+    // the stop recipe. effectId is the same boxed ServerEventDef hash AddEffect stored.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int RemoveEffect(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is { } bridge && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+            {
+                var hardStop = LuaNative.lua_gettop(L) >= 3 && LuaNative.lua_toboolean(L, 3) != 0;
+                bridge.RemoveObjectEffect(Oid(L, 1), ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2)), hardStop);
+            }
+        }
+        catch { }
+        LuaNative.lua_pushnumber(L, 1f);
+        return 1;
+    }
+
+    // RemoveEffectIndex(objId, slotIndex, [hardStop]) @0x009fbe60 — clear a specific slot.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int RemoveEffectIndex(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+            {
+                var hardStop = LuaNative.lua_gettop(L) >= 3 && LuaNative.lua_toboolean(L, 3) != 0;
+                bridge.RemoveObjectEffectByIndex(Oid(L, 1), (int)Math.Round((double)LuaNative.lua_tonumber(L, 2)), hardStop);
+            }
+        }
+        catch { }
+        LuaNative.lua_pushnumber(L, 1f);
+        return 1;
     }
 
     private static uint ReadId(nint L) =>

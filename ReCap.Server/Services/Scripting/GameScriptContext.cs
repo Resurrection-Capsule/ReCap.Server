@@ -379,17 +379,62 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
             o.Attributes[mod.Attr] = cur - mod.Value;
     }
 
-    private uint _nextEffectHandle;
     public uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId)
     {
-        if (serverEventDef == 0) return 0;
+        var slot = AddObjectEffect(objectId, serverEventDef, initiatorId, null);
+        return slot < 0 ? 0u : (uint)(slot + 1);
+    }
+
+    // nGameObject.AddEffect @0x00a05f10: fill the first free slot of the object's 16-slot effect array
+    // and replicate the attached recipe (0x9B: field 1 = slot+1, 4 = forceAttach, 6 = effectId, 7 =
+    // objId, 9 = initiator, 10 = position). Returns the slot index (0-15) or -1 when full/invalid.
+    public int AddObjectEffect(uint objectId, uint effectId, uint initiatorId, System.Numerics.Vector3? position)
+    {
+        if (effectId == 0 || !_game.Objects.Objects.TryGetValue(objectId, out var o)) return -1;
+        for (var i = 0; i < o.EffectSlots.Length; i++)
+        {
+            if (o.EffectSlots[i] != 0) continue;
+            o.EffectSlots[i] = effectId;
+            _game.BroadcastServerEvent(new ReCap.Server.Adapters.RakNet.Packets.ServerEventPacket
+            {
+                ObjectFxIndex = (byte)(i + 1),
+                ForceAttach = true,
+                ServerEventDef = effectId,
+                ObjectId = objectId,
+                AttackerId = initiatorId,
+                Position = position,
+            });
+            return i;
+        }
+        return -1;
+    }
+
+    // nGameObject.RemoveEffect @0x009fbcc0: clear the slot holding effectId. RemoveEffectIndex @0x009fbe60
+    // clears a given slot. Both replicate the stop recipe (0x9B: field 1 = slot+1, 2 = remove, 3 = hardStop).
+    public void RemoveObjectEffect(uint objectId, uint effectId, bool hardStop)
+    {
+        if (effectId == 0 || !_game.Objects.Objects.TryGetValue(objectId, out var o)) return;
+        for (var i = 0; i < o.EffectSlots.Length; i++)
+            if (o.EffectSlots[i] == effectId) { ClearEffectSlot(objectId, o, i, hardStop); return; }
+    }
+
+    public void RemoveObjectEffectByIndex(uint objectId, int slotIndex, bool hardStop)
+    {
+        if (slotIndex < 0 || !_game.Objects.Objects.TryGetValue(objectId, out var o) || slotIndex >= o.EffectSlots.Length)
+            return;
+        ClearEffectSlot(objectId, o, slotIndex, hardStop);
+    }
+
+    private void ClearEffectSlot(uint objectId, GameObject o, int slot, bool hardStop)
+    {
+        o.EffectSlots[slot] = 0;
         _game.BroadcastServerEvent(new ReCap.Server.Adapters.RakNet.Packets.ServerEventPacket
         {
-            ServerEventDef = serverEventDef,
+            ObjectFxIndex = (byte)(slot + 1),
+            Remove = true,
+            HardStop = hardStop,
             ObjectId = objectId,
-            AttackerId = initiatorId,
         });
-        return ++_nextEffectHandle;
     }
 
     // nEvent.Notify FX recipe → ServerEvent 0x9B. Ability hit/impact scripts fire two recipe shapes:

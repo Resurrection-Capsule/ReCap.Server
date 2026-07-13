@@ -11,7 +11,11 @@
 | Route | Feasible? | Confidence |
 |---|---|---|
 | **No-injection** (CLI switch / AppProperty / config gate) | **NO** — start-path is genuine dead code, not gated | HIGH |
-| **Injection** (Detours one-shot on main thread) | **YES** — HTTP on `:8088`, low risk | HIGH |
+| **Injection — main-thread call is SAFE** | **YES, PROVEN LIVE** (no crash) | VERIFIED |
+| **Injection → HTTP `:8088`** | **NO** — object builds but never binds (pump absent) | VERIFIED |
+| **Injection → telnet** | **LIKELY** — `TCPInterface::Listen` self-binds, no pump needed | next experiment |
+
+> **★ LIVE-VERIFIED 2026-07-13 (x32dbg on retail 5.3.0.127).** The injection *mechanism* works — calling the dormant init on the main thread does **not** crash. But the HTTP service is a deeper dead end than expected: the object builds and "starts" (flags only) yet **never opens a socket**, because its servicing pump does not exist in retail. See "Live experiment" below. Pivot the reactivation target to the **telnet** path, whose `TCPInterface::Listen` binds synchronously with its own accept thread (no pump).
 
 The console classes (`ConsoleServer`, `TelnetTransport`, Spark `HTTPServer`) **ship compiled into retail** but the code that would *start* them was compiled out of `App::Init`. No flag restores it. The only way in is to add the missing start call ourselves via injection — which the existing EAWebKit/Detours foothold (`recaphooks.cpp`) already makes cheap. See [[console-system-telnet-server]], [[eawebkit-redirect-and-ports]].
 
@@ -133,6 +137,28 @@ Validate the whole theory **live in a debugger first** (x64dbg/Ghidra debugger M
 **Stage 5 — codify.** Only now port the Stage-2 sequence into `Hook_PeekMessageW` (one-shot, `recap.cfg`-gated), rebuild `EAWebKit.dll`, and repeat Stages 3–4 with zero manual debugger steps.
 
 Cheapest first move = **Stages 0–2 in x64dbg** — proves or kills the plan in minutes without touching code.
+
+## Live experiment — 2026-07-13 (x32dbg, retail 5.3.0.127, PID attach, base 0x00400000, no ASLR)
+
+Ran Stages 0–3 of the test plan against the live in-game client (main menu; `mb132_x32`+`eawebkit`+`d3d9`+`physxloader` loaded).
+
+**Stage 0 — baseline.** `Get-NetTCPConnection` for `Darkspore.exe`: only Blaze `127.0.0.1:42125` + 2 UDP. Nothing on `:8088`. Dormant confirmed.
+
+**Stage 1 — SP_App located (read-only).** `findallmem 0,"58 C5 00 01"` → 3 hits: two in `.text` (ctor `0x007EC869`, dtor `0x007ECADB`), one heap = **`SP_App` = `0x04042CE8`** (this run; heap, per-run). Reads: `+0x00` = `0x0100c558` (vtable ✔ right object), `+0x16c` = `0x00000000` (HTTP ptr NULL = dormant ✔). `+0x140` = `0xD3657200` (NOT 0/1 → the Angle-C "devDirs at +0x140" offset guess is **wrong**; irrelevant to this path).
+> Note: at the **launcher** stage the heap hit is absent (only the 2 code hits) — `SP_App` isn't constructed until you hit Play. Confirms EAWebKit loads before the game's `App::Init`, i.e. the timing-independent `PeekMessageW` hook is the right foothold.
+
+**Stage 2 — main-thread call, NO CRASH (the make-or-break, PASSED).** Caught the main thread (`Mb132UiThread`, TID 25516) at a conditional bp on `user32.PeekMessageW` filtered to a darkspore.exe caller (`[esp]` in `0x400000..0x17f0000`; return addr `0x00B366C3` = the game's own pump — a clean point). Hijacked context: pushed a catch address (allocated page + sw bp), set `ECX=0x04042CE8`, `EIP=0x007EB780`, ran. `FUN_007eb780` **returned cleanly to the catch, no crash**. Restored full context afterward; game resumed normally. **This validates the entire injection hypothesis — the 2026-05-27 remote-thread crash was purely a wrong-thread/stale-`this` artifact, not intrinsic.**
+
+**Result of the call:** `+0x16c` went `NULL → 0x2A317E00`; `eax` = `0x2A317E00`. Object vtable at `0x2A317E00` = `0x01051db0` = "EA HTTP Server 1.0" — a valid HTTPServer was constructed and stored.
+
+**Stage 3 — FAILED: no socket.** After resume, still nothing on `:8088`. Root cause traced in Ghidra:
+- "Start" `FUN_00b2fde0` (vtable `+0x10`) does **not** bind — it only `Lock`s, flips `+4` (started) and calls vtable `+0xd8` = `FUN_00b30130`, which merely sets flag `+0x1ec`. Pure state toggle.
+- `FUN_007eb780` then calls `FUN_007b3830(server)`, which stores the server ptr into global `_DAT_01464f50`.
+- **`get_xrefs_to(0x01464f50)` → ONE xref, the WRITE itself. Zero readers.** Nothing in retail ever reads the HTTP singleton → no pump services the "enabled" flag → the socket is never created. The EA HTTP Server is gutted even more thoroughly than the console: not only is its start unwired, its entire servicing loop is absent.
+
+**Conclusion:** injection is safe and real, but **HTTP is a dead end** (object without a pump). The **telnet** path is the viable target: `TelnetTransport::Open` → `TCPInterface::Listen` (`FUN_00ad3c40`) does `socket/bind/listen` + spawns its own accept thread **synchronously on the calling thread** — no external pump required. Next experiment: construct a `ConsoleServer`+`TelnetTransport` (or find a dormant instance) on the main thread and drive `SetTransport(transport, port)`; resolve the `SetTransport` param types via `FUN_00accab0`/`FUN_00aae930` first.
+
+**Debugger notes (for next session):** mb132 (Chromium/miniblink) thread-churn + x32dbg auto-`singleshoot` TLS-callback bps make it pause constantly during load — **detach during launcher, re-attach at the idle in-game menu, then `bc` all the TLS bps**. Attach lands on a random worker thread; use a caller-filtered `PeekMessageW` bp to catch the real main thread at a clean point. Catch-return via allocated page + sw bp works cleanly for hijack-call-restore.
 
 ## Key addresses
 

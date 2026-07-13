@@ -76,6 +76,13 @@ public interface IScriptGameBridge
     // SendAbilityEvent → fire a Lua-built typed event on the target's subscribed modifiers ([4]).
     void DispatchAbilityEvent(uint targetId, int eventType, ModifierEventData payload) { }
 
+    // Attached-effect array (nGameObject.AddEffect/RemoveEffect, client obj+0x32 → 0x9B). AddObjectEffect
+    // fills the first free slot and replicates the attached recipe, returning the slot index (-1 = full);
+    // RemoveObjectEffect clears the slot matching effectId, RemoveObjectEffectByIndex clears a given slot.
+    int AddObjectEffect(uint objectId, uint effectId, uint initiatorId, System.Numerics.Vector3? position) => -1;
+    void RemoveObjectEffect(uint objectId, uint effectId, bool hardStop) { }
+    void RemoveObjectEffectByIndex(uint objectId, int slotIndex, bool hardStop) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)

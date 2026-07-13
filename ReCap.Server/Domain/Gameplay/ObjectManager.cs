@@ -36,6 +36,10 @@ public sealed class GameObject
     // nNPCType (client creature-data +0x44, nGameObject.GetNPCType), cached from the noun at spawn.
     // -1 = not a typed NPC / unresolved (the client's own missing-object fallback).
     public int NpcType { get; set; } = -1;
+    // Attached-effect slots (client obj+0x32, 16 slots): the ServerEventDef currently playing in each
+    // slot, 0 = free. nGameObject.AddEffect fills the first free slot + replicates via 0x9B (ForceAttach);
+    // RemoveEffect/RemoveEffectIndex clear a slot + replicate the stop recipe.
+    public readonly uint[] EffectSlots = new uint[16];
     // kAttribute id → value. CONFIRMED ids (Ghidra GetAttributeValue @0x009feca0 switch sites):
     // 0=Strength 1=Dexterity 2=Mind 4=MaxHealth. Remaining ids of the 116-wide domain are
     // unverified — reads of unknown ids return 0 and are debug-logged for harvesting.
