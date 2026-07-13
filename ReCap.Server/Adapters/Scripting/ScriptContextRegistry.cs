@@ -69,6 +69,13 @@ public interface IScriptGameBridge
     // amount 0 (make the agent notice the target). No-op if the object is not an AI agent (+0x2b0==0).
     void AddAggroForObject(uint agentId, uint targetId, float amount) { }
 
+    // GetNPCType(obj) — the object's nNPCType (-1 when unresolved).
+    int GetNpcType(uint objectId) => -1;
+    // GetAbilityAttributeValue(agent, abilityGuid) — the agent's value for the ability's scalingAttribute.
+    float GetAbilityAttributeValue(uint agentId, uint abilityGuid) => 0f;
+    // SendAbilityEvent → fire a Lua-built typed event on the target's subscribed modifiers ([4]).
+    void DispatchAbilityEvent(uint targetId, int eventType, ModifierEventData payload) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)
@@ -253,6 +260,28 @@ public sealed class ScriptStateContext
     public double CooldownRemaining(uint objectId, uint abilityHash, double nowSeconds)
         => _cooldownReadyAt.TryGetValue((objectId, abilityHash), out var ready)
             ? Math.Max(0d, ready - nowSeconds) : 0d;
+
+    // nAbility.CreateAbilityEvent → Set*Data → SendAbilityEvent: a Lua-built typed event carrying a
+    // type + optional int/float/guid slots, dispatched to a target's [4] handlers. The builder outlives
+    // a single send (gravitystorm loops one event over many targets), freed when its coroutine releases.
+    public sealed class AbilityEventBuilder
+    {
+        public int Type;
+        public readonly Dictionary<int, uint> Guids = new();
+        public readonly Dictionary<int, float> Floats = new();
+        public readonly Dictionary<int, int> Ints = new();
+        public ModifierEventData ToPayload() => new() { Guids = Guids, Floats = Floats, Ints = Ints };
+    }
+
+    private uint _nextAbilityEventHandle;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AbilityEventBuilder> _abilityEvents = new();
+    public uint CreateAbilityEvent(int type)
+    {
+        var handle = System.Threading.Interlocked.Increment(ref _nextAbilityEventHandle);
+        _abilityEvents[handle] = new AbilityEventBuilder { Type = type };
+        return handle;
+    }
+    public AbilityEventBuilder? GetAbilityEvent(uint handle) => _abilityEvents.GetValueOrDefault(handle);
 }
 
 public static class ScriptContextRegistry

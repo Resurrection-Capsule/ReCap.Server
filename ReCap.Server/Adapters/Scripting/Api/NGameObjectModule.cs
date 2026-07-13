@@ -44,7 +44,8 @@ public static unsafe class NGameObjectModule
             ("SetTargetID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetID),
             ("SetOrientation", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetOrientation),
             ("AddAggroForObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAggroForObject),
-            ("AlertObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AlertObject));
+            ("AlertObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AlertObject),
+            ("GetNPCType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetNPCType));
     }
 
     private static uint Oid(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
@@ -158,6 +159,15 @@ public static unsafe class NGameObjectModule
         }
         catch { }
         return 0;
+    }
+
+    // GetNPCType(obj) @0x009fdf20 — the object's nNPCType (from the noun, cached at spawn); -1 if none.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetNPCType(nint L)
+    {
+        try { LuaNative.lua_pushnumber(L, ScriptContextRegistry.Get(L)?.GameBridge?.GetNpcType(Oid(L, 1)) ?? -1); }
+        catch { LuaNative.lua_pushnumber(L, -1f); }
+        return 1;
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,

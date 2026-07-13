@@ -15,7 +15,9 @@ public static unsafe class NLocomotionModule
             ("TeleportObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TeleportObject),
             ("MoveToObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToObject),
             ("MoveToPointExact", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToPointExact),
-            ("TurnToFaceTargetObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TurnToFaceTargetObject));
+            ("MoveToPointWithinRange", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToPointWithinRange),
+            ("TurnToFaceTargetObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TurnToFaceTargetObject),
+            ("JumpInDirection", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&JumpInDirection));
 
     private static uint Id(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
 
@@ -73,6 +75,54 @@ public static unsafe class NLocomotionModule
                 bridge.SetLocomotionGoal(Id(L, 1), x, y, z, 0f);
                 ok = bridge.ObjectExists(Id(L, 1));
             }
+        }
+        catch { }
+        LuaNative.lua_pushboolean(L, ok ? 1 : 0);
+        return 1;
+    }
+
+    // MoveToPointWithinRange(obj, x, y, z, range, [face]) @0x00a04ad0 — blocking move: aim the goal at
+    // the point (stopping `range` short) and yield until arrival. Retail installs a live arrival
+    // predicate; we resume on a time estimate (as WaitForNearGoal/MoveTowardObject). Yields; no return
+    // on the resume path (returns has-locomotion false only when it cannot start).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int MoveToPointWithinRange(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var scheduler = ctx?.Scheduler;
+            var bridge = ctx?.GameBridge;
+            if (scheduler is null || bridge is null
+                || !Num(L, 1, out var idf) || !Num(L, 2, out var x) || !Num(L, 3, out var y)
+                || !Num(L, 4, out var z) || !Num(L, 5, out var range))
+            { LuaNative.lua_pushboolean(L, 0); return 1; }
+
+            var id = (uint)Math.Round(idf);
+            bridge.SetLocomotionGoal(id, x, y, z, range);
+            var remaining = bridge.TryGetGoalDistance(id, out var dist) ? Math.Max(0f, dist - range) : 0f;
+            var speed = Math.Max(0.01f, bridge.GetModifiedMoveSpeed(id));
+            scheduler.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + Math.Min(remaining / speed, 10.0));
+        }
+        catch
+        {
+            LuaNative.lua_pushboolean(L, 0);
+            return 1;
+        }
+        return LuaNative.lua_yield(L, 0);
+    }
+
+    // JumpInDirection(obj, dir{x,y,z}, ...) @0x00a04750 — a ballistic jump driven by the physics
+    // component (obj+0xb0, 12 args of arc/speed tuning). ReCap has no server-side physics, so this is a
+    // faithful no-op that reports has-locomotion; real jump arcs are deferred with the physics model.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int JumpInDirection(nint L)
+    {
+        var ok = false;
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            ok = bridge is not null && Num(L, 1, out var id) && bridge.ObjectExists((uint)Math.Round(id));
         }
         catch { }
         LuaNative.lua_pushboolean(L, ok ? 1 : 0);

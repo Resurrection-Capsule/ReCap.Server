@@ -2,6 +2,7 @@ using System.Linq;
 using ReCap.Server.Adapters.Scripting;
 using ReCap.Server.Adapters.Scripting.Native;
 using ReCap.Server.Domain.Gameplay;
+using ReCap.Server.Services.Assets;
 using AI = ReCap.Server.Domain.Gameplay.AI;
 
 namespace ReCap.Server.Services.Scripting;
@@ -316,6 +317,23 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (_game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb)
             bb.AddAggro(targetId, amount);
     }
+
+    public int GetNpcType(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.NpcType : -1;
+
+    // GetAbilityAttributeValue @0x009e8600: the agent's value for the attribute the ability scales off
+    // (ability asset `scalingAttribute` @+0x1b8; -1 = none). Retail recomputes with modifiers layered;
+    // we read the flat GameObject.Attributes value (our modifier model already writes into that map).
+    public float GetAbilityAttributeValue(uint agentId, uint abilityGuid)
+    {
+        if (!_game.Objects.Objects.TryGetValue(agentId, out var o)) return 0f;
+        var scalingAttr = _game.Assets?.GetAbility(abilityGuid)?.FindByName("scalingAttribute") is { } sa
+            ? (int)sa.AsUInt32() : -1;
+        return scalingAttr >= 0 ? o.Attributes.GetValueOrDefault(scalingAttr, 0f) : 0f;
+    }
+
+    public void DispatchAbilityEvent(uint targetId, int eventType, Adapters.Scripting.ModifierEventData payload) =>
+        DispatchCombatEvent(targetId, eventType, payload);
 
     public void SetNavCollision(uint objectId, bool collidable)
     {

@@ -30,6 +30,12 @@ public static unsafe class NAbilityContextModule
             ("AddCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddCooldownTime),
             ("RequestAbility", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RequestAbility),
             ("CallFunctionInContext", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CallFunctionInContext),
+            ("CreateAbilityEvent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CreateAbilityEvent),
+            ("SetAbilityEventIntData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAbilityEventIntData),
+            ("SetAbilityEventFloatData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAbilityEventFloatData),
+            ("SetAbilityEventGUIDData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetAbilityEventGUIDData),
+            ("SendAbilityEvent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SendAbilityEvent),
+            ("GetAbilityAttributeValue", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityAttributeValue),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
     }
 
@@ -434,6 +440,98 @@ public static unsafe class NAbilityContextModule
             return LuaNative.lua_gettop(L) - 1; // result count (values sit above the handle)
         }
         catch { return 0; }
+    }
+
+    // The ability-event chain (Ghidra: CreateAbilityEvent + Set*Data build a typed event, SendAbilityEvent
+    // @0x00a42050 dispatches it to a target's [4] handlers via the same path as combat events). Real
+    // consumers (BreakRoot, gravitystorm) pass only a type; the setters exist for completeness. The
+    // builder outlives one send (gravitystorm loops one event over many targets), so SendAbilityEvent
+    // does not consume it.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int CreateAbilityEvent(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var type = LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER ? (int)Math.Round((double)LuaNative.lua_tonumber(L, 1)) : 0;
+            LuaNative.lua_pushnumber(L, ctx?.CreateAbilityEvent(type) ?? 0u);
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
+    }
+
+    private static int EventArgSlot(nint L) =>
+        LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER ? (int)Math.Round((double)LuaNative.lua_tonumber(L, 2)) : 0;
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetAbilityEventIntData(nint L)
+    {
+        try
+        {
+            var b = ScriptContextRegistry.Get(L)?.GetAbilityEvent((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)));
+            if (b is not null) b.Ints[EventArgSlot(L)] = (int)Math.Round((double)LuaNative.lua_tonumber(L, 3));
+        }
+        catch { }
+        return 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetAbilityEventFloatData(nint L)
+    {
+        try
+        {
+            var b = ScriptContextRegistry.Get(L)?.GetAbilityEvent((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)));
+            if (b is not null) b.Floats[EventArgSlot(L)] = (float)LuaNative.lua_tonumber(L, 3);
+        }
+        catch { }
+        return 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetAbilityEventGUIDData(nint L)
+    {
+        try
+        {
+            var b = ScriptContextRegistry.Get(L)?.GetAbilityEvent((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)));
+            if (b is not null) b.Guids[EventArgSlot(L)] = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 3));
+        }
+        catch { }
+        return 0;
+    }
+
+    // SendAbilityEvent(eventHandle, target) — dispatch the built event to the target's subscribed modifiers.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SendAbilityEvent(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is null || LuaNative.lua_gettop(L) < 2) return 0;
+            var builder = ctx.GetAbilityEvent((uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)));
+            if (builder is null) return 0;
+            var target = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            ctx.GameBridge.DispatchAbilityEvent(target, builder.Type, builder.ToPayload());
+        }
+        catch { }
+        return 0;
+    }
+
+    // GetAbilityAttributeValue(agent, abilityGuid) @0x00a419f0 — the agent's value for the ability's
+    // scalingAttribute. abilityGuid is a lossy-float32-boxed hash → resolve exactly.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetAbilityAttributeValue(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is null || LuaNative.lua_gettop(L) < 2)
+            { LuaNative.lua_pushnumber(L, 0f); return 1; }
+            var agent = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            var abilityGuid = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2));
+            LuaNative.lua_pushnumber(L, ctx.GameBridge.GetAbilityAttributeValue(agent, abilityGuid));
+            return 1;
+        }
+        catch { LuaNative.lua_pushnumber(L, 0f); return 1; }
     }
 
     // Recognized no-op (state mutation impl-time-DEFERRED, needs nAbility::ReleaseAgent decompile).

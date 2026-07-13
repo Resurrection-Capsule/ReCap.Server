@@ -33,6 +33,9 @@ public sealed class GameObject
     // Owner object (client obj+0x50, nGameObject.Get/SetOwnerID): the creature/player a summoned
     // object (pet, projectile, turret) belongs to. 0 = no owner.
     public uint OwnerId { get; set; }
+    // nNPCType (client creature-data +0x44, nGameObject.GetNPCType), cached from the noun at spawn.
+    // -1 = not a typed NPC / unresolved (the client's own missing-object fallback).
+    public int NpcType { get; set; } = -1;
     // kAttribute id → value. CONFIRMED ids (Ghidra GetAttributeValue @0x009feca0 switch sites):
     // 0=Strength 1=Dexterity 2=Mind 4=MaxHealth. Remaining ids of the 116-wide domain are
     // unverified — reads of unknown ids return 0 and are debug-logged for harvesting.
@@ -131,6 +134,8 @@ public sealed class ObjectManager
             }
         }
 
+        var npcType = noun?.FindByName("npcType") is { } nt ? (int)nt.AsUInt32() : -1;
+
         var obj = new GameObject
         {
             ObjectId = objectId,
@@ -141,7 +146,8 @@ public sealed class ObjectManager
             PlayerControlled = playerControlled,
             Health = maxHealth,
             MaxHealth = maxHealth,
-            AIDefinition = aiDef
+            AIDefinition = aiDef,
+            NpcType = npcType
         };
         obj.Attributes[0] = strength;
         obj.Attributes[1] = dexterity;
