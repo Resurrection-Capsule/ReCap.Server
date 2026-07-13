@@ -216,5 +216,30 @@ public sealed class ObjectManager
                 ReCap.Server.Util.Logging.Log.Game.Error($"AI controller {id} tick failed: {ex}");
             }
         }
+
+        IntegrateLocomotion(deltaSeconds);
+    }
+
+    // Server-authoritative movement: advance each non-player object toward its locomotion goal at its
+    // move speed. Without this the server position never changes, so distance/range checks (an enemy's
+    // pursue-then-strike ability, GetObjectDistance, WaitForNearGoal) never satisfy and enemies freeze in
+    // place. The client already smooth-moves via the 0x95 goal broadcast; integrating at the same speed
+    // keeps the two in sync. Stops within DesiredStopDistance so it doesn't orbit the target.
+    private void IntegrateLocomotion(double deltaSeconds)
+    {
+        if (deltaSeconds <= 0) return;
+        foreach (var o in _objects.Values)
+        {
+            if (o.PlayerControlled || o.Dead) continue;
+            if ((o.GoalFlags & 0x001) == 0) continue; // not in a move goal
+            var toGoal = o.GoalPosition - o.Position;
+            var dist = toGoal.Length();
+            var stop = MathF.Max(0f, o.DesiredStopDistance);
+            if (dist <= stop + 0.01f) { o.GoalFlags = 0x020; continue; } // arrived -> stop
+            var step = (float)(o.MoveSpeed * deltaSeconds);
+            o.Position += step >= dist - stop
+                ? toGoal * ((dist - stop) / dist)          // final step: land at the stop ring
+                : Vector3.Normalize(toGoal) * step;
+        }
     }
 }
