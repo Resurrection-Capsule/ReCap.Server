@@ -845,8 +845,11 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
             }
         }
 
-        // Director enemies: one per AI-wander markerset, noun drawn from the level's enemy bank —
-        // never the SpawnPoint marker's own noun (Instance.cpp:345-391, including the one-per-set cap).
+        // Director enemies: one per director SpawnPoint marker across the AI-wander markersets, noun
+        // drawn from the level's enemy bank — never the SpawnPoint marker's own noun. The C++
+        // Instance.cpp:345-391 caps at ONE enemy per set (a reverse-eng shortcut, not the client's
+        // contract); we spawn per spawn-point so the dungeon has real enemy density (CLAUDE.md: port the
+        // contract, not the C++ fixture — see the "enemy-spawn break capping at 1/set" note).
         var enemyBank = Chain.EnemyNouns.Where(n => n != 0).ToArray();
         string[][] wanderSetNames =
         {
@@ -866,7 +869,7 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
                 var enemyNoun = enemyBank[Random.Shared.Next(enemyBank.Length)];
                 SpawnWorldObject(client, enemyNoun, marker, scale: 1f, hasCollision: true, bindMarker: false);
                 enemies++;
-                break;
+                // No per-set break: every director spawn-point marker spawns an enemy.
             }
         }
 

@@ -891,5 +891,26 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
 
     // Condition-type evaluators (Distance, Closest, ...) are harvest-deferred; the slice enemy
     // (ZelemBasicMelee) uses none. See AI_SLICE_HARVEST.md.
-    public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target) => false;
+    // Evaluate a gambit's condition from its conditionProps (AI_SLICE_HARVEST: a cAssetProperty[] of
+    // name/value pairs, e.g. {Distance:"10", GreaterThan:"true"} = "distance(self,target) > 10"). We
+    // evaluate the distance gate — the common melee/ranged range check that decides whether a gambit's
+    // ability fires. Conditions we don't yet model return false (the gambit is skipped, next one is
+    // tried), matching the prior all-false behavior for unmapped conditions rather than guessing.
+    public bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target)
+    {
+        if (props.Count == 0) return false;
+        var p = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (n, v) in props) if (!string.IsNullOrEmpty(n)) p[n] = v;
+
+        if (p.TryGetValue("Distance", out var distStr)
+            && float.TryParse(distStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var threshold))
+        {
+            if (!_game.Objects.Objects.TryGetValue(self, out var so) || !_game.Objects.Objects.TryGetValue(target, out var to))
+                return false;
+            var distance = System.Numerics.Vector3.Distance(so.Position, to.Position);
+            var greater = p.TryGetValue("GreaterThan", out var g) && g.Equals("true", StringComparison.OrdinalIgnoreCase);
+            return greater ? distance > threshold : distance < threshold;
+        }
+        return false;
+    }
 }
