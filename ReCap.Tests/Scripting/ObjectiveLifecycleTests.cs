@@ -75,6 +75,28 @@ public class ObjectiveLifecycleTests
     }
 
     [Fact]
+    public void ObjectiveInit_UsingCreatePrivateTable_RunsWithoutError()
+    {
+        using var ctx = MakeContext(out _);
+        // Real objectives (DefeatAllMonsters) do `local pt = nThreadData.CreatePrivateTable(); pt.x = ...`
+        // in Init. CreatePrivateTable was unregistered → returned nil → "index a nil value" killed Init.
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
+            nObjective.RegisterObjective("recap_obj_pt", {
+                handledEvents = 0,
+                [1] = function()
+                        local pt = nThreadData.CreatePrivateTable()
+                        pt.reportPercentage = 25
+                        nObjective.SetObjectiveIntData(255, 0, pt.reportPercentage)
+                      end,
+            })
+            """), "reg");
+        ctx.ActivateObjectives(new[] { "recap_obj_pt" });
+
+        Assert.Equal(0, ctx.Scheduler.ErrorCount); // Init ran clean (no nil-index)
+        Assert.Equal(25, ctx.PeekObjectiveInt(ScriptVfs.Hash("recap_obj_pt"), 255, 0));
+    }
+
+    [Fact]
     public void InactiveObjective_DoesNotReceiveEvents()
     {
         using var ctx = MakeContext(out var game);
