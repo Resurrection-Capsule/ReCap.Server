@@ -58,6 +58,16 @@ public interface IScriptGameBridge
     // no-op keeps lightweight test doubles compiling.
     void TeleportObject(uint objectId, float x, float y, float z, bool face) { }
 
+    // Tier-2 nGameObject cluster (Ghidra 2026-07-13). Defaults keep lightweight test doubles compiling.
+    bool TryGetObjectDistance(uint a, uint b, out float edgeDistance) { edgeDistance = 0f; return false; }
+    uint GetOwnerId(uint objectId) => 0;
+    void SetOwnerId(uint objectId, uint ownerId) { }
+    void SetTargetId(uint objectId, uint targetId) { }
+    void SetOrientation(uint objectId, float x, float y, float z, float w) { }
+    // AddAggroForObject(agent, target, amount): raise the agent's threat toward target. AlertObject =
+    // amount 0 (make the agent notice the target). No-op if the object is not an AI agent (+0x2b0==0).
+    void AddAggroForObject(uint agentId, uint targetId, float amount) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)

@@ -37,7 +37,127 @@ public static unsafe class NGameObjectModule
             ("SetTargetPosition", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetPosition),
             ("SetNavCollision", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetNavCollision),
             ("GetModifiedMoveSpeed", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetModifiedMoveSpeed),
-            ("AddEffect", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddEffect));
+            ("AddEffect", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddEffect),
+            ("GetObjectDistance", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetObjectDistance),
+            ("GetOwnerID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetOwnerID),
+            ("SetOwnerID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetOwnerID),
+            ("SetTargetID", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetTargetID),
+            ("SetOrientation", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SetOrientation),
+            ("AddAggroForObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAggroForObject),
+            ("AlertObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AlertObject));
+    }
+
+    private static uint Oid(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
+
+    // Tier-2 nGameObject cluster (Ghidra 2026-07-13).
+
+    // GetObjectDistance(a, b) @0x00a060c0 — edge-to-edge distance (center minus both radii, floored 0).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetObjectDistance(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_gettop(L) >= 2
+                && bridge.TryGetObjectDistance(Oid(L, 1), Oid(L, 2), out var dist))
+            {
+                LuaNative.lua_pushnumber(L, dist);
+                return 1;
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // GetOwnerID(obj) @0x009fd910 — owner object id (obj+0x50); 0 if none.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int GetOwnerID(nint L)
+    {
+        try { LuaNative.lua_pushnumber(L, ScriptContextRegistry.Get(L)?.GameBridge?.GetOwnerId(Oid(L, 1)) ?? 0u); }
+        catch { LuaNative.lua_pushnumber(L, 0f); }
+        return 1;
+    }
+
+    // SetOwnerID(obj, ownerId) @0x009fd950.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetOwnerID(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_gettop(L) >= 2) bridge.SetOwnerId(Oid(L, 1), Oid(L, 2));
+        }
+        catch { }
+        return 0;
+    }
+
+    // SetTargetID(obj, targetId) @0x009fce30 — set the object's combat target (kObjIDNone = 0 clears).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetTargetID(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_gettop(L) >= 2) bridge.SetTargetId(Oid(L, 1), Oid(L, 2));
+        }
+        catch { }
+        return 0;
+    }
+
+    // SetOrientation(obj, ...) @0x00a081c0. Corpus uses two forms: 5 args = full quaternion
+    // (x,y,z,w, e.g. from GetOrientation), and 2 args = yaw angle (radians) about world-up — only ever
+    // called with 0 (reset). The 4-arg direction form is unused in the corpus and left unhandled.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int SetOrientation(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is null) return 0;
+            var id = Oid(L, 1);
+            var top = LuaNative.lua_gettop(L);
+            if (top >= 5)
+                bridge.SetOrientation(id,
+                    (float)LuaNative.lua_tonumber(L, 2), (float)LuaNative.lua_tonumber(L, 3),
+                    (float)LuaNative.lua_tonumber(L, 4), (float)LuaNative.lua_tonumber(L, 5));
+            else if (top == 2)
+            {
+                var half = (float)LuaNative.lua_tonumber(L, 2) * 0.5f; // yaw about world-up Y
+                bridge.SetOrientation(id, 0f, MathF.Sin(half), 0f, MathF.Cos(half));
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // AddAggroForObject(agent, target, amount, [reason]) @0x009fd690 — raise the agent's threat toward
+    // target. No-op if the object is not an AI agent.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AddAggroForObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_gettop(L) >= 3)
+                bridge.AddAggroForObject(Oid(L, 1), Oid(L, 2), (float)LuaNative.lua_tonumber(L, 3));
+        }
+        catch { }
+        return 0;
+    }
+
+    // AlertObject(agent, target) @0x009fd750 — make the agent notice the target (aggro with no extra
+    // threat). No-op if the object is not an AI agent.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AlertObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_gettop(L) >= 2)
+                bridge.AddAggroForObject(Oid(L, 1), Oid(L, 2), 0f);
+        }
+        catch { }
+        return 0;
     }
 
     // Retail contracts (Ghidra 2026-06-06): HealDamage @0x009fd020 — args (sourceId, targetId,

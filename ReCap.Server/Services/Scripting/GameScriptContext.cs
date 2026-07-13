@@ -277,6 +277,46 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         if (face && delta != System.Numerics.Vector3.Zero) o.Facing = delta;
     }
 
+    // GetObjectDistance @0x00a060c0: edge-to-edge = center distance minus both footprint radii, floored
+    // at 0. Footprint radius comes from the object scale (real per-noun radius needs the collision
+    // asset, deferred) — the AI range checks that consume it compare against generous ability ranges.
+    public bool TryGetObjectDistance(uint a, uint b, out float edgeDistance)
+    {
+        if (_game.Objects.Objects.TryGetValue(a, out var oa) && _game.Objects.Objects.TryGetValue(b, out var ob))
+        {
+            var centre = System.Numerics.Vector3.Distance(oa.Position, ob.Position);
+            edgeDistance = MathF.Max(0f, centre - (oa.Scale + ob.Scale));
+            return true;
+        }
+        edgeDistance = 0f;
+        return false;
+    }
+
+    public uint GetOwnerId(uint objectId) =>
+        _game.Objects.Objects.TryGetValue(objectId, out var o) ? o.OwnerId : 0u;
+
+    public void SetOwnerId(uint objectId, uint ownerId)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o)) o.OwnerId = ownerId;
+    }
+
+    public void SetTargetId(uint objectId, uint targetId)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o)) o.TargetId = targetId;
+    }
+
+    public void SetOrientation(uint objectId, float x, float y, float z, float w)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o))
+            o.Orientation = new System.Numerics.Quaternion(x, y, z, w);
+    }
+
+    public void AddAggroForObject(uint agentId, uint targetId, float amount)
+    {
+        if (_game.Objects.Objects.TryGetValue(agentId, out var o) && o.Agent is { } bb)
+            bb.AddAggro(targetId, amount);
+    }
+
     public void SetNavCollision(uint objectId, bool collidable)
     {
         // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.

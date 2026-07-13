@@ -30,6 +30,9 @@ public sealed class GameObject
     // death sink twice and excludes the corpse from targeting queries before it is swept.
     public bool Dead { get; set; }
     public uint TargetId { get; set; }
+    // Owner object (client obj+0x50, nGameObject.Get/SetOwnerID): the creature/player a summoned
+    // object (pet, projectile, turret) belongs to. 0 = no owner.
+    public uint OwnerId { get; set; }
     // kAttribute id → value. CONFIRMED ids (Ghidra GetAttributeValue @0x009feca0 switch sites):
     // 0=Strength 1=Dexterity 2=Mind 4=MaxHealth. Remaining ids of the 116-wide domain are
     // unverified — reads of unknown ids return 0 and are debug-logged for harvesting.
