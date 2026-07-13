@@ -93,7 +93,7 @@ public interface IScriptGameBridge
     // nObjective data store: per-(target, index) objective progress. Set*Data writes + flags a HUD
     // update (ObjectiveUpdate wire = deferred orchestration); Get*Data reads. DispatchObjectiveEvent
     // fires a built event on every registered objective whose handledEvents match its type.
-    void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, ObjectiveDataKind kind) { }
+    void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, ObjectiveDataKind kind, bool showNotif) { }
     int GetObjectiveInt(byte target, int index) => 0;
     float GetObjectiveFloat(byte target, int index) => 0f;
     uint GetObjectiveGuid(byte target, int index) => 0u;

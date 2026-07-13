@@ -45,8 +45,10 @@ public static unsafe class NObjectiveModule
     {
         try
         {
+            // arg4 = showNotif flag (DefeatAllMonsters: SetObjectiveIntData(target,index,value,showNotif,complete)).
+            var showNotif = LuaNative.lua_gettop(L) >= 4 && LuaNative.lua_toboolean(L, 4) != 0;
             ScriptContextRegistry.Get(L)?.GameBridge?.SetObjectiveData(Target(L), Index(L),
-                (int)Math.Round((double)LuaNative.lua_tonumber(L, 3)), 0f, 0u, ObjectiveDataKind.Int);
+                (int)Math.Round((double)LuaNative.lua_tonumber(L, 3)), 0f, 0u, ObjectiveDataKind.Int, showNotif);
         }
         catch { }
         return 0;
@@ -58,7 +60,7 @@ public static unsafe class NObjectiveModule
         try
         {
             ScriptContextRegistry.Get(L)?.GameBridge?.SetObjectiveData(Target(L), Index(L),
-                0, (float)LuaNative.lua_tonumber(L, 3), 0u, ObjectiveDataKind.Float);
+                0, (float)LuaNative.lua_tonumber(L, 3), 0u, ObjectiveDataKind.Float, false);
         }
         catch { }
         return 0;
@@ -71,7 +73,7 @@ public static unsafe class NObjectiveModule
         {
             var ctx = ScriptContextRegistry.Get(L);
             ctx?.GameBridge?.SetObjectiveData(Target(L), Index(L), 0, 0f,
-                ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 3)), ObjectiveDataKind.Guid);
+                ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 3)), ObjectiveDataKind.Guid, false);
         }
         catch { }
         return 0;

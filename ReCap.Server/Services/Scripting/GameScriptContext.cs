@@ -362,12 +362,17 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     // keys on it; 0 when no objective context is active.
     private uint _currentObjectiveId;
 
-    public void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, Adapters.Scripting.ObjectiveDataKind kind)
+    public void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, Adapters.Scripting.ObjectiveDataKind kind, bool showNotif)
     {
         var key = (_currentObjectiveId, target, index);
         switch (kind)
         {
-            case Adapters.Scripting.ObjectiveDataKind.Int: _objectiveInts[key] = intValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Int:
+                _objectiveInts[key] = intValue;
+                // Drive the objective's HUD progress from the Lua value (nObjective.SetObjectiveIntData),
+                // using the ObjectiveUpdated format already proven by the FinishLevelQuickly fixture.
+                if (_currentObjectiveId != 0) _game.BroadcastObjectiveUpdate(_currentObjectiveId, (uint)Math.Max(0, intValue), showNotif);
+                break;
             case Adapters.Scripting.ObjectiveDataKind.Float: _objectiveFloats[key] = floatValue; break;
             case Adapters.Scripting.ObjectiveDataKind.Guid: _objectiveGuids[key] = guidValue; break;
         }

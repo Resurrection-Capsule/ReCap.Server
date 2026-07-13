@@ -1243,6 +1243,22 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     // nObjectiveEvents.Death = 4 (GlobalDefinitions): kill-based objectives (DefeatAllMonsters) subscribe.
     private const int ObjectiveEventDeath = 4;
 
+    // Broadcast a Lua-driven objective progress update (nObjective.SetObjectiveIntData) to every player's
+    // HUD, using the ObjectiveUpdated format already proven by the FinishLevelQuickly fixture (Medal Gold,
+    // unk 2/3). value = the objective's current progress. Additive to the fixture until fully verified.
+    public void BroadcastObjectiveUpdate(uint objectiveId, uint value, bool showNotif)
+    {
+        foreach (var player in Players.Values)
+            player.Client?.SendPacket(new ObjectiveUpdatedPacket
+            {
+                ObjectiveId = objectiveId,
+                ClientId = player.Slot,
+                Medal = 4,
+                Value = value,
+                ShowNotif = showNotif,
+            });
+    }
+
     public void OnObjectDeath(uint objectId)
     {
         if (!Objects.Objects.TryGetValue(objectId, out var obj)) return;
