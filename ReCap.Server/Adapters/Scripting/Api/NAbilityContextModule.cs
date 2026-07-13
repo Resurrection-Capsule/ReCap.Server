@@ -29,6 +29,7 @@ public static unsafe class NAbilityContextModule
             ("ScaleCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ScaleCooldownTime),
             ("AddCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddCooldownTime),
             ("RequestAbility", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RequestAbility),
+            ("CallFunctionInContext", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CallFunctionInContext),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
     }
 
@@ -390,6 +391,49 @@ public static unsafe class NAbilityContextModule
         }
         catch { }
         return 0;
+    }
+
+    // CallFunctionInContext(instanceHandle, fn, ...args) — run `fn` bound to the instance's context
+    // (its invocation + shared private table) so in-fn getters (GetMyAgentID/GetPrivateTable) resolve
+    // to that instance; returns fn's results. Ghidra @0x00a41c20 (shared nAbility/nModifier): resolves
+    // the instance, fetches its thread (instance+0x2c) and calls fn in that thread's context. We run it
+    // on the CALLER's thread with the instance's context swapped in for the call, then restored — the
+    // called methods (SetStrafed/PromoteAlly/UpdateLaserZone) are synchronous, so a protected call is
+    // sufficient (a yield across the C boundary would error and be swallowed, matching best-effort).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    internal static int CallFunctionInContext(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is null) return 0;
+            if (LuaNative.lua_gettop(L) < 2 || LuaNative.lua_type(L, 2) != LuaNative.LUA_TFUNCTION) return 0;
+
+            var handle = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            if (!ctx.GameBridge.TryGetInstanceContext(handle, out var invocation, out var privateRef))
+                return 0;
+
+            var hadInv = ctx.GetInvocation(L);
+            var hadShared = ctx.TryGetSharedPrivateTable(L, out var oldShared);
+            ctx.SetInvocation(L, invocation);
+            if (privateRef != 0) ctx.BindSharedPrivateTable(L, privateRef);
+
+            // Stack: [handle, fn, arg3..argN] — pcall consumes fn+args, pushes results above the handle.
+            var nargs = LuaNative.lua_gettop(L) - 2;
+            var status = LuaNative.lua_pcall(L, nargs, LuaNative.LUA_MULTRET, 0);
+
+            if (hadInv.HasValue) ctx.SetInvocation(L, hadInv.Value); else ctx.RemoveInvocation(L);
+            if (hadShared) ctx.BindSharedPrivateTable(L, oldShared); else ctx.UnbindSharedPrivateTable(L);
+
+            if (status != 0)
+            {
+                try { Util.Logging.Log.Lua.Warn($"CallFunctionInContext error: {LuaNative.ToManagedString(L, -1)}"); } catch { }
+                LuaNative.lua_settop(L, 1); // drop the error, keep only the handle
+                return 0;
+            }
+            return LuaNative.lua_gettop(L) - 1; // result count (values sit above the handle)
+        }
+        catch { return 0; }
     }
 
     // Recognized no-op (state mutation impl-time-DEFERRED, needs nAbility::ReleaseAgent decompile).

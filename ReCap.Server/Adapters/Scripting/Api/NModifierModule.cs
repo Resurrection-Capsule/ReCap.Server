@@ -23,7 +23,9 @@ public static unsafe class NModifierModule
             ("IncrementStackCount", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IncrementStackCount),
             ("ResetDuration", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetDuration),
             ("MarkForDelete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MarkForDelete),
-            ("GetRank", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetRank));
+            ("GetRank", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetRank),
+            // Shared with nAbility (retail registers the same fn on both namespaces).
+            ("CallFunctionInContext", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&NAbilityContextModule.CallFunctionInContext));
 
     // nModifier.RequestModifier(targetId, casterId, modifierGuid, [param4=0], [rank]) — retail
     // nAbility::RequestModifier @0x00a408d0 creates the server-side modifier instance and returns its

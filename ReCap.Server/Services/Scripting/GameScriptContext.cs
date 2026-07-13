@@ -41,6 +41,22 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public void RequestAbility(uint abilityHash, uint agentId, uint targetId, float x, float y, float z, int rank)
         => _pendingRequests.Enqueue((abilityHash, agentId, targetId, x, y, z, rank));
 
+    // Resolve a modifier instance handle to its context so CallFunctionInContext can run a function
+    // bound to it (getters GetMyAgentID/GetPrivateTable resolve to this instance). Ability instances
+    // aren't persisted server-side, so only modifier handles resolve — others fall through as no-op.
+    public bool TryGetInstanceContext(uint instanceId, out Adapters.Scripting.AbilityInvocation invocation, out int privateTableRef)
+    {
+        if (_game.Modifiers.Get(instanceId) is { } instance)
+        {
+            invocation = ModifierInvocation(instance);
+            privateTableRef = instance.PrivateTableRef;
+            return true;
+        }
+        invocation = default;
+        privateTableRef = 0;
+        return false;
+    }
+
     public void Tick()
     {
         lock (_luaGate)

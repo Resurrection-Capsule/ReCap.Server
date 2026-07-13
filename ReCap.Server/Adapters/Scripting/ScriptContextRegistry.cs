@@ -53,6 +53,15 @@ public interface IScriptGameBridge
     // Deferred to the next tick so it never re-enters the runtime mid-coroutine. Default no-op keeps
     // lightweight test doubles compiling.
     void RequestAbility(uint abilityHash, uint agentId, uint targetId, float x, float y, float z, int rank) { }
+
+    // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
+    // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
+    bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)
+    {
+        invocation = default;
+        privateTableRef = 0;
+        return false;
+    }
 }
 
 public readonly record struct AbilityInvocation(
