@@ -211,6 +211,19 @@ public sealed class ScriptStateContext
         => _cooldownReadyAt[(objectId, abilityHash)] = readyAtSeconds;
     public bool IsOnCooldown(uint objectId, uint abilityHash, double nowSeconds)
         => _cooldownReadyAt.TryGetValue((objectId, abilityHash), out var ready) && nowSeconds < ready;
+
+    // Clear the deadline so the ability is ready again (nAbility.Reset/RemoveCooldownTime → 0xC1 dur 0).
+    public void ClearCooldown(uint objectId, uint abilityHash)
+        => _cooldownReadyAt.TryRemove((objectId, abilityHash), out _);
+
+    // Every ability currently cooling down on an object (RemoveCooldownTime/ScaleCooldownTime, no id).
+    public IReadOnlyList<uint> CooldownAbilities(uint objectId)
+        => _cooldownReadyAt.Keys.Where(k => k.Object == objectId).Select(k => k.Ability).ToList();
+
+    // Remaining cooldown in seconds (0 if none / already ready) — for Scale/AddCooldownTime.
+    public double CooldownRemaining(uint objectId, uint abilityHash, double nowSeconds)
+        => _cooldownReadyAt.TryGetValue((objectId, abilityHash), out var ready)
+            ? Math.Max(0d, ready - nowSeconds) : 0d;
 }
 
 public static class ScriptContextRegistry

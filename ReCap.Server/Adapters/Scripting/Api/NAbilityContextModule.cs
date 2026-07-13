@@ -24,7 +24,112 @@ public static unsafe class NAbilityContextModule
             ("GetAbilityEventFloatData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventFloatData),
             ("GetAbilityEventIntData", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAbilityEventIntData),
             ("CheckDescriptors_AnyMatch", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&CheckDescriptorsAnyMatch),
+            ("ResetAbilityCooldown", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ResetAbilityCooldown),
+            ("RemoveCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveCooldownTime),
+            ("ScaleCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ScaleCooldownTime),
+            ("AddCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddCooldownTime),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
+    }
+
+    private static uint ReadObjectIdArg(nint L, int idx)
+        => (uint)Math.Round((double)LuaNative.lua_tonumber(L, idx));
+
+    // Cooldown-cluster natives (Ghidra 2026-07-13: Reset@0x00a41b00, Remove@0x00a42e10,
+    // Scale@0x00a42f20, Add@0x00a42b30). Retail keys cooldowns per (ability, initiator, rank) on the
+    // object's cooldown component (obj+0x29c); we model per (agent, abilityHash) on the context's
+    // deadline map, so the initiator/rank args are accepted-and-ignored. Every mutation rebroadcasts
+    // 0xC1 (relative: start=0 → client re-stamps end = now + duration), duration 0 = ready now.
+
+    // ResetAbilityCooldown(agent, abilityId, initiatorId, rank) — clear that one ability → ready.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int ResetAbilityCooldown(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_gettop(L) < 2) return 0;
+            var agent = ReadObjectIdArg(L, 1);
+            var ability = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2));
+            ctx.ClearCooldown(agent, ability);
+            ctx.GameBridge?.SendCooldownUpdate(agent, ability, 0f);
+        }
+        catch { }
+        return 0;
+    }
+
+    // RemoveCooldownTime(agent, [abilityId]) — 2 args clears one, 1 arg clears ALL cooldowns on agent.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int RemoveCooldownTime(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_gettop(L) < 1) return 0;
+            var agent = ReadObjectIdArg(L, 1);
+            if (LuaNative.lua_gettop(L) == 2)
+            {
+                var ability = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2));
+                ctx.ClearCooldown(agent, ability);
+                ctx.GameBridge?.SendCooldownUpdate(agent, ability, 0f);
+            }
+            else
+            {
+                foreach (var ability in ctx.CooldownAbilities(agent))
+                {
+                    ctx.ClearCooldown(agent, ability);
+                    ctx.GameBridge?.SendCooldownUpdate(agent, ability, 0f);
+                }
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // ScaleCooldownTime(agent, scale, [abilityId]) — scale remaining by `scale`; 3 args one, 2 args ALL.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int ScaleCooldownTime(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_gettop(L) < 2) return 0;
+            var agent = ReadObjectIdArg(L, 1);
+            var scale = (float)LuaNative.lua_tonumber(L, 2);
+            var now = ctx.Scheduler?.Now ?? 0d;
+            var targets = LuaNative.lua_gettop(L) >= 3
+                ? [ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 3))]
+                : ctx.CooldownAbilities(agent);
+            foreach (var ability in targets)
+            {
+                var remaining = ctx.CooldownRemaining(agent, ability, now);
+                if (remaining <= 0d) continue;
+                var scaled = remaining * scale;
+                ctx.StampCooldown(agent, ability, now + scaled);
+                ctx.GameBridge?.SendCooldownUpdate(agent, ability, (float)scaled);
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // AddCooldownTime(agent, abilityId, seconds) — extend remaining cooldown by `seconds`.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int AddCooldownTime(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx is null || LuaNative.lua_gettop(L) < 3) return 0;
+            var agent = ReadObjectIdArg(L, 1);
+            var ability = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 2));
+            var seconds = (float)LuaNative.lua_tonumber(L, 3);
+            var now = ctx.Scheduler?.Now ?? 0d;
+            var extended = ctx.CooldownRemaining(agent, ability, now) + seconds;
+            ctx.StampCooldown(agent, ability, now + extended);
+            ctx.GameBridge?.SendCooldownUpdate(agent, ability, (float)extended);
+        }
+        catch { }
+        return 0;
     }
 
     private static int EventSlotIndex(nint L) =>
