@@ -160,6 +160,36 @@ Ran Stages 0–3 of the test plan against the live in-game client (main menu; `m
 
 **Debugger notes (for next session):** mb132 (Chromium/miniblink) thread-churn + x32dbg auto-`singleshoot` TLS-callback bps make it pause constantly during load — **detach during launcher, re-attach at the idle in-game menu, then `bc` all the TLS bps**. Attach lands on a random worker thread; use a caller-filtered `PeekMessageW` bp to catch the real main thread at a clean point. Catch-return via allocated page + sw bp works cleanly for hijack-call-restore.
 
+## Telnet enable recipe — 2026-07-13 (Ghidra prep, step 1 done)
+
+Full decompile of the telnet chain. Unlike HTTP, this path **self-binds** and needs **no dormant pump of its own** for the socket — only our periodic `ProcessCommand` pump for dispatch.
+
+**The "fake ConsoleServer" insight:** both `SetTransport` (`FUN_00aad990`) and `ProcessCommand` (`FUN_00aadbe0`) touch their `this` only as `*param_1` = the transport pointer. So the ConsoleServer can be a **single 4-byte slot** `S` holding the transport pointer — no real ConsoleServer object needs constructing. Pass `&S` as `this` to both.
+
+**Objects:**
+- **TelnetTransport** — ctor `FUN_00ab6250(mem)` sets vtable `0x0103c8dc`, zeroes fields. Over-allocate ~`0x40` zeroed bytes (exact factory size unconfirmed; ctor + bases touch offsets 0/4/0x14/0x18). Slot `+4` = its internal `TCPInterface` (Open lazy-allocs `0x250` there via `FUN_00ab6ce0`). Only ever built by the reflective `CreateObject` factory in retail — we build it directly.
+- **Slot `S`** — 4 zeroed bytes; becomes the transport pointer after `SetTransport`.
+
+**Enable (binds the socket, synchronous):**
+`SetTransport(&S, T, port)` = `FUN_00aad990(this=&S, transport=T, port)`:
+1. `*(&S) = T`
+2. `T->Open(port,1)` (transport vtable `+4` = `FUN_00ab6310`) → `TCPInterface::Listen` (`FUN_00ad3c40`): `socket(AF_INET,SOCK_STREAM)` → `bind(htons(port), INADDR_ANY)` → `listen(64)` → spawns accept thread `FUN_00ad5000` via `_beginthreadex`. **Socket is live on return.**
+3. registers the transport with the global parser registry.
+
+**Dispatch (needs our pump):** the accept thread (`FUN_00ad5000`) only accepts + **queues** received lines — it does not dispatch. `ProcessCommand(&S)` (`FUN_00aadbe0`) is the consumer: drains the queue, sends the greeting `"Connected to remote command console.\r\nType 'help' for help.\r\n"` on new connect, and dispatches `help`/`quit` (hardcoded builtins — always work) + parser commands (global registry). **It must be called repeatedly** (e.g. once per frame from the `PeekMessageW` hook). No retail code calls it → we pump it.
+
+**Live-proof procedure (x32dbg, main thread — same hijack technique as the HTTP test):**
+1. `alloc T` (0x40, zero); call `FUN_00ab6250(T)`.
+2. `alloc S` (4 bytes, zero).
+3. On the main thread (caught at the `PeekMessageW` bp): `ecx=&S`, push `T`, push `port` (pick our own, e.g. `0x23F0`=9200), `call 0x00aad990`.
+4. `netstat` → port LISTENING under `Darkspore.exe` ⇒ **socket proven**.
+5. `ncat 127.0.0.1 9200` (raw, no telnet IAC).
+6. Pump: main thread `ecx=&S; call 0x00aadbe0` a few times ⇒ greeting appears, `help` responds ⇒ **console proven 100%**.
+
+**Runtime unknowns (resolve live; none are blockers):** (a) the global parser-registry `this` that `FUN_00accab0`/`FUN_00aae930` load into `ecx` — verify valid when `ProcessCommand` runs; (b) whether command parsers (editor/prop) are actually populated (affects `help` richness only — greeting + `help`/`quit` builtins work regardless); (c) exact TelnetTransport size (over-allocate).
+
+**Fase B (native):** one-shot `SetTransport` at enable time + `ProcessCommand(&S)` each frame, both from the existing main-thread `PeekMessageW` hook in `recaphooks.cpp`.
+
 ## Key addresses
 
 | Addr | Symbol / role |

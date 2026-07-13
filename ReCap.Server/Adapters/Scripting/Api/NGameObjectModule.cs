@@ -47,7 +47,8 @@ public static unsafe class NGameObjectModule
             ("AlertObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AlertObject),
             ("GetNPCType", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetNPCType),
             ("RemoveEffect", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveEffect),
-            ("RemoveEffectIndex", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveEffectIndex));
+            ("RemoveEffectIndex", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveEffectIndex),
+            ("KillObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&KillObject));
     }
 
     private static uint Oid(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
@@ -158,6 +159,19 @@ public static unsafe class NGameObjectModule
             var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
             if (bridge is not null && LuaNative.lua_gettop(L) >= 2)
                 bridge.AddAggroForObject(Oid(L, 1), Oid(L, 2), 0f);
+        }
+        catch { }
+        return 0;
+    }
+
+    // KillObject(obj, [flag]) @0x009fd1f0 — force the object's death path (distinct from MarkForDelete).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int KillObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER) bridge.KillObject(Oid(L, 1));
         }
         catch { }
         return 0;

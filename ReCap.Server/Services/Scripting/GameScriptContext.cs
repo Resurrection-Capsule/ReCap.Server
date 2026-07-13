@@ -335,6 +335,22 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     public void DispatchAbilityEvent(uint targetId, int eventType, Adapters.Scripting.ModifierEventData payload) =>
         DispatchCombatEvent(targetId, eventType, payload);
 
+    // IsChainGame @0x00a008c0: true for the campaign chain mode. ReCap runs the single-player dungeon as
+    // a chain game (Game emits LabsGameType.Chain every tick), so this is always true here.
+    public bool IsChainGame() => true;
+
+    // KillObject @0x009fd1f0: force the object's death (HP→0 + OnObjectDeath), distinct from a bare
+    // MarkForDelete. Idempotent via the Dead guard.
+    public void KillObject(uint objectId)
+    {
+        if (_game.Objects.Objects.TryGetValue(objectId, out var o) && !o.Dead)
+        {
+            o.Health = 0f;
+            o.Dead = true;
+            _game.OnObjectDeath(objectId);
+        }
+    }
+
     public void SetNavCollision(uint objectId, bool collidable)
     {
         // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.

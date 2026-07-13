@@ -83,6 +83,11 @@ public interface IScriptGameBridge
     void RemoveObjectEffect(uint objectId, uint effectId, bool hardStop) { }
     void RemoveObjectEffectByIndex(uint objectId, int slotIndex, bool hardStop) { }
 
+    // Tier-3: nGameSimulator.IsChainGame — the campaign/chain mode (our single-player dungeon is always
+    // a chain game). nGameObject.KillObject — force the object's death path.
+    bool IsChainGame() => true;
+    void KillObject(uint objectId) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)

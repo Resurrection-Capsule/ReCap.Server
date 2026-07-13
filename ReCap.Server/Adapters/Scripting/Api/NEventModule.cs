@@ -87,12 +87,18 @@ public static unsafe class NEventModule
     }
 }
 
+// nDebug — script debug helpers. LogToConsole/Assert surface the game scripts' OWN diagnostics into
+// our Lua log (valuable when driving the client: the scripts narrate what they do). Draw calls are
+// server-side no-ops.
 public static unsafe class NDebugModule
 {
     public static void Register(nint L)
     {
         LuaApiModule.RegisterNamespace(L, "nDebug",
-            ("IsAbilityDebugEnabled", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsAbilityDebugEnabled));
+            ("IsAbilityDebugEnabled", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&IsAbilityDebugEnabled),
+            ("LogToConsole", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&LogToConsole),
+            ("Assert", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&Assert),
+            ("DrawCircle", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&DrawCircle));
     }
 
     // Retail @0x009f97b0: hardcoded PushBoolean(false), no flag read.
@@ -102,4 +108,46 @@ public static unsafe class NDebugModule
         LuaNative.lua_pushboolean(L, 0);
         return 1;
     }
+
+    // LogToConsole(message) — print a script diagnostic (routed to the Lua log category).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int LogToConsole(nint L)
+    {
+        try
+        {
+            var msg = LuaNative.lua_type(L, 1) == LuaNative.LUA_TSTRING ? LuaNative.ToManagedString(L, 1)
+                : LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER ? LuaNative.lua_tonumber(L, 1).ToString()
+                : null;
+            if (msg is not null) ReCap.Server.Util.Logging.Log.Lua.Debug($"[nDebug] {msg}");
+        }
+        catch { }
+        return 0;
+    }
+
+    // Assert(condition, [message]) — warn when the condition is falsy (nil/false/0). Never throws.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int Assert(nint L)
+    {
+        try
+        {
+            var truthy = LuaNative.lua_type(L, 1) switch
+            {
+                LuaNative.LUA_TNIL => false,
+                LuaNative.LUA_TBOOLEAN => LuaNative.lua_toboolean(L, 1) != 0,
+                LuaNative.LUA_TNUMBER => LuaNative.lua_tonumber(L, 1) != 0f,
+                _ => true,
+            };
+            if (!truthy)
+            {
+                var msg = LuaNative.lua_type(L, 2) == LuaNative.LUA_TSTRING ? LuaNative.ToManagedString(L, 2) : "assertion failed";
+                ReCap.Server.Util.Logging.Log.Lua.Warn($"[nDebug] assert: {msg}");
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // DrawCircle(x,y,z, r,g,b, radius) — debug overlay; no server-side effect.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int DrawCircle(nint L) => 0;
 }
