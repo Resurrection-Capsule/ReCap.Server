@@ -28,6 +28,7 @@ public interface IScriptGameBridge
     float GetModifiedMoveSpeed(uint objectId);
     bool TryGetGoalDistance(uint objectId, out float distance);
     uint AddAttributeModifier(uint objectId, int attributeId, float value);
+    void RemoveAttributeModifier(uint objectId, uint handle) { }
     uint EmitEffect(uint objectId, uint serverEventDef, uint initiatorId);
     void EmitServerEvent(uint serverEventDef, uint objectId, uint attackerId, bool critical,
         System.Numerics.Vector3? position, System.Numerics.Vector3? facing);

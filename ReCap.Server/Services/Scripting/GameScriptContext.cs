@@ -339,14 +339,26 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     }
 
     private uint _nextAttrModHandle;
+    private readonly Dictionary<uint, (uint Obj, int Attr, float Value)> _attrMods = new();
     // DEFERRED: retail layers attribute modifiers (recomputed by GetAttributeValue); ReCap applies an
     // additive delta directly to GameObject.Attributes (add-vs-mult unverified) and records the reversal
-    // for a future RemoveAttributeModifier (not yet demanded). Handle 0 = object missing.
+    // so RemoveAttributeModifier can undo it. Handle 0 = object missing.
     public uint AddAttributeModifier(uint objectId, int attributeId, float value)
     {
         if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return 0;
         o.Attributes[attributeId] = (o.Attributes.TryGetValue(attributeId, out var cur) ? cur : 0f) + value;
-        return ++_nextAttrModHandle;
+        var handle = ++_nextAttrModHandle;
+        _attrMods[handle] = (objectId, attributeId, value);
+        return handle;
+    }
+
+    // RemoveAttributeModifier @0x009fec10: undo a handle's delta (nAttribute; the obj arg only gates on
+    // the attribute component). Unknown handle = no-op.
+    public void RemoveAttributeModifier(uint objectId, uint handle)
+    {
+        if (!_attrMods.Remove(handle, out var mod)) return;
+        if (_game.Objects.Objects.TryGetValue(mod.Obj, out var o) && o.Attributes.TryGetValue(mod.Attr, out var cur))
+            o.Attributes[mod.Attr] = cur - mod.Value;
     }
 
     private uint _nextEffectHandle;

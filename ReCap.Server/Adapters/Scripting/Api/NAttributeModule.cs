@@ -11,7 +11,24 @@ public static unsafe class NAttributeModule
         LuaApiModule.RegisterNamespace(L, "nAttribute",
             ("GetAttributeValue", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeValue),
             ("GetAttributeValue_FromSnapshot", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetAttributeValueFromSnapshot),
-            ("AddAttributeModifier", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAttributeModifier));
+            ("AddAttributeModifier", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddAttributeModifier),
+            ("RemoveAttributeModifier", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveAttributeModifier));
+    }
+
+    // RemoveAttributeModifier(obj, handle) @0x009fec10 — undo a modifier added by AddAttributeModifier.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int RemoveAttributeModifier(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && LuaNative.lua_type(L, 1) == LuaNative.LUA_TNUMBER && LuaNative.lua_type(L, 2) == LuaNative.LUA_TNUMBER)
+                bridge.RemoveAttributeModifier(
+                    (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1)),
+                    (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2)));
+        }
+        catch { }
+        return 0;
     }
 
     // Retail contracts (Ghidra 2026-06-06):

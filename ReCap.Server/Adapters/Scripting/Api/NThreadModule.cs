@@ -18,6 +18,7 @@ public static unsafe class NThreadModule
             ("WaitForHitpointsAbove", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForHitpointsAbove),
             ("WaitForFadeOutInXSeconds", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForFadeOutInXSeconds),
             ("WaitForNearGoal", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForNearGoal),
+            ("MoveTowardObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveTowardObject),
             ("WaitForProjectile", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForProjectile),
             ("WaitForJumpComplete", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&WaitForJumpComplete));
     }
@@ -101,6 +102,43 @@ public static unsafe class NThreadModule
         }
         LuaNative.lua_settop(L, -2);
         return (x, y, z);
+    }
+
+    // MoveTowardObject(mover, target, [stopDist], ...) @0x00a03ad0 — blocking chase: point the mover's
+    // goal at the target's current position (stopping stopDist short) and yield until arrival. Retail
+    // tracks the moving target live; we aim once and resume on a time estimate (same approximation as
+    // WaitForNearGoal), which suffices for an enemy closing on the hero per gambit tick. The trailing
+    // face/flag args are locomotion tuning we don't model. Returns nothing on the resume path.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int MoveTowardObject(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            var scheduler = ctx?.Scheduler;
+            var bridge = ctx?.GameBridge;
+            if (scheduler is null || bridge is null
+                || LuaNative.lua_type(L, 1) != LuaNative.LUA_TNUMBER || LuaNative.lua_type(L, 2) != LuaNative.LUA_TNUMBER)
+            { LuaNative.lua_pushboolean(L, 0); return 1; }
+
+            var mover = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 1));
+            var target = (uint)Math.Round((double)LuaNative.lua_tonumber(L, 2));
+            var stopDist = LuaNative.lua_type(L, 3) == LuaNative.LUA_TNUMBER ? (float)LuaNative.lua_tonumber(L, 3) : 0f;
+            if (!bridge.TryGetPosition(target, out var tx, out var ty, out var tz))
+            { LuaNative.lua_pushboolean(L, 0); return 1; }
+
+            bridge.SetLocomotionGoal(mover, tx, ty, tz, stopDist);
+            var remaining = bridge.TryGetGoalDistance(mover, out var dist) ? Math.Max(0f, dist - stopDist) : 0f;
+            var speed = Math.Max(0.01f, bridge.GetModifiedMoveSpeed(mover));
+            scheduler.RegisterYield(L, sleeping: false, wakeAt: scheduler.Now + Math.Min(remaining / speed, 10.0));
+        }
+        catch (Exception ex)
+        {
+            try { Util.Logging.Log.Lua.Error($"[nThread] MoveTowardObject failed: {ex.Message}"); } catch { }
+            LuaNative.lua_pushboolean(L, 0);
+            return 1;
+        }
+        return LuaNative.lua_yield(L, 0);
     }
 
     // DEFERRED (no server-side movement integration): resume on a time estimate, not a live position
