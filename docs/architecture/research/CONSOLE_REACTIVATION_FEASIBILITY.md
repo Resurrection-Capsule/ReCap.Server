@@ -212,6 +212,31 @@ Executed the telnet enable recipe against the live client (main thread caught at
 
 **This closes the feasibility question: YES, reactivatable, proven end-to-end.** Remaining is productionization (Fase B) — move the two injected calls into `recaphooks.cpp`.
 
+## The command bridge — devs' commands via the game's own executor (2026-07-13)
+
+The reactivated telnet ConsoleServer has an **empty parser vector** (its registry is a per-instance member at `ConsoleServer+4/+8`, only ever populated by the transport via `AddParser` `FUN_00aada70` — which has a single xref, `SetTransport`). So no dev commands live in the telnet registry. **But** the real dev commands (state, app-control, effects, light, movie, baker, …) are all live in the **AppCommandRegistry** (`FUN_007b3760` → global `DAT_01464f54`), populated at boot by ~60 registrars. The bridge forwards typed lines to that registry's own executor.
+
+**Executor found — it IS the game's own command path.** Retail boot (`FUN_00538090`) runs `localCheats.txt` by calling the registry's vtable slot `+0x20` with an `sinclude "…"` string. That slot is:
+```
+FUN_008675e0(this=AppCommandRegistry, char* line)   // vtable 0x01014878 slot +0x20
+```
+It dereferences `this+0x44` (the global **ArgScript** interpreter, set up by `FUN_00866680` at boot), then dispatches the line: `ArgScript_vtable[0x58]` (`0x00b55a80`) → tokenize + lookup + invoke the registered command callback (`0x00b54650`).
+
+**One-call bridge:**
+```
+reg = FUN_007b3760();                 // AppCommandRegistry::GetInstance (DAT_01464f54)
+FUN_008675e0(reg, "command args");    // executes it — the game's own path (no leading '!' needed)
+```
+This is exactly what the client does for `localCheats.txt` (minus the `sinclude` wrapper). Proven-valid by being the retail path.
+
+**Gotchas:**
+- **Init gate:** `FUN_008675e0` no-ops if `*(reg+0x44)==0` (ArgScript not yet set by `FUN_00866680`). Fine post-boot / in-game.
+- **Thread:** dispatch is synchronous on the calling thread when `ArgScript+0x7C0 == 0` (the boot call site is the main thread); non-zero defers to a queue. Call from the **main thread** (our `PeekMessageW` hook already is).
+- **Unknown command THROWS** a C++ exception (`"Unknown command"`) instead of returning an error → the bridge call MUST be wrapped in `try/catch` (SEH) or a bad line crashes the process.
+- **Output** goes to the `AppConsole`/log sink each command writes to — **not** returned to the caller. To echo results back over telnet, hook that sink (enhancement). Command *effects* (state changes, spawns, pauses) are visible in-game regardless.
+
+**Fase B design (native, `recaphooks.cpp`):** on the main-thread `PeekMessageW` hook — (1) one-shot: build `TelnetTransport` + fake ConsoleServer slot + `SetTransport(&S,T,port)` (binds socket, proven); (2) each frame: drain the transport's incoming lines (or pump `ProcessCommand` for greeting/builtins) and for each command line call `FUN_008675e0(FUN_007b3760(), line)` inside `try/catch`. Optionally hook the AppConsole output sink to stream results back to the telnet client. Result: **the devs' console, fully functional, over telnet.**
+
 ## Key addresses
 
 | Addr | Symbol / role |

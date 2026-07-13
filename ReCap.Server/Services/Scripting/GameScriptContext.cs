@@ -351,53 +351,115 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         }
     }
 
-    // nObjective data store — per-(target, index) mission progress (SetObjectiveIntData etc.). The retail
-    // setter replicates to the HUD (ObjectiveUpdate); that wire + the level-init/completion orchestration
-    // are the integration layer (deferred), so this holds the authoritative server-side values.
-    private readonly Dictionary<(byte Target, int Index), int> _objectiveInts = new();
-    private readonly Dictionary<(byte Target, int Index), float> _objectiveFloats = new();
-    private readonly Dictionary<(byte Target, int Index), uint> _objectiveGuids = new();
+    // nObjective data store — per (objectiveId, target, index) mission progress. Keyed by the objective
+    // currently running (nObjectiveFns.Tick/HandleEvent set _currentObjectiveId), matching the retail
+    // setter which reads the current objective context. Held server-side; the ObjectiveUpdated HUD wire
+    // is the next (in-game-verified) integration step.
+    private readonly Dictionary<(uint Objective, byte Target, int Index), int> _objectiveInts = new();
+    private readonly Dictionary<(uint Objective, byte Target, int Index), float> _objectiveFloats = new();
+    private readonly Dictionary<(uint Objective, byte Target, int Index), uint> _objectiveGuids = new();
+    // The objective whose script function is currently executing (its FNV hash id). SetObjectiveData
+    // keys on it; 0 when no objective context is active.
+    private uint _currentObjectiveId;
 
     public void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, Adapters.Scripting.ObjectiveDataKind kind)
     {
+        var key = (_currentObjectiveId, target, index);
         switch (kind)
         {
-            case Adapters.Scripting.ObjectiveDataKind.Int: _objectiveInts[(target, index)] = intValue; break;
-            case Adapters.Scripting.ObjectiveDataKind.Float: _objectiveFloats[(target, index)] = floatValue; break;
-            case Adapters.Scripting.ObjectiveDataKind.Guid: _objectiveGuids[(target, index)] = guidValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Int: _objectiveInts[key] = intValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Float: _objectiveFloats[key] = floatValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Guid: _objectiveGuids[key] = guidValue; break;
         }
     }
 
-    public int GetObjectiveInt(byte target, int index) => _objectiveInts.GetValueOrDefault((target, index));
-    public float GetObjectiveFloat(byte target, int index) => _objectiveFloats.GetValueOrDefault((target, index));
-    public uint GetObjectiveGuid(byte target, int index) => _objectiveGuids.GetValueOrDefault((target, index));
+    public int GetObjectiveInt(byte target, int index) => _objectiveInts.GetValueOrDefault((_currentObjectiveId, target, index));
+    public float GetObjectiveFloat(byte target, int index) => _objectiveFloats.GetValueOrDefault((_currentObjectiveId, target, index));
+    public uint GetObjectiveGuid(byte target, int index) => _objectiveGuids.GetValueOrDefault((_currentObjectiveId, target, index));
 
-    // SendObjectiveEvent @0x00a01280: run HandleEvent ([2]) on every registered objective whose
-    // handledEvents bitmask includes the event's type, passing (eventType, eventHandle). The handler
-    // reads the event payload by handle via GetObjectiveEvent*Data. Synchronous (objective handlers
-    // don't yield); the event stays valid until DestroyObjectiveEvent.
+    // Read an objective's stored int value directly (for tests / HUD wiring), independent of context.
+    public int PeekObjectiveInt(uint objectiveId, byte target, int index) => _objectiveInts.GetValueOrDefault((objectiveId, target, index));
+
+    // Active objectives for the level: id -> shared private table ref (nThreadData.GetPrivateTable
+    // resolves to it across the objective's Init/HandleEvent so per-objective state persists).
+    private readonly Dictionary<uint, int> _activeObjectives = new();
+
+    // Run objective table[index](args...) with the objective's context bound: _currentObjectiveId set and
+    // its shared private table bound to the runtime state, restored afterwards. Synchronous (objective
+    // functions don't yield); errors are logged, never thrown.
+    private void RunObjectiveIndex(ScriptEntry entry, int index, params float[] args)
+    {
+        var L = _runtime.L;
+        var state = ScriptContextRegistry.Get(L);
+        LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
+        LuaNative.lua_rawgeti(L, -1, index);
+        if (LuaNative.lua_type(L, -1) != LuaNative.LUA_TFUNCTION) { LuaNative.lua_settop(L, 0); return; }
+        LuaNative.lua_remove(L, -2); // drop the table, leave the function
+
+        var prevId = _currentObjectiveId;
+        var oldSharedRef = 0;
+        var hadShared = state is not null && state.TryGetSharedPrivateTable(L, out oldSharedRef);
+        _currentObjectiveId = entry.Hash;
+        if (state is not null && _activeObjectives.TryGetValue(entry.Hash, out var pref) && pref != 0)
+            state.BindSharedPrivateTable(L, pref);
+
+        foreach (var a in args) LuaNative.lua_pushnumber(L, a);
+        if (LuaNative.lua_pcall(L, args.Length, 0, 0) != 0)
+        {
+            try { ReCap.Server.Util.Logging.Log.Lua.Warn($"[objective] {entry.Name}[{index}] error: {LuaNative.ToManagedString(L, -1)}"); } catch { }
+        }
+
+        // Capture a private table the objective created during this run so later runs resolve the same one.
+        if (state is not null && (!_activeObjectives.TryGetValue(entry.Hash, out var cur) || cur == 0)
+            && state.TryGetPrivateTableRef(L, out var created) && created != 0)
+            _activeObjectives[entry.Hash] = created;
+
+        _currentObjectiveId = prevId;
+        if (state is not null)
+        {
+            if (hadShared) state.BindSharedPrivateTable(L, oldSharedRef); else state.UnbindSharedPrivateTable(L);
+        }
+        LuaNative.lua_settop(L, 0);
+    }
+
+    // Activate the level's objectives: register-time entries run their Init/Tick ([1]) so they set up
+    // initial progress. Called at level start (additive; the HUD-fixture wire is untouched for now).
+    public void ActivateObjectives(IEnumerable<string> names)
+    {
+        lock (_luaGate)
+        {
+            foreach (var name in names)
+            {
+                if (_registry.Find(ScriptKind.Objective, ScriptVfs.Hash(name)) is not { } entry) continue;
+                _activeObjectives.TryAdd(entry.Hash, 0);
+                RunObjectiveIndex(entry, 1); // nObjectiveFns.Tick = 1 (first call = init)
+            }
+        }
+    }
+
+    // Fire a typed objective event on every active objective whose handledEvents match (retail Death,
+    // FullClear, TouchedObelisk, Damage). Builds the event payload, dispatches, then frees it.
+    public void FireObjectiveEvent(int eventType, uint guidSlot1 = 0)
+    {
+        if (ScriptContextRegistry.Get(_runtime.L) is not { } state) return;
+        var handle = state.CreateAbilityEvent(eventType);
+        if (guidSlot1 != 0 && state.GetAbilityEvent(handle) is { } ev) ev.Guids[1] = guidSlot1;
+        DispatchObjectiveEvent(eventType, handle);
+        state.RemoveAbilityEvent(handle);
+    }
+
+    // SendObjectiveEvent @0x00a01280: run HandleEvent ([2]) on every active objective whose handledEvents
+    // bitmask includes the event's type, passing (eventType, eventHandle). The handler reads the payload
+    // by handle via GetObjectiveEvent*Data. Synchronous; the event stays valid until DestroyObjectiveEvent.
     public void DispatchObjectiveEvent(int eventType, uint eventHandle)
     {
         lock (_luaGate)
         {
-            var L = _runtime.L;
             foreach (var entry in _registry.AllEntries(ScriptKind.Objective))
             {
                 if ((entry.HandledEvents & eventType) == 0) continue;
-                LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
-                LuaNative.lua_rawgeti(L, -1, 2); // nObjectiveFns.HandleEvent = 2
-                if (LuaNative.lua_type(L, -1) == LuaNative.LUA_TFUNCTION)
-                {
-                    LuaNative.lua_pushnumber(L, eventType);
-                    LuaNative.lua_pushnumber(L, eventHandle);
-                    if (LuaNative.lua_pcall(L, 2, 0, 0) != 0)
-                    {
-                        try { ReCap.Server.Util.Logging.Log.Lua.Warn($"[objective] {entry.Name} HandleEvent error: {LuaNative.ToManagedString(L, -1)}"); } catch { }
-                        LuaNative.lua_settop(L, 0);
-                        continue;
-                    }
-                }
-                LuaNative.lua_settop(L, 0);
+                if (!_activeObjectives.ContainsKey(entry.Hash)) continue;
+                RunObjectiveIndex(entry, 2, eventType, eventHandle); // nObjectiveFns.HandleEvent = 2
             }
         }
     }

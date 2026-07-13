@@ -673,6 +673,10 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
 
         client.SendPacket(ObjectivesInitForLevelPacket.CreateDefault());
 
+        // Run the level objectives' Lua Init ([1]) so they set up their progress state (additive; the
+        // ObjectiveUpdated HUD wire below is still the C++ fixture until the Lua-driven wire is verified).
+        ScriptContext?.ActivateObjectives(ObjectivesInitForLevelPacket.ObjectiveNames);
+
         // C++ Instance::OnPlayerStart sends an ObjectiveUpdated (0xB8) for each objective right
         // after the init (Instance.cpp:399-401). The per-tick obj-0 update is in Update().
         // Medal = Gold(4) per the hardcoded objective set; clientId = player slot.
@@ -1233,13 +1237,19 @@ public class Game(ulong id, GameType gameType, AssetDatabase? assetDatabase = nu
     private int _enemiesKilled;
     public float KillPercent => _enemiesSpawned == 0 ? 0f : (float)_enemiesKilled / _enemiesSpawned;
 
+    // nObjectiveEvents.Death = 4 (GlobalDefinitions): kill-based objectives (DefeatAllMonsters) subscribe.
+    private const int ObjectiveEventDeath = 4;
+
     public void OnObjectDeath(uint objectId)
     {
         if (!Objects.Objects.TryGetValue(objectId, out var obj)) return;
-        if (!obj.PlayerControlled && obj.MaxHealth > 0f) _enemiesKilled++;
+        var wasCombatant = !obj.PlayerControlled && obj.MaxHealth > 0f;
+        if (wasCombatant) _enemiesKilled++;
         Log.Game.Info($"[death] object={objectId} noun=0x{obj.NounId:X8} despawned");
         BroadcastToAllPlayers(new ObjectDeletePacket { ObjectIds = [objectId] });
         Objects.Remove(objectId);
+        // Fire the objective Death event AFTER removal so GetKillPercent sees the updated count.
+        if (wasCombatant) ScriptContext?.FireObjectiveEvent(ObjectiveEventDeath, objectId);
     }
 
     // nGameObject.AddEffect → 0x9B ServerEvent (client OnGmsServerEvent @0x0053ec80). Attached FX

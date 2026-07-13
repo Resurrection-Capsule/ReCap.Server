@@ -71,6 +71,7 @@ public class NObjectiveModuleTests
                 [2] = function(evType, evHandle) NoFire = NoFire + 1 end,
             })
             """), "reg");
+        ctx.ActivateObjectives(new[] { "recap_obj_probe", "recap_obj_other" }); // events dispatch to active objectives
 
         ctx.Runtime.Execute(LuaFixtures.Compile("""
             local ev = nObjective.CreateObjectiveEvent(2)
@@ -95,6 +96,9 @@ public class NObjectiveModuleTests
                 handledEvents = 4,
                 [2] = function() Fired = Fired + 1 end,
             })
+            """), "reg");
+        ctx.ActivateObjectives(new[] { "recap_obj_free" }); // active, so only the destroy keeps it from firing
+        ctx.Runtime.Execute(LuaFixtures.Compile("""
             local ev = nObjective.CreateObjectiveEvent(4)
             nObjective.DestroyObjectiveEvent(ev)
             nObjective.SendObjectiveEvent(ev)
