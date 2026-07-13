@@ -1,5 +1,7 @@
 namespace ReCap.Server.Adapters.Scripting;
 
+public enum ObjectiveDataKind { Int, Float, Guid }
+
 public interface IScriptGameBridge
 {
     bool TryGetPosition(uint objectId, out float x, out float y, out float z);
@@ -87,6 +89,16 @@ public interface IScriptGameBridge
     // a chain game). nGameObject.KillObject — force the object's death path.
     bool IsChainGame() => true;
     void KillObject(uint objectId) { }
+
+    // nObjective data store: per-(target, index) objective progress. Set*Data writes + flags a HUD
+    // update (ObjectiveUpdate wire = deferred orchestration); Get*Data reads. DispatchObjectiveEvent
+    // fires a built event on every registered objective whose handledEvents match its type.
+    void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, ObjectiveDataKind kind) { }
+    int GetObjectiveInt(byte target, int index) => 0;
+    float GetObjectiveFloat(byte target, int index) => 0f;
+    uint GetObjectiveGuid(byte target, int index) => 0u;
+    void DispatchObjectiveEvent(int eventType, uint eventHandle) { }
+    uint GetRegisteredDestructibles() => 0u;
 
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
@@ -294,6 +306,8 @@ public sealed class ScriptStateContext
         return handle;
     }
     public AbilityEventBuilder? GetAbilityEvent(uint handle) => _abilityEvents.GetValueOrDefault(handle);
+    // nObjective.DestroyObjectiveEvent frees an event builder (ability events are freed with their coroutine).
+    public void RemoveAbilityEvent(uint handle) => _abilityEvents.TryRemove(handle, out _);
 }
 
 public static class ScriptContextRegistry

@@ -13,9 +13,9 @@
 | **No-injection** (CLI switch / AppProperty / config gate) | **NO** — start-path is genuine dead code, not gated | HIGH |
 | **Injection — main-thread call is SAFE** | **YES, PROVEN LIVE** (no crash) | VERIFIED |
 | **Injection → HTTP `:8088`** | **NO** — object builds but never binds (pump absent) | VERIFIED |
-| **Injection → telnet** | **LIKELY** — `TCPInterface::Listen` self-binds, no pump needed | next experiment |
+| **Injection → telnet** | **YES — PROVEN 100% END-TO-END** | ✅ VERIFIED |
 
-> **★ LIVE-VERIFIED 2026-07-13 (x32dbg on retail 5.3.0.127).** The injection *mechanism* works — calling the dormant init on the main thread does **not** crash. But the HTTP service is a deeper dead end than expected: the object builds and "starts" (flags only) yet **never opens a socket**, because its servicing pump does not exist in retail. See "Live experiment" below. Pivot the reactivation target to the **telnet** path, whose `TCPInterface::Listen` binds synchronously with its own accept thread (no pump).
+> **★★★ TELNET CONSOLE REACTIVATED — PROVEN 2026-07-13 (x32dbg on retail 5.3.0.127).** Built a `TelnetTransport` + wired it via `SetTransport` on the main thread (injected calls, no crash) → socket bound `0.0.0.0:9200 LISTENING` under `Darkspore.exe`. A raw TCP client connected and, after pumping `ProcessCommand`, received the real console banner: `"Connected to remote command console.\r\nType 'help' for help.\r\nINSTALLED PARSERS:"`. **The dormant retail command console is fully reachable via injection.** The no-injection route stays impossible; HTTP stays a dead end (no pump). See "Live experiment" below.
 
 The console classes (`ConsoleServer`, `TelnetTransport`, Spark `HTTPServer`) **ship compiled into retail** but the code that would *start* them was compiled out of `App::Init`. No flag restores it. The only way in is to add the missing start call ourselves via injection — which the existing EAWebKit/Detours foothold (`recaphooks.cpp`) already makes cheap. See [[console-system-telnet-server]], [[eawebkit-redirect-and-ports]].
 
@@ -189,6 +189,28 @@ Full decompile of the telnet chain. Unlike HTTP, this path **self-binds** and ne
 **Runtime unknowns (resolve live; none are blockers):** (a) the global parser-registry `this` that `FUN_00accab0`/`FUN_00aae930` load into `ecx` — verify valid when `ProcessCommand` runs; (b) whether command parsers (editor/prop) are actually populated (affects `help` richness only — greeting + `help`/`quit` builtins work regardless); (c) exact TelnetTransport size (over-allocate).
 
 **Fase B (native):** one-shot `SetTransport` at enable time + `ProcessCommand(&S)` each frame, both from the existing main-thread `PeekMessageW` hook in `recaphooks.cpp`.
+
+## Live experiment #2 — TELNET, 100% PROVEN — 2026-07-13 (x32dbg, retail, in-game)
+
+Executed the telnet enable recipe against the live client (main thread caught at `PeekMessageW`, caller-filtered to darkspore.exe). Port chosen: **9200** (ours; retail default irrelevant).
+
+1. `alloc T=0x40` (zeroed); hijack-call `FUN_00ab6250(T)` → `T[0]` = `0x0103c8dc` (TelnetTransport vtable) ✓.
+2. `alloc S=4` (zeroed).
+3. Hijack-call `SetTransport(ecx=&S, T, 9200)` = `FUN_00aad990` → returned clean, no crash. `*S` = T (transport stored); `T[+4]` = `0x2782EB88` (internal `TCPInterface` allocated by `Open`→`FUN_00ab6ce0`).
+4. `netstat` → **`TCP 0.0.0.0:9200 LISTENING` under PID (Darkspore.exe)** ✓ — **socket bound by our injected call.**
+5. Raw `TcpClient` (PowerShell, no telnet IAC) connected → `connected=True`.
+6. Hijack-pumped `ProcessCommand(ecx=&S)` = `FUN_00aadbe0` (twice; game resumed between so the accept thread `accept()`s + flushes) → client received:
+   ```
+   Connected to remote command console.
+   Type 'help' for help.
+   INSTALLED PARSERS:
+   ```
+
+**Result: the retail command console is fully reactivated via injection — greeting delivered, dispatch loop alive.** `"INSTALLED PARSERS:"` with an empty list confirms runtime-unknown (b): the editor/prop command parsers are **not** registered in this state, so only the greeting + `help`/`quit` builtins are live (as predicted; a richer parser set would need those registrars driven too). Runtime-unknown (a) resolved implicitly — `ProcessCommand`'s global parser-registry access ran without fault.
+
+**Critical gotcha discovered:** while the game is paused in the debugger, the accept thread is also paused, so a client `Connect()` only completes the kernel handshake (backlog) — the app hasn't `accept()`ed. `ProcessCommand` must be pumped **while the game is running** long enough (≥1 select cycle, 500 ms) for the accept thread to take the connection, else it sees no connection and sends nothing. In the native impl this is a non-issue (the pump runs every frame with the game live).
+
+**This closes the feasibility question: YES, reactivatable, proven end-to-end.** Remaining is productionization (Fase B) — move the two injected calls into `recaphooks.cpp`.
 
 ## Key addresses
 

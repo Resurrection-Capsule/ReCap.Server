@@ -351,6 +351,60 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         }
     }
 
+    // nObjective data store — per-(target, index) mission progress (SetObjectiveIntData etc.). The retail
+    // setter replicates to the HUD (ObjectiveUpdate); that wire + the level-init/completion orchestration
+    // are the integration layer (deferred), so this holds the authoritative server-side values.
+    private readonly Dictionary<(byte Target, int Index), int> _objectiveInts = new();
+    private readonly Dictionary<(byte Target, int Index), float> _objectiveFloats = new();
+    private readonly Dictionary<(byte Target, int Index), uint> _objectiveGuids = new();
+
+    public void SetObjectiveData(byte target, int index, int intValue, float floatValue, uint guidValue, Adapters.Scripting.ObjectiveDataKind kind)
+    {
+        switch (kind)
+        {
+            case Adapters.Scripting.ObjectiveDataKind.Int: _objectiveInts[(target, index)] = intValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Float: _objectiveFloats[(target, index)] = floatValue; break;
+            case Adapters.Scripting.ObjectiveDataKind.Guid: _objectiveGuids[(target, index)] = guidValue; break;
+        }
+    }
+
+    public int GetObjectiveInt(byte target, int index) => _objectiveInts.GetValueOrDefault((target, index));
+    public float GetObjectiveFloat(byte target, int index) => _objectiveFloats.GetValueOrDefault((target, index));
+    public uint GetObjectiveGuid(byte target, int index) => _objectiveGuids.GetValueOrDefault((target, index));
+
+    // SendObjectiveEvent @0x00a01280: run HandleEvent ([2]) on every registered objective whose
+    // handledEvents bitmask includes the event's type, passing (eventType, eventHandle). The handler
+    // reads the event payload by handle via GetObjectiveEvent*Data. Synchronous (objective handlers
+    // don't yield); the event stays valid until DestroyObjectiveEvent.
+    public void DispatchObjectiveEvent(int eventType, uint eventHandle)
+    {
+        lock (_luaGate)
+        {
+            var L = _runtime.L;
+            foreach (var entry in _registry.AllEntries(ScriptKind.Objective))
+            {
+                if ((entry.HandledEvents & eventType) == 0) continue;
+                LuaNative.lua_rawgeti(L, LuaNative.LUA_REGISTRYINDEX, entry.TableRef);
+                LuaNative.lua_rawgeti(L, -1, 2); // nObjectiveFns.HandleEvent = 2
+                if (LuaNative.lua_type(L, -1) == LuaNative.LUA_TFUNCTION)
+                {
+                    LuaNative.lua_pushnumber(L, eventType);
+                    LuaNative.lua_pushnumber(L, eventHandle);
+                    if (LuaNative.lua_pcall(L, 2, 0, 0) != 0)
+                    {
+                        try { ReCap.Server.Util.Logging.Log.Lua.Warn($"[objective] {entry.Name} HandleEvent error: {LuaNative.ToManagedString(L, -1)}"); } catch { }
+                        LuaNative.lua_settop(L, 0);
+                        continue;
+                    }
+                }
+                LuaNative.lua_settop(L, 0);
+            }
+        }
+    }
+
+    // GetRegisteredDestructibles: we don't track destructible ornaments yet -> 0.
+    public uint GetRegisteredDestructibles() => 0u;
+
     public void SetNavCollision(uint objectId, bool collidable)
     {
         // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.

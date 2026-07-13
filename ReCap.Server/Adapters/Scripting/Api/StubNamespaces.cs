@@ -27,7 +27,6 @@ public static class StubNamespaces
         LuaApiModule.RegisterNamespace(L, "nGameDirector");
         LuaApiModule.RegisterNamespace(L, "nGameSimulator");
         LuaApiModule.RegisterNamespace(L, "nLevel");
-        LuaApiModule.RegisterNamespace(L, "nObjective");
         LuaApiModule.RegisterNamespace(L, "nAffix");
         LuaApiModule.RegisterNamespace(L, "nJuggernaut");
         LuaApiModule.RegisterNamespace(L, "nTuning");
