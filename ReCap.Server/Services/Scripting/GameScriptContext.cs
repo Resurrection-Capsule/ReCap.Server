@@ -34,10 +34,19 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
     internal LuaRuntime Runtime => _runtime;
     public LuaCoroutineScheduler Scheduler => _scheduler;
 
+    // nAbility.RequestAbility enqueues here; drained at the top of Tick so a requested ability spawns
+    // and runs on the game loop, never re-entering the runtime from inside the requesting coroutine.
+    private readonly System.Collections.Concurrent.ConcurrentQueue<(uint Ability, uint Agent, uint Target, float X, float Y, float Z, int Rank)> _pendingRequests = new();
+
+    public void RequestAbility(uint abilityHash, uint agentId, uint targetId, float x, float y, float z, int rank)
+        => _pendingRequests.Enqueue((abilityHash, agentId, targetId, x, y, z, rank));
+
     public void Tick()
     {
         lock (_luaGate)
         {
+            while (_pendingRequests.TryDequeue(out var r))
+                InvokeAbility(r.Ability, r.Agent, r.Target, r.X, r.Y, r.Z, r.Rank);
             _clockSeconds += 0.05;
             _scheduler.Tick(_clockSeconds);
         }

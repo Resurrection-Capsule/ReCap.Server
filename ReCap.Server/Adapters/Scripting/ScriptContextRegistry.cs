@@ -48,6 +48,11 @@ public interface IScriptGameBridge
     bool InPerceptionCircle(uint agentId, float x, float y, float z, float offset);
     void CastAiAbility(string abilityName, uint self, uint target);
     bool EvaluateAiCondition(string conditionName, IReadOnlyList<(string Name, string Value)> props, uint self, uint target);
+
+    // nAbility.RequestAbility — run an ability programmatically (sub-ability / projectile / pet cast).
+    // Deferred to the next tick so it never re-enters the runtime mid-coroutine. Default no-op keeps
+    // lightweight test doubles compiling.
+    void RequestAbility(uint abilityHash, uint agentId, uint targetId, float x, float y, float z, int rank) { }
 }
 
 public readonly record struct AbilityInvocation(

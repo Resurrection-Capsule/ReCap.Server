@@ -28,6 +28,7 @@ public static unsafe class NAbilityContextModule
             ("RemoveCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RemoveCooldownTime),
             ("ScaleCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ScaleCooldownTime),
             ("AddCooldownTime", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&AddCooldownTime),
+            ("RequestAbility", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&RequestAbility),
             ("ReleaseAgent", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&ReleaseAgent));
     }
 
@@ -365,6 +366,30 @@ public static unsafe class NAbilityContextModule
         {
             return 0;
         }
+    }
+
+    // RequestAbility(abilityGuid, agent, target, x, y, z, [rank=1], [flag], [instanceId]) — run an
+    // ability programmatically (Ghidra @0x00a42bf0 → FUN_009e62a0). Retail defaults rank to 1 when the
+    // 7th arg is absent; the extra flag/instanceId args are cast-instance bookkeeping we don't model.
+    // The request is deferred to the next tick (bridge queue) to avoid re-entering the runtime.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int RequestAbility(nint L)
+    {
+        try
+        {
+            var ctx = ScriptContextRegistry.Get(L);
+            if (ctx?.GameBridge is null || LuaNative.lua_gettop(L) < 6) return 0;
+            var ability = ctx.ResolveAssetHash(LuaNative.lua_tonumber(L, 1));
+            var agent = ReadObjectIdArg(L, 2);
+            var target = ReadObjectIdArg(L, 3);
+            var x = (float)LuaNative.lua_tonumber(L, 4);
+            var y = (float)LuaNative.lua_tonumber(L, 5);
+            var z = (float)LuaNative.lua_tonumber(L, 6);
+            var rank = LuaNative.lua_gettop(L) >= 7 ? (int)Math.Round((double)LuaNative.lua_tonumber(L, 7)) : 1;
+            ctx.GameBridge.RequestAbility(ability, agent, target, x, y, z, rank);
+        }
+        catch { }
+        return 0;
     }
 
     // Recognized no-op (state mutation impl-time-DEFERRED, needs nAbility::ReleaseAgent decompile).
