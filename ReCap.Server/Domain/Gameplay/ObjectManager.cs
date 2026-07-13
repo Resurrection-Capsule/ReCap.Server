@@ -61,6 +61,10 @@ public sealed class GameObject
     public bool NavCollisionDisabled { get; set; }
     // Wave-2 stop-distance for the arrival estimate (WaitForNearGoal); not on the wire.
     public float DesiredStopDistance { get; set; }
+    // Server-side pathing destination for AI pursuit (the target to walk toward). Distinct from
+    // GoalPosition (which carries the CURRENT integrated position on the 0x95 wire so the client trails
+    // in small steps instead of snapping to the far target). null = not pursuing.
+    public Vector3? MoveTarget { get; set; }
 
     public const float DefaultMoveSpeed = 5.0f;
     public const float DefaultPerceptionRadius = 15f;
@@ -217,12 +221,13 @@ public sealed class ObjectManager
             }
         }
 
-        // Pursue: every aggro'd agent walks toward its best target (independent of whether it has an
-        // AIController), so enemies close on the player instead of idling at spawn.
+        // Pursue: every aggro'd agent sets its pathing target to its best target, so it closes on the
+        // player instead of idling at spawn (only aggro'd = nearby enemies pursue).
         foreach (var agent in _objects.Values)
         {
             if (agent.Dead || agent.Agent is null) continue;
-            Pursue(agent, _aggro.BestTargetFor(agent));
+            var targetId = _aggro.BestTargetFor(agent);
+            agent.MoveTarget = targetId != 0 && _objects.TryGetValue(targetId, out var t) ? t.Position : null;
         }
 
         IntegrateLocomotion(deltaSeconds);
@@ -232,45 +237,32 @@ public sealed class ObjectManager
     // is a later per-ability concern; for now every aggro'd enemy walks into melee of its target.
     private const float MeleePursuitRange = 2.5f;
 
-    // Chase the aggro target: the AIController only casts the gambit ability (the pursue is the enemy's
-    // job), but the basic-melee abilities don't drive movement — so without this the enemy strikes only
-    // when the player walks into it and otherwise idles at spawn. Aim the locomotion goal at the target
-    // each tick (stopping in melee range) and flag it for the 0x95 smooth-move broadcast; IntegrateLocomotion
-    // advances the server position so the strike's range check can pass.
-    private void Pursue(GameObject agent, uint targetId)
-    {
-        if (targetId == 0 || !_objects.TryGetValue(targetId, out var target)) return;
-        if (Vector3.Distance(agent.Position, target.Position) <= MeleePursuitRange + 0.01f)
-        {
-            if ((agent.GoalFlags & 0x001) != 0) { agent.GoalFlags = 0x020; agent.DirtyFlags |= ObjectDirtyFlags.Locomotion; }
-            return; // already in reach — hold and let the ability strike
-        }
-        agent.GoalPosition = target.Position;
-        agent.DesiredStopDistance = MeleePursuitRange;
-        agent.GoalFlags = 0x001;
-        agent.DirtyFlags |= ObjectDirtyFlags.Locomotion;
-    }
-
-    // Server-authoritative movement: advance each non-player object toward its locomotion goal at its
-    // move speed. Without this the server position never changes, so distance/range checks (an enemy's
-    // pursue-then-strike ability, GetObjectDistance, WaitForNearGoal) never satisfy and enemies freeze in
-    // place. The client already smooth-moves via the 0x95 goal broadcast; integrating at the same speed
-    // keeps the two in sync. Stops within DesiredStopDistance so it doesn't orbit the target.
+    // Server-authoritative movement: each tick, step every pursuing non-player object toward its MoveTarget
+    // at its move speed, stopping in melee range. CRITICAL: the 0x95 wire goal carries the object's NEW
+    // (integrated) position — a small ~0.25-unit step — NOT the far MoveTarget, so the client trails the
+    // server in small increments instead of snapping across the map (which looked like teleporting). The
+    // server position advancing is also what lets an enemy's pursue-then-strike range check pass.
     private void IntegrateLocomotion(double deltaSeconds)
     {
         if (deltaSeconds <= 0) return;
         foreach (var o in _objects.Values)
         {
-            if (o.PlayerControlled || o.Dead) continue;
-            if ((o.GoalFlags & 0x001) == 0) continue; // not in a move goal
-            var toGoal = o.GoalPosition - o.Position;
-            var dist = toGoal.Length();
-            var stop = MathF.Max(0f, o.DesiredStopDistance);
-            if (dist <= stop + 0.01f) { o.GoalFlags = 0x020; continue; } // arrived -> stop
+            if (o.PlayerControlled || o.Dead || o.MoveTarget is not { } target) continue;
+            var toTarget = target - o.Position;
+            var dist = toTarget.Length();
+            if (dist <= MeleePursuitRange + 0.01f)
+            {
+                o.MoveTarget = null; // in reach — hold and let the ability strike (no teleport broadcast)
+                continue;
+            }
             var step = (float)(o.MoveSpeed * deltaSeconds);
-            o.Position += step >= dist - stop
-                ? toGoal * ((dist - stop) / dist)          // final step: land at the stop ring
-                : Vector3.Normalize(toGoal) * step;
+            o.Position += step >= dist - MeleePursuitRange
+                ? toTarget * ((dist - MeleePursuitRange) / dist) // final step: land at the melee ring
+                : Vector3.Normalize(toTarget) * step;
+            // Broadcast the CURRENT position as the smooth-move goal (small step), not the far target.
+            o.GoalPosition = o.Position;
+            o.GoalFlags = 0x001;
+            o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
         }
     }
 }
