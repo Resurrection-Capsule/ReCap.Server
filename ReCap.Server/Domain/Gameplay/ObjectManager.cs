@@ -217,7 +217,38 @@ public sealed class ObjectManager
             }
         }
 
+        // Pursue: every aggro'd agent walks toward its best target (independent of whether it has an
+        // AIController), so enemies close on the player instead of idling at spawn.
+        foreach (var agent in _objects.Values)
+        {
+            if (agent.Dead || agent.Agent is null) continue;
+            Pursue(agent, _aggro.BestTargetFor(agent));
+        }
+
         IntegrateLocomotion(deltaSeconds);
+    }
+
+    // Distance the agent closes to before stopping to strike (basic melee reach). Ranged/kiting behaviour
+    // is a later per-ability concern; for now every aggro'd enemy walks into melee of its target.
+    private const float MeleePursuitRange = 2.5f;
+
+    // Chase the aggro target: the AIController only casts the gambit ability (the pursue is the enemy's
+    // job), but the basic-melee abilities don't drive movement — so without this the enemy strikes only
+    // when the player walks into it and otherwise idles at spawn. Aim the locomotion goal at the target
+    // each tick (stopping in melee range) and flag it for the 0x95 smooth-move broadcast; IntegrateLocomotion
+    // advances the server position so the strike's range check can pass.
+    private void Pursue(GameObject agent, uint targetId)
+    {
+        if (targetId == 0 || !_objects.TryGetValue(targetId, out var target)) return;
+        if (Vector3.Distance(agent.Position, target.Position) <= MeleePursuitRange + 0.01f)
+        {
+            if ((agent.GoalFlags & 0x001) != 0) { agent.GoalFlags = 0x020; agent.DirtyFlags |= ObjectDirtyFlags.Locomotion; }
+            return; // already in reach — hold and let the ability strike
+        }
+        agent.GoalPosition = target.Position;
+        agent.DesiredStopDistance = MeleePursuitRange;
+        agent.GoalFlags = 0x001;
+        agent.DirtyFlags |= ObjectDirtyFlags.Locomotion;
     }
 
     // Server-authoritative movement: advance each non-player object toward its locomotion goal at its

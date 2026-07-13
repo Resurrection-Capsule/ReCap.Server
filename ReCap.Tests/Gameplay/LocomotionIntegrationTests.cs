@@ -44,6 +44,25 @@ public class LocomotionIntegrationTests
     }
 
     [Fact]
+    public void AggroedEnemyPursuesTargetIntoMeleeRange()
+    {
+        var om = new ObjectManager(null);
+        var enemy = Spawn(om, 10, Vector3.Zero);
+        enemy.Agent = new ReCap.Server.Domain.Gameplay.AI.AgentBlackboard { PerceptionRadius = 100f };
+        var player = om.Spawn(20, 0, new Vector3(20, 0, 0), 1f, team: 1, playerControlled: true);
+        player.Health = 100f; player.MaxHealth = 100f;
+        enemy.Agent.AddAggro(20); // enemy has the player on its aggro list
+
+        var startX = om.Objects[10].Position.X;
+        for (var i = 0; i < 20; i++) om.Update(0.5); // plenty of time to close 20 units at speed 5
+        var endX = om.Objects[10].Position.X;
+
+        Assert.True(endX > startX, "enemy did not pursue the target");
+        // Stops within melee reach of the player at x=20, not on top of it.
+        Assert.InRange(20f - endX, 2.0f, 3.5f);
+    }
+
+    [Fact]
     public void PlayerControlledObjectsAreNotServerMoved()
     {
         var om = new ObjectManager(null);
