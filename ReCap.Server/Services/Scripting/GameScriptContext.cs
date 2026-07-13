@@ -261,6 +261,22 @@ public sealed class GameScriptContext : IScriptGameBridge, IDisposable
         o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
     }
 
+    // nLocomotion.TeleportObject @0x00a04590: instant reposition. Stop locomotion, set the position,
+    // and flag the teleport route (GoalFlags 0x020) so FlushObjectUpdates emits ObjectTeleport (0x90)
+    // with the new position instead of a smooth-move. `face` orients the object along the jump vector.
+    public void TeleportObject(uint objectId, float x, float y, float z, bool face)
+    {
+        if (!_game.Objects.Objects.TryGetValue(objectId, out var o)) return;
+        var destination = new System.Numerics.Vector3(x, y, z);
+        var delta = destination - o.Position;
+        o.Position = destination;
+        o.GoalPosition = destination;
+        o.TargetPosition = System.Numerics.Vector3.Zero;
+        o.GoalFlags = 0x020;
+        o.DirtyFlags |= ObjectDirtyFlags.Locomotion;
+        if (face && delta != System.Numerics.Vector3.Zero) o.Facing = delta;
+    }
+
     public void SetNavCollision(uint objectId, bool collidable)
     {
         // Client SetNavCollision @0x009fe7c0 writes the INVERTED collidable flag; server-side only, no wire.

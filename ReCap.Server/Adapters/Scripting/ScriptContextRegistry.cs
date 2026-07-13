@@ -54,6 +54,10 @@ public interface IScriptGameBridge
     // lightweight test doubles compiling.
     void RequestAbility(uint abilityHash, uint agentId, uint targetId, float x, float y, float z, int rank) { }
 
+    // nLocomotion.TeleportObject — instant reposition + teleport-route replication (0x90). Default
+    // no-op keeps lightweight test doubles compiling.
+    void TeleportObject(uint objectId, float x, float y, float z, bool face) { }
+
     // nAbility/nModifier.CallFunctionInContext — resolve a live instance (modifier) to its context
     // (invocation + shared private table ref) so a function can be run bound to it. Default: unknown.
     bool TryGetInstanceContext(uint instanceId, out AbilityInvocation invocation, out int privateTableRef)

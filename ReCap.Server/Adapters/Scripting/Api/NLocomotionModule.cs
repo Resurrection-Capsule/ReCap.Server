@@ -11,7 +11,89 @@ public static unsafe class NLocomotionModule
             ("Stop", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&Stop),
             ("SlideToPoint", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&SlideToPoint),
             ("MoveToCircleEdge", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToCircleEdge),
-            ("TurnToFace", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TurnToFace));
+            ("TurnToFace", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TurnToFace),
+            ("TeleportObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TeleportObject),
+            ("MoveToObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToObject),
+            ("MoveToPointExact", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&MoveToPointExact),
+            ("TurnToFaceTargetObject", (nint)(delegate* unmanaged[Cdecl]<nint, int>)&TurnToFaceTargetObject));
+
+    private static uint Id(nint L, int i) => (uint)Math.Round((double)LuaNative.lua_tonumber(L, i));
+
+    // TeleportObject(obj, x, y, z, [face]) @0x00a04590 — instant reposition + teleport-route replication.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int TeleportObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && Num(L, 1, out var id) && Num(L, 2, out var x) && Num(L, 3, out var y) && Num(L, 4, out var z))
+            {
+                var face = LuaNative.lua_gettop(L) >= 5 && LuaNative.lua_toboolean(L, 5) != 0;
+                bridge.TeleportObject((uint)Math.Round(id), x, y, z, face);
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    // MoveToObject(obj, targetObj, [extraRange=0], [face]) @0x009fadc0 — pathfind toward a live object,
+    // stopping `extraRange` short of it; returns has-locomotion. We aim at the target's current position
+    // (the AI re-issues per gambit tick, so tracking a moving target falls out of re-evaluation).
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int MoveToObject(nint L)
+    {
+        var ok = false;
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && Num(L, 1, out var id) && Num(L, 2, out var tid)
+                && bridge.TryGetPosition(Id(L, 2), out var tx, out var ty, out var tz))
+            {
+                var extra = Num(L, 3, out var r) ? r : 0f;
+                bridge.SetLocomotionGoal(Id(L, 1), tx, ty, tz, extra);
+                ok = bridge.ObjectExists(Id(L, 1));
+            }
+        }
+        catch { }
+        LuaNative.lua_pushboolean(L, ok ? 1 : 0);
+        return 1;
+    }
+
+    // MoveToPointExact(obj, x, y, z, [face]) @0x00a048c0 — pathfind to an exact point (no stop distance);
+    // returns has-locomotion.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int MoveToPointExact(nint L)
+    {
+        var ok = false;
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && Num(L, 1, out var id) && Num(L, 2, out var x) && Num(L, 3, out var y) && Num(L, 4, out var z))
+            {
+                bridge.SetLocomotionGoal(Id(L, 1), x, y, z, 0f);
+                ok = bridge.ObjectExists(Id(L, 1));
+            }
+        }
+        catch { }
+        LuaNative.lua_pushboolean(L, ok ? 1 : 0);
+        return 1;
+    }
+
+    // TurnToFaceTargetObject(obj, targetObj, [immediate]) @0x009fb130 — orient obj toward another object.
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static int TurnToFaceTargetObject(nint L)
+    {
+        try
+        {
+            var bridge = ScriptContextRegistry.Get(L)?.GameBridge;
+            if (bridge is not null && Num(L, 1, out var id) && Num(L, 2, out var tid)
+                && bridge.TryGetPosition(Id(L, 1), out var ox, out var oy, out var oz)
+                && bridge.TryGetPosition(Id(L, 2), out var tx, out var ty, out var tz))
+                bridge.SetFacing(Id(L, 1), tx - ox, ty - oy, tz - oz);
+        }
+        catch { }
+        return 0;
+    }
 
     private static bool Num(nint L, int i, out float v)
     {
